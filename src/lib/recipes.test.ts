@@ -169,3 +169,21 @@ test('default House schedule has no quiet-hour work; a late start and book sched
   p.time='17:00';assert.ok(quietHourActions(recipeSchedule(p)).some(x=>x.step.id==='fridge'));
   p.time='09:00';p.recipe='tartine';assert.ok(quietHourActions(recipeSchedule(p)).some(x=>x.step.id==='fold'));
 });
+test('leaven steps list the scaled build and what is kept, for every recipe',()=>{
+  const p=plan();
+  p.recipe='house';let note=recipeSchedule(p).find(s=>s.id==='leaven')!.note!;
+  assert.match(note,/28 g mature starter, 71 g red spring flour, 71 g whole-wheat flour and 142 g water/);assert.match(note,/use 200 g in the dough and keep 112 g/);
+  p.recipe='tartine';note=recipeSchedule(p).find(s=>s.id==='leaven')!.note!;
+  assert.match(note,/15 g \(about 1 tbsp\) of mature starter with 200 g water, then add 100 g white-bread flour and 100 g whole-wheat flour/);assert.match(note,/keep 215 g/);
+  p.recipe='white-wheat';assert.match(recipeSchedule(p).find(s=>s.id==='leaven')!.note!,/white-bread flour/);
+  p.recipe='red-rye';assert.match(recipeSchedule(p).find(s=>s.id==='leaven')!.note!,/All 312 g goes into the dough/);
+  for(const k of ['buildSeed','buildBread','buildWheat','buildWater'])p.recipes.house.params[k]=0;
+  p.recipe='house';assert.match(recipeSchedule(p).find(s=>s.id==='leaven')!.note!,/200 g less than the 200 g the dough needs/);
+});
+test('every refrigerated proof tells you to cover and refrigerate, and no step is left without guidance',()=>{
+  const p=plan();
+  for(const id of p.order){p.recipe=id;const s=recipeSchedule(p);
+    assert.match(s.find(x=>x.id==='fridge')!.note!,/[Rr]efrigerat/,id);
+    for(const step of s)assert.ok(step.note&&step.note.length>10,`${id}: ${step.id} has no note`);
+  }
+});

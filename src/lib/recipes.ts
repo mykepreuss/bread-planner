@@ -101,8 +101,14 @@ export function calculateRecipe(plan:Planner,id=plan.recipe){
 export function recipeSchedule(plan:Planner):Step[]{
   if(!calculateRecipe(plan))return [];
   const d=definitions[plan.recipe],p=plan.recipes[plan.recipe].params,base:Plan={...plan.legacy,date:plan.date,time:plan.time,anchor:plan.anchor,proof:plan.proof,recipe:d.method,cells:{...plan.legacy.cells,ovenCapacity:plan.ovenCapacity,batchReheat:plan.reheat,houseCount:p.count,bookCount:p.count,F24:p.count}};
-  const r=calculateRecipe(plan)!;
+  const r=calculateRecipe(plan)!,gram=(n:number)=>`${Math.round(n*10)/10} g`;
+  const buildFlour=(d.flours.includes('red')?flourNames.red:d.flours.includes('white')?flourNames.white:'Bread flour').toLowerCase();
+  const [seed,bread,wheat,buildWater]=r.madeParts,keep=r.reserve>0?` You use ${gram(r.used)} in the dough and keep ${gram(r.reserve)}.`:r.shortfall>0?` This makes ${gram(r.shortfall)} less than the ${gram(r.used)} the dough needs; increase the build.`:` All ${gram(r.used)} goes into the dough.`;
+  const leavenNote=d.method==='tartine'
+    ?`Mix ${gram(seed)} (about 1 tbsp) of mature starter with ${gram(buildWater)} water, then add ${gram(bread)} ${buildFlour} and ${gram(wheat)} whole-wheat flour. Cover at room temperature.${keep}`
+    :`Mix ${gram(seed)} mature starter, ${gram(bread)} ${buildFlour}, ${gram(wheat)} whole-wheat flour and ${gram(buildWater)} water. Keep it separate from the autolyse and cover.${keep}`;
   return legacySchedule(base).map(step=>{
+    if(step.id==='leaven')return {...step,note:leavenNote};
     if(step.id==='autolyse'&&d.method!=='tartine')return {...step,note:`Mix ${r.initial.map(([name,n])=>`${name.toLowerCase()} (${Math.round(n*10)/10} g)`).join(', ')}. Cover. Keep the remaining ingredients for the final mix.`};
     if(step.id==='mix'&&d.method!=='tartine')return {...step,note:`Add ${r.final.map(([name,n])=>`${name.toLowerCase()} (${Math.round(n*10)/10} g)`).join(', ')} after the autolyse. Mix until incorporated.`};
     return step;
