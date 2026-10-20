@@ -1,0 +1,21 @@
+{
+  "id": "dpl_J26TGnf6qboggCUvzbD7kaMs87g3",
+  "url": "bread-planner-1pmhyjmrz-mpmba.vercel.app",
+  "alias": [
+    "bread.assemblydigital.com",
+    "bread-planner-blue.vercel.app",
+    "bread-planner-mpmba.vercel.app",
+    "bread-planner-git-main-mpmba.vercel.app"
+  ],
+  "readyState": "READY",
+  "target": "production",
+  "projectId": "prj_oaBadxUrg76MQyvwFsY68FvfuM8r",
+  "gitSource": {
+    "ref": "main",
+    "repoId": 1426547563,
+    "sha": "f25f1ba0cbc8902d2789eaf64edf46b16b95cd8d",
+    "type": "github",
+    "prId": null
+  },
+  "gitCommitSha": "f25f1ba0cbc8902d2789eaf64edf46b16b95cd8d"
+}

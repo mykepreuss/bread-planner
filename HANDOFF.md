@@ -1,27 +1,53 @@
-# Bread Planner migration
+# Bread Planner
 
-Authorized outcome: rebuild the existing Bread Planner with Astro, publish on Vercel and connect bread.assemblydigital.com through Cloudflare. Public app, browser-local settings. No backend or account system required.
+## Current state: released and verified
 
-Source: Sites commit e3f364a8f2459c50c980ddb55970d191997f9dba. Exact recipes, legacy migrations, timing/readiness cues, all-loaf scheduling, quiet-hours warnings and synchronized percentage controls retained. Prior receipts and design decisions are archived in docs/SITES_HISTORY.md. Current implementation uses Astro static pages and a React calculator island, preserving shadcn and TanStack.
+Public URL: https://bread.assemblydigital.com/
+Private source: https://github.com/mykepreuss/bread-planner
+Workspace: /Users/mp/Code/mp-hq/bread-planner
+Production branch: main
+Functional release source: f25f1ba0cbc8902d2789eaf64edf46b16b95cd8d
+Verified Vercel deployment: dpl_J26TGnf6qboggCUvzbD7kaMs87g3 (READY, production,23s build)
+Project: prj_oaBadxUrg76MQyvwFsY68FvfuM8r (bread-planner)
+Team: team_U2Fu7jNsQEgGylxpq9YR7M2f (mpmba)
 
-Acceptance: model/migration/backup tests; Astro typecheck/build; independent browser-local profiles and persistence; backup transfer from the old origin; desktop/phone checks; Vercel READY bound to a source commit; Cloudflare exact DNS-only bread CNAME; authoritative/public DNS and valid HTTPS for the final hostname. All remain pending for this release.
+This checkpoint is documentation following the functional release. Subsequent documentation-only Git deployments retain the same application behavior.
 
-Authority: requested Vercel production release and scoped bread DNS setup. Preserve unrelated zone records and the existing private Sites app. New standalone repository path /Users/mp/Code/mp-hq/bread-planner.
+## Scope and decisions
 
-## Implementation checkpoint
+User requested an Astro rebuild, Vercel release and Cloudflare setup for bread.assemblydigital.com. The app has never been used in production. User explicitly excluded any transfer/migration features; temporary backup/import controls and transfer page were removed. The release starts fresh with the established recipes and browser-local editing.
 
-Astro7.4.1 static shell with one React island is implemented. Existing60 tests plus five backup/import tests pass. Astro check passes with0 errors/0 warnings and seven pre-existing hints. Production build passed locally and on Vercel Node24. shadcn's standalone Tailwind variant stylesheet is vendored with its MIT license so the authoring CLI is not installed in the deployed app. Pinned React integration7.0.0 with compatible Vite React plugin6.1.1 and cookie2.0.1 resolves two dependency-resolution failures found during the first builds. npm audit now reports0 vulnerabilities.
+Astro7.4.1 statically builds the page shell, metadata and404 page. One React island retains shadcn/Radix, TanStack Form/Table and the existing calculator behavior. No backend, database, authentication or analytics were added. Preuss House remains the default, with six distinct editable recipes, exact staged quantities, leaven made/used/reserved, independent saved settings/checklists, multi-loaf forward/backward schedules, overnight proof, readiness cues, quiet-hour alerts and synchronized percentage sliders/exact inputs. Existing decisions and source math are archived in docs/SITES_HISTORY.md.
 
-Private GitHub source: https://github.com/mykepreuss/bread-planner. Initial source commit98aa00d01815c03e5e93dbdcde884982f1ac8e33. Vercel projectprj_oaBadxUrg76MQyvwFsY68FvfuM8r, teamteam_U2Fu7jNsQEgGylxpq9YR7M2f (mpmba), Git connected. Initial production deploymentdpl_7MjaQ9rLhQyRSjG49gkSy6pFDdks is READY. Public verification alias https://bread-planner-blue.vercel.app. Deployed .env files are excluded by .vercelignore; local Vercel CLI auth files remain ignored.
+Vercel framework is Astro, Node24, install npm ci, build npm test && npm run build, output dist. Git integration is connected. Local .env.local and .vercel files are ignored and excluded from source uploads. The source repository is PRIVATE. Vercel's immutable/team/branch preview aliases retain their default authentication; the production domain is public.
 
-Native Vercel MCP returned a stale/incomplete project list and404 for the verified existing puppy-club project. The authenticated CLI verified MP/puppy-club and was used as the documented fallback for this release. Cloudflare browser CDP attachment timed out twice; native Chrome controls accessed the already signed-in DNS dashboard. Confirmed no bread record existed, then added only CNAME bread →5f91c9b5d5ea5e2b.vercel-dns-017.com, DNS only, Auto TTL, using Vercel's project-specific recommendation. Final DNS/TLS/browser checks remain.
+## DNS and HTTPS
 
-Live preview acceptance: House loads2000g/78%/two loaves/capacity2, proof19:15→next07:45, completion09:28. Hydration slider78→78.5 and count2→3 produced3000g and two oven batches. Count/hydration survived reload. Test values restored2/78 and checklist empty. No browser errors/warnings. Existing private Sites app retains its original UI; transfer utility deployed there from commit10855203e44afd21adf0b7242586fb704492c1d2, deploymentappgdep_6ad6fca0bb888191b06e8f23215c602e. Its /transfer.html downloads only known planner storage keys to a local JSON file and never changes/deletes source settings.
+Cloudflare remains authoritative at norman.ns.cloudflare.com and arya.ns.cloudflare.com. Added only:
 
-## Scope correction from user
+- CNAME bread.assemblydigital.com →5f91c9b5d5ea5e2b.vercel-dns-017.com
+- DNS only, Auto TTL
 
-The app has never been in production and needs no migration or transfer features. Removed the new Saved bakes controls, backup/import modules and related five tests. Closing the transfer tab and removing the temporary utility from the old Sites app. Release starts fresh with the established recipe presets and existing browser-local editing. Existing model/import hardening only filters unrecognized recipe IDs; no recipe math changes. Original60 checks are the required suite.
+Target came from Vercel's project-specific recommendation. Cloudflare dashboard row confirmed saved; authoritative server,1.1.1.1 and8.8.8.8 returned the exact CNAME. Vercel domains verify reports configured-correctly, attached and verified. HTTPS returns200 with successful TLS verification. Certificate CN is bread.assemblydigital.com, issued by Let's Encrypt YR2, valid through2027-01-18. Existing apex,www,mail,PostHog,Substack and other DNS records were not modified.
 
-Cloudflare record is saved. Authoritative DNS plus1.1.1.1 and8.8.8.8 return the exact Vercel CNAME. Vercel domain verification reports configured-correctly. HTTPS first failed during initial certificate provisioning and then returned200 with successful TLS verification. Final UI and release verification follow the feature removal.
+## Acceptance evidence: MET
 
-Post-correction local acceptance: original60 test suite and Astro production build passed. No backup/import/transfer modules or controls remain in this source. Static HTTPS verification on bread.assemblydigital.com passes: Astro page, metadata/security headers, all10 assets referenced by the deployed asset graph (including JS imports and fonts),404 behavior and an intentional missing-asset negative fixture. Initial verifier incorrectly assumed local and remote build filenames would be identical; Vercel's CSS filename differed, so that criterion was invalid. The corrected verifier follows the actual deployed graph and records live asset hashes rather than claiming local/remote byte identity.
+- Vercel production build ran60 tests:60 pass,0 fail. Astro check reported0 errors/0 warnings with seven pre-existing hints; checked production build succeeded on Node24.
+- npm audit reports0 vulnerabilities. Initial peer/cookie resolution failures were fixed with compatible React integration7.0.0/Vite React plugin6.1.1/OXC0.145 and explicit cookie2.0.1. shadcn's unmodified standalone variant CSS is vendored with its MIT license; the authoring CLI is not installed in the app.
+- Live House defaults:2000g,78%,2×1000g,oven capacity2; initial800/100/680g,final100/200/20/100g. Proof19:15→next07:45 and baking complete09:28 with09:00 leaven anchor.
+- Live input/scheduling: hydration slider78→78.5 and count2→3 produced3000g and two oven batches. Count/hydration persisted on reload. All test values restored2/78.
+- Final custom-domain check: all six dropdown options observed, Tartine1970g/75% and eight quiet-hour actions, House checklist persisted through reload and was then cleared. House selected in Schedule for handoff.
+- No Saved bakes, backup, import or transfer controls remain. Temporary original-preview transfer route was removed with Sites source4973f06e9bfa99d38656c531033da7c76e7c5bbe, owner-private cleanup deploymentappgdep_6ad6feea3f5c8191937a4f3f7e623061 succeeded. Original private preview otherwise retained.
+- Responsive:390px Recipe and Schedule document widths equal390; no horizontal overflow. Normal928px view checked; temporary viewport reset. Browser error/warning log empty.
+- scripts/verify-deployment.mjs passes12 checks covering live Astro HTML/metadata/security headers, all10 linked/imported/font assets,404 and a deliberately missing-asset negative fixture. It records live asset hashes, not local/remote byte identity. Initial local-filename comparison was invalid because local and Vercel builds emitted different CSS filenames; verifier now follows the deployed asset graph.
+- Vercel production runtime error scan returned0 records over the bounded30-minute query. This is a static app with no application functions. No monitoring/drains were added.
+
+Ignored local receipts: artifacts/deployment.json, artifacts/live-verification.json, artifacts/astro-production.png and artifacts/astro-mobile.png.
+
+## Commands and operational notes
+
+Use Node24. npm ci; npm test; npm run build. Deployments from main run required checks through Vercel. Verify the public hostname with node scripts/verify-deployment.mjs https://bread.assemblydigital.com.
+
+Vercel MCP returned a stale/incomplete project list and404 for the independently verified puppy-club project. The authenticated CLI64.5.0 was the documented fallback, with explicit scope mpmba and project IDs throughout. Cloudflare CDP attachment timed out twice; native Chrome controls accessed the already signed-in DNS dashboard. Never read/print auth files or upload local credentials. Preserve the current Cloudflare DNS-only record and unrelated zone records.
+
+No remaining work in the requested release scope. Keep the existing design and recipe behavior unless the user requests another change.
