@@ -21,6 +21,8 @@ Preuss House is the default. Six distinct editable recipes retain independent se
 
 Browser storage uses `bread-planner.v5`. Each browser starts with the default recipes and remembers edits locally. The first release starts fresh; no data transfer or account system is included.
 
+The main hydration figure and slider show total water divided by total flour, including only the leaven used in the dough. Existing ingredient weights and stored v5 added-water percentages are preserved through a display/input conversion. Leaven composition follows its build, assuming equal flour and water in mature starter; an empty build assumes a 100% hydration leaven until specified.
+
 ## Deployment
 
 Vercel project `bread-planner`, team `mpmba`, Node24. The build command runs tests and the checked Astro production build. The production branch is `main`. Cloudflare remains authoritative for `assemblydigital.com`; only the `bread` DNS record belongs to this project. Use Vercel's project-specific recommended CNAME, DNS only.

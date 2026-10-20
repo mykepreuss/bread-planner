@@ -137,8 +137,8 @@ export function schedule(plan:Plan):Step[] {
   if(house)durationSpecs.forEach((s,i)=>{c[s.cell]=c[houseDurationSpecs[i].cell];});
   const book=plan.recipe==='tartine',rows:Omit<Step,'at'>[]=[];
   const push=(id:string,title:string,offset:number,duration:number,note?:string,readiness?:string,cell?:string)=>rows.push({id,title,offset,duration,note,readiness,cell});
-  const leavenCue='Use when aerated and puffy, and a spoonful floats in room-temperature water. If it sinks, allow more fermentation and extend the leaven time.';
-  const bulkCue='Look for a billowy dough and 20% to 30% volume increase. The book allows up to one more hour with folds if needed; adjust bulk time before moving on.';
+  const leavenCue='Use when aerated and puffy, and a spoonful floats in room-temperature water. If it sinks, allow more fermentation before mixing. The displayed times are estimates and do not move automatically.';
+  const bulkCue='Look for a billowy dough and 20% to 30% volume increase. The book allows up to one more hour with folds if needed; wait until the dough is ready before moving on.';
   let firstBake=0,preheat=0,covered=0,uncovered=0,warmup=0;
   if(book){
     push('leaven','Make leaven',0,c.bookLeaven,'Keep 1 tbsp of mature starter. Mix with the build water, then the equal white/whole-wheat flour blend. Cover at room temperature.',leavenCue);
@@ -153,7 +153,7 @@ export function schedule(plan:Plan):Step[] {
     push('fold','Final shape',at,c.bookShape,'Turn flour-side down. Stretch and fold the bottom, sides and top over the center; roll seam-side down into a taut round. Place seam-side up in a prepared basket.');at+=c.bookShape;
     if(plan.proof==='cold'){
       push('fridge','Refrigerated final proof',at,c.bookCold,'Cover the baskets. The supplied recipe gives 10 to 12 hours in the refrigerator. Later batches remain chilled until their own warm-up.');at+=c.bookCold;
-      warmup=c.bookWarmup;push('warmup','Warm batch 1 to room temperature',at,warmup,'Remove only the loaves in the first batch. This warm-up duration is an editable planning allowance.', 'Bring the dough back to room temperature before baking; use its condition, rather than the clock alone.');at+=warmup;
+      warmup=c.bookWarmup;push('warmup','Warm batch 1 to room temperature',at,warmup,'Remove only the loaves in the first batch. The schedule includes a warm-up allowance; wait longer if the dough needs it.', 'Bring the dough back to room temperature before baking; use its condition, rather than the clock alone.');at+=warmup;
     }else{
       push('proof','Warm final proof',at,c.bookWarm,'Cover and keep at 75°F to 80°F / 24°C to 27°C. The supplied recipe gives 3 to 4 hours.');at+=c.bookWarm;
     }

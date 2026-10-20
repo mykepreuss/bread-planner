@@ -1,9 +1,48 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {defaults as legacyDefaults,restorePlan as restoreLegacy,schedule as legacySchedule,houseIngredients,bookIngredients,ingredients} from './model.ts';
-import {createPlanner,restorePlanner,calculateRecipe,consolidate,recipeSignature,recipeSchedule,recipeDefaults,definitions,quietHourActions} from './recipes.ts';
+import {createPlanner,restorePlanner,calculateRecipe,consolidate,recipeSignature,recipeSchedule,recipeDefaults,definitions,quietHourActions,totalHydration,addedHydration} from './recipes.ts';
 const approx=(a:number,b:number)=>assert.ok(Math.abs(a-b)<1e-7,`${a} != ${b}`);
 const plan=()=>{const p=createPlanner();p.date='2026-10-21';p.time='09:00';return p;};
+test('total hydration includes only the used leaven while every original recipe quantity stays intact',()=>{
+  const p=plan(),expected:Record<string,number>={house:80,tartine:850/1100*100,'white-wheat':900/1100*100,'red-rye':80,'five-flour':900/1100*100,'four-flour':1350/1650*100};
+  const snapshot=JSON.stringify(p);
+  for(const id of p.order){
+    const r=calculateRecipe(p,id)!;approx(r.totalHydration,expected[id]);approx(r.totalHydration,r.totalWater/r.totalFlour*100);
+    approx(r.totalWater+r.totalFlour+r.salt,r.total);
+    approx(addedHydration(totalHydration(p.recipes[id].params),p.recipes[id].params),p.recipes[id].params.hydration);
+  }
+  assert.equal(JSON.stringify(p),snapshot);
+  const h=calculateRecipe(p)!;approx(h.totalFlour,1100);approx(h.totalWater,880);approx(h.made,312);approx(h.used,200);approx(h.reserve,112);
+});
+test('total hydration slider conversion changes water at fixed yield and keeps the schedule intact',()=>{
+  const p=plan(),params=p.recipes.house.params,before=recipeSchedule(p);
+  params.hydration=addedHydration(80.5,params);approx(params.hydration,78.55);
+  const r=calculateRecipe(p)!;approx(r.totalHydration,80.5);approx(r.total,2000);approx(r.water/r.flour, .7855);
+  approx([...r.initial,...r.final].reduce((sum,[,g])=>sum+g,0),2000);assert.deepEqual(recipeSchedule(p).map(s=>s.at),before.map(s=>s.at));
+  params.hydration=addedHydration(80,params);const restored=calculateRecipe(p)!;
+  restored.initial.forEach(([,g],i)=>approx(g,[800,100,680][i]));restored.final.forEach(([,g],i)=>approx(g,[100,200,20,100][i]));
+});
+test('total hydration follows custom leaven composition, with explicit seed and empty-build assumptions',()=>{
+  const p=plan(),params=p.recipes.house.params;
+  params.buildSeed=20;params.buildBread=80;params.buildWheat=10;params.buildWater=190;
+  // The build contains 100 g flour and 200 g water; used leaven is still 200 g.
+  const r=calculateRecipe(p)!;approx(r.totalFlour,1000+200/3);approx(r.totalWater,780+400/3);
+  approx(r.totalHydration,(780+400/3)/(1000+200/3)*100);
+  params.hydration=addedHydration(90,params);approx(calculateRecipe(p)!.totalHydration,90);
+  params.leaven=0;approx(totalHydration(params),params.hydration);
+  params.leaven=20;for(const k of ['buildSeed','buildBread','buildWheat','buildWater'])params[k]=0;
+  params.hydration=78;approx(totalHydration(params),80);approx(calculateRecipe(p)!.shortfall,200);
+  params.buildWater=100;approx(totalHydration(params),98);
+  params.buildWater=0;params.buildBread=100;approx(totalHydration(params),65);
+  approx(addedHydration(totalHydration({...params,hydration:0}),params),0);
+});
+test('existing saved recipes retain their added-water settings and exact weights after showing total hydration',()=>{
+  const p=plan();p.recipe='five-flour';p.recipes['five-flour'].params.hydration=73;p.recipes['five-flour'].params.count=4;p.recipes.house.params.buildWater=200;p.recipes.house.done=['autolyse'];
+  const weights=p.order.map(id=>calculateRecipe(p,id)!),saved=JSON.stringify({version:5,plan:p}),restored=restorePlanner(JSON.parse(saved));
+  assert.deepEqual(restored,p);assert.deepEqual(restored.order.map(id=>calculateRecipe(restored,id)),weights);
+  approx(calculateRecipe(restored,'five-flour')!.totalHydration,83/1.1);assert.equal(JSON.stringify({version:5,plan:restored}),saved);
+});
 test('one dropdown contains six distinct recipes and the House duplicate is removed',()=>{
   const p=plan();assert.deepEqual(p.order,['house','tartine','white-wheat','red-rye','five-flour','four-flour']);assert.equal(p.recipe,'house');
   assert.equal(new Set(p.order.map(id=>recipeSignature(id,p.recipes[id]))).size,p.order.length);
