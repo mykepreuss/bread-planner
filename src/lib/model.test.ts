@@ -101,10 +101,10 @@ test('parallel capacity and partial final batch cover every loaf once',()=>{
   assert.equal(covered.length,2);assert.match(covered[0].title,/loaves 1 to 2/);assert.match(covered[1].title,/loaf 3/);
   p.cells.ovenCapacity=3;assert.equal(batchCount(p),1);assert.equal(schedule(p).filter(x=>x.id.startsWith('covered')).length,1);
 });
-test('book cold sequence uses short leaven-containing rest, six folds, and correct first/last bake times',()=>{
+test('book cold sequence uses short leaven-containing rest, five folds before dividing, and correct first/last bake times',()=>{
   const p={...plan(),recipe:'tartine' as const},s=schedule(p),at=(id:string)=>local(s.find(x=>x.id===id)!.at);
   assert.equal(at('autolyse'),'2026-10-21 21:00');assert.equal(at('mix'),'2026-10-21 21:30');assert.equal(at('shape'),'2026-10-22 00:30');assert.equal(at('fridge'),'2026-10-22 01:10');
-  assert.equal(s.filter(x=>/^turn\d+$/.test(x.id)).length,6);assert.equal(at('preheat'),'2026-10-22 13:40');assert.equal(at('covered'),'2026-10-22 14:10');assert.equal(at('out-1'),'2026-10-22 14:50');assert.equal(at('done'),'2026-10-22 16:00');
+  assert.equal(s.filter(x=>/^turn\d+$/.test(x.id)).length,5);assert.ok(+s.find(x=>x.id==='turn5')!.at<+s.find(x=>x.id==='shape')!.at);assert.equal(at('preheat'),'2026-10-22 13:40');assert.equal(at('covered'),'2026-10-22 14:10');assert.equal(at('out-1'),'2026-10-22 14:50');assert.equal(at('done'),'2026-10-22 16:00');
   assert.match(s.find(x=>x.id==='autolyse')!.note!,/leaven used/);assert.match(s.find(x=>x.id==='preheat')!.note!,/500°F/);assert.match(s.find(x=>x.id==='covered')!.note!,/450°F/);
 });
 test('book warm proof omits refrigeration and warm-up, and overlaps preheat with proof',()=>{
@@ -113,7 +113,7 @@ test('book warm proof omits refrigeration and warm-up, and overlaps preheat with
 });
 test('extending book bulk adds folds and moves later steps, while preheat allowance overlaps',()=>{
   const p={...plan(),recipe:'tartine' as const},a=schedule(p);p.cells.bookBulk=240;const b=schedule(p);
-  assert.equal(b.filter(x=>/^turn\d+$/.test(x.id)).length,8);assert.equal(+b.find(x=>x.id==='done')!.at-(+a.find(x=>x.id==='done')!.at),3600000);
+  assert.equal(b.filter(x=>/^turn\d+$/.test(x.id)).length,7);assert.equal(+b.find(x=>x.id==='done')!.at-(+a.find(x=>x.id==='done')!.at),3600000);
   p.cells.bookPreheat+=20;const c=schedule(p);assert.equal(+c.find(x=>x.id==='done')!.at,+b.find(x=>x.id==='done')!.at);assert.equal(+b.find(x=>x.id==='preheat')!.at-(+c.find(x=>x.id==='preheat')!.at),1200000);
 });
 test('backward anchor is the last batch for both recipes and proof paths',()=>{

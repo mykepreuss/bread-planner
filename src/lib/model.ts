@@ -146,7 +146,7 @@ export function schedule(plan:Plan):Step[] {
     push('autolyse','Mix dough and rest',at,c.bookRest,'Disperse the leaven used in the initial water, about 80°F / 27°C. Add white and whole-wheat flour; mix until no dry flour remains. Cover for 25 to 40 minutes.');at+=c.bookRest;
     push('mix','Add salt and final water',at,0,'Work in the salt and reserved water. Keep mixing if the dough separates; it should come together again.');
     push('rest','Begin warm bulk fermentation',at,Math.min(30,c.bookBulk),'Cover and keep at 75°F to 80°F / 24°C to 27°C.');
-    for(let elapsed=30,n=1;elapsed<=c.bookBulk;elapsed+=30,n++)push(`turn${n}`,`Turn ${n}`,at+elapsed,Math.min(30,c.bookBulk-elapsed),n===1?'Wet your hand. Stretch one quadrant over the dough; rotate and repeat to fold all four sides.':'Repeat the four-sided stretch and fold, with wet hands.');
+    for(let elapsed=30,n=1;elapsed<c.bookBulk;elapsed+=30,n++)push(`turn${n}`,`Turn ${n}`,at+elapsed,Math.min(30,c.bookBulk-elapsed),n===1?'Wet your hand. Stretch one quadrant over the dough; rotate and repeat to fold all four sides.':'Repeat the four-sided stretch and fold, with wet hands.');
     at+=c.bookBulk;
     push('shape','Divide and preshape',at,c.bookPreshape,'Dust the top, divide equally and turn flour-side down. Shape taut rounds with the dusting flour on the outside.',bulkCue);at+=c.bookPreshape;
     push('bench1','Bench rest and prepare baskets',at,c.bookBench,'Cover the rounds for 30 minutes. Line proofing baskets or bowls with towels and generously dust with the whole-wheat/rice-flour blend.');at+=c.bookBench;
@@ -165,13 +165,13 @@ export function schedule(plan:Plan):Step[] {
     let at=c.C4;
     const add=(id:string,title:string,cell:string,note?:string,readiness?:string)=>{push(id,title,at,c[cell],note,readiness,cell);at+=c[cell];};
     add('mix','Mix final dough','C9','Add the rye, leaven used, salt and reserved water to the autolysed dough. Mix until incorporated.');
-    add('rest','Rest','C10','Keep covered in a warm place. The book uses 75°F to 80°F / 24°C to 27°C for bulk fermentation.');
+    add('rest','Rest','C10','Keep covered in a warm place, about 75°F to 80°F / 24°C to 27°C, for bulk fermentation.');
     for(let i=1;i<=7;i++)add(`turn${i}`,`Turn ${i}`,'C'+(10+i),'Use wet hands to stretch and fold all four sides of the dough.');
-    add('shape','Cut and preshape','C19','Divide into equal pieces and form taut rounds.',`Look for a billowy dough and 20% to 30% volume increase. ${house?'The House':'Your custom'} plan already uses a longer bulk; adjust to its condition.`);
+    add('shape','Cut and preshape','C19','Divide into equal pieces and form taut rounds.',`Look for a billowy dough and 20% to 30% volume increase. This plan uses a longer bulk than the book’s three hours; judge by the dough’s condition.`);
     add('bench1','Bench rest','C20','Cover the rounds. Prepare towel-lined baskets with the whole-wheat/rice-flour dusting blend.');
-    add('fold','Final shape','C22','Fold the edges toward the center and roll into a taut round.');add('bench2','Bench rest','C23');
+    add('fold','Final shape','C22','Fold the edges toward the center and roll into a taut round.');add('bench2','Bench rest','C23','Leave the shaped loaves covered on the bench.');
     add('basket','Basket rest','C24','Place each loaf seam-side up in its prepared basket. Cover.');
-    add('fridge',house?'Overnight cold proof':'Refrigerated final proof','C25',house?'Cover the shaped loaves in their baskets and refrigerate overnight. The default is 12 hours 30 minutes, followed by the morning warm-up and bake. Keep later batches chilled until their own warm-up.':'Keep later batches refrigerated until their own warm-up.');
+    add('fridge',house?'Overnight cold proof':'Refrigerated final proof','C25',house?'Cover the shaped loaves in their baskets and refrigerate overnight. The default is 12 hours 30 minutes, followed by the morning warm-up and bake. Keep later batches chilled until their own warm-up.':'Cover the shaped loaves in their baskets and refrigerate. Keep later batches refrigerated until their own warm-up.');
     preheat=c.C28;firstBake=at+preheat;warmup=preheat;covered=c.C29;uncovered=c.C30;
     push('warmup','Take batch 1 out of fridge',at,warmup,'Allow the first batch to warm while the oven and pots heat.');
     const feed=rows.find(s=>s.id==='feed');if(feed)feed.cell='C2';
