@@ -1,0 +1,26 @@
+---
+import App from '../App';
+import '../index.css';
+const description='Plan your sourdough bake with editable recipes, exact ingredient weights, overnight fermentation and a schedule for every loaf.';
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f8f5ee" />
+    <meta name="description" content={description} />
+    <link rel="canonical" href="https://bread.assemblydigital.com/" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Bread Planner</title>
+  </head>
+  <body>
+    <header class="app-shell site-heading"><div class="intro"><h1>Bread Planner</h1></div></header>
+    <main>
+      <App client:only="react">
+        <div slot="fallback" class="app-shell loading-planner" role="status">Loading your bread planner…</div>
+      </App>
+      <noscript><p class="app-shell">Enable JavaScript to use the recipe calculator and bake schedule. Your settings are saved on this device.</p></noscript>
+    </main>
+  </body>
+</html>

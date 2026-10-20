@@ -1,0 +1,8 @@
+.env*
+.git/
+.astro/
+.vercel/
+node_modules/
+artifacts/
+docs/
+*.log
