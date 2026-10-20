@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {defaults,ingredients,bookIngredients,houseIngredients,coldProofWindow,houseDurationSpecs,restorePlan,activeDone,batchCount,manual,blend,schedule,round,durationSpecs,doughSpecs,leavenSpecs,manualSpecs,blendSpecs} from './model.ts';
+import {defaults,ingredients,bookIngredients,houseIngredients,coldProofWindow,houseDurationSpecs,restorePlan,activeDone,batchCount,manual,blend,schedule,round,loafText,durationSpecs,doughSpecs,leavenSpecs,manualSpecs,blendSpecs} from './model.ts';
 const plan=():ReturnType<typeof defaults>=>{const p=defaults();return {...p,cells:{...p.cells,ovenCapacity:1},recipe:'custom' as typeof p.recipe,date:'2026-10-21',time:'09:00'};};
 const local=(date:Date)=>`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')} ${String(date.getHours()).padStart(2,'0')}:${String(date.getMinutes()).padStart(2,'0')}`;
 test('all 59 original numeric inputs plus B4 are represented once',()=>{
@@ -62,6 +62,7 @@ test('independent percentages stay independent; zero flour has no fake hydration
   p.cells.N2=0;p.cells.N3=0;assert.equal(manual(p.cells,1).hydration,null);
   p.cells.F17=0;p.cells.F18=0;p.cells.F19=0;p.cells.F20=0;assert.equal(ingredients(p.cells),null);
 });
+test('loaf counts read as one loaf or several loaves',()=>{assert.equal(loafText(1),'1 loaf');assert.equal(loafText(2),'2 loaves');assert.equal(loafText(3),'3 loaves');});
 test('uses spreadsheet rounding, including negative half values',()=>{assert.equal(round(-1.5),-2);assert.equal(round(1.5),2);assert.equal(round(1.25,1),1.3);assert.equal(round(2000/182,1),11);});
 test('leaven build uses bread flour rather than all flour',()=>{const p=plan();p.cells.F18=0;const r=ingredients(p.cells)!;assert.equal(r.leavenBase,r.base[0]*.15);});
 test('invalid date/time produces no invalid timestamps',()=>{assert.deepEqual(schedule({...plan(),date:'2026-02-31'}),[]);assert.deepEqual(schedule({...plan(),time:'25:00'}),[]);});

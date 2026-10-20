@@ -14,6 +14,8 @@ export const definitions:Record<string,RecipeDefinition>={
 export type Profile={params:Record<string,number>;done:string[]};
 export type Planner={recipes:Record<string,Profile>;order:string[];recipe:string;date:string;time:string;anchor:'leaven'|'done';proof:'cold'|'warm';ovenCapacity:number;reheat:number;legacy:Plan};
 const clean=(n:number)=>Math.abs(n)<1e-12?0:n;
+/** Leaven balances compare sums of separately scaled parts, so sub-microgram differences are arithmetic noise, not a deficit. */
+const balance=(n:number)=>Math.max(0,Math.abs(n)<1e-6?0:n);
 function profile(flours:Record<string,number>,water:number,leaven:number,salt:number,finalWater:number,count:number,weight:number,build:number[],done:string[]=[]):Profile{
   const flour=Object.values(flours).reduce((a,b)=>a+b,0),denominator=flour||1;
   return {params:{count,weight,hydration:water/denominator*100,leaven:leaven/denominator*100,salt:salt/denominator*100,reserve:water?finalWater/water*100:0,...Object.fromEntries(Object.entries(flours).map(([k,n])=>[`flour_${k}`,n/denominator*100])),buildSeed:build[0]/denominator*1000,buildBread:build[1]/denominator*1000,buildWheat:build[2]/denominator*1000,buildWater:build[3]/denominator*1000},done:[...done]};
@@ -60,8 +62,8 @@ export function restorePlanner(saved:unknown):Planner{
   }
   base.order=Array.isArray(p.order)?[...new Set(p.order.filter(id=>typeof id==='string'&&Object.hasOwn(definitions,id)))]:base.order;
   if(!base.order.length)base.order=['house'];
-  const merged=consolidate(base.recipes,base.order);base.order=merged.order;
-  base.recipe=typeof p.recipe==='string'&&Object.hasOwn(merged.aliases,p.recipe)?merged.aliases[p.recipe]:base.order[0];
+  // Duplicates merge once, when legacy data migrates through createPlanner. A saved order is kept as it is, so an edited recipe never disappears from the list.
+  base.recipe=typeof p.recipe==='string'&&base.order.includes(p.recipe)?p.recipe:base.order[0];
   if(typeof p.date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(p.date))base.date=p.date;
   if(typeof p.time==='string'&&/^\d{2}:\d{2}$/.test(p.time))base.time=p.time;
   base.anchor=p.anchor==='done'?'done':'leaven';base.proof=p.proof==='warm'?'warm':'cold';
@@ -78,7 +80,7 @@ export function calculateRecipe(plan:Planner,id=plan.recipe){
   if(d.method==='tartine')initial.unshift(['Leaven used',used]);
   const final:[string,number][]=[...flours.filter(f=>f.grams>0&&d.late.includes(f.key)).map(f=>[f.name,f.grams] as [string,number]),...(d.method==='tartine'?[]:[['Leaven used',used] as [string,number]]),['Salt',salt],['Water',finalWater]];
   const madeParts=['buildSeed','buildBread','buildWheat','buildWater'].map(k=>p[k]*flour/1000),made=madeParts.reduce((a,b)=>a+b,0);
-  return {total,flour,water,used,salt,hydration:p.hydration,flours,initial,final,madeParts,made,reserve:Math.max(0,made-used),shortfall:Math.max(0,used-made),dustingWheat:flour*.1,dustingRice:flour*.1};
+  return {total,flour,water,used,salt,hydration:p.hydration,flours,initial,final,madeParts,made,reserve:balance(made-used),shortfall:balance(used-made),dustingWheat:flour*.1,dustingRice:flour*.1};
 }
 export function recipeSchedule(plan:Planner):Step[]{
   if(!calculateRecipe(plan))return [];

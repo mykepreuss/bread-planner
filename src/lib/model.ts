@@ -207,6 +207,7 @@ export function coldProofWindow(steps:Step[]){
   const end=new Date(+fridge.at+fridge.duration*60000);
   return {start:fridge.at,end,minutes:fridge.duration,overnight:dateString(fridge.at)!==dateString(end)};
 }
+export function loafText(n:number) {return `${n.toLocaleString(undefined,{maximumFractionDigits:1})} ${n===1?'loaf':'loaves'}`;}
 export function durationText(n:number) {const h=Math.floor(n/60),m=round(n%60,1);return h?`${h}h${m?` ${m}m`:''}`:`${m} min`;}
 export function timeText(d:Date) {return d.toLocaleTimeString([], {hour:'numeric',minute:'2-digit'});}
 export function calendarText(d:Date) {return d.toLocaleDateString([], {weekday:'long',month:'short',day:'numeric'});}

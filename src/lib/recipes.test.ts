@@ -73,11 +73,30 @@ test('v4 migration preserves selected recipe, edited ingredients, dates, capacit
   const old=legacyDefaults();old.recipe='custom';old.cells.F19=74;old.cells.houseWeight=850;old.cells.N3=250;old.cells.R12=70;old.done=['feed'];old.houseDone=['autolyse'];old.bookDone=['leaven'];old.cells.ovenCapacity=3;
   const p=restorePlanner({version:4,plan:old});assert.equal(p.recipe,'red-rye');assert.deepEqual(p.legacy,old);assert.equal(p.ovenCapacity,3);assert.equal(p.date,old.date);assert.equal(p.time,old.time);assert.deepEqual(p.recipes['red-rye'].done,['feed']);assert.deepEqual(p.recipes.house.done,['autolyse']);assert.deepEqual(p.recipes.tartine.done,['leaven']);approx(calculateRecipe(p,'white-wheat')!.flours.find(x=>x.key==='wheat')!.grams,250);
 });
-test('v5 reload keeps each recipe’s hydration, yield and checklist; duplicate water variants merge',()=>{
+test('v5 reload keeps each recipe’s hydration, yield, checklist and listing, including a migrated variant',()=>{
   const p=plan();p.recipe='five-flour';p.recipes['five-flour'].params.hydration=73;p.recipes['five-flour'].params.count=4;p.recipes['five-flour'].done=['feed'];p.recipes.house.done=['mix'];p.ovenCapacity=1;
   const restored=restorePlanner(JSON.parse(JSON.stringify({version:5,plan:p})));assert.deepEqual(restored,p);
   p.order.push('manual-rye');p.recipe='manual-rye';p.recipes['manual-rye'].params.hydration=90;
-  const merged=restorePlanner({version:5,plan:p});assert.equal(merged.recipe,'house');assert.ok(!merged.order.includes('manual-rye'));
+  const kept=restorePlanner({version:5,plan:p});assert.equal(kept.recipe,'manual-rye');assert.deepEqual(kept.order,p.order);
+});
+test('saved recipes stay listed when edits make two formulas identical; legacy data still merges once',()=>{
+  const p=plan(),five=p.recipes['five-flour'].params,four=p.recipes['four-flour'].params;
+  for(const key of Object.keys(five))if(key.startsWith('flour_'))four[key]=five[key];
+  p.recipe='four-flour';assert.equal(recipeSignature('five-flour',p.recipes['five-flour']),recipeSignature('four-flour',p.recipes['four-flour']));
+  const once=restorePlanner(JSON.parse(JSON.stringify({version:5,plan:p})));assert.deepEqual(once.order,p.order);assert.equal(once.recipe,'four-flour');
+  once.recipes['five-flour'].params.flour_ap=10;
+  const twice=restorePlanner(JSON.parse(JSON.stringify({version:5,plan:once})));assert.deepEqual(twice.order,p.order);assert.equal(twice.recipe,'four-flour');
+  for(const id of ['house','white-wheat'])for(const key of Object.keys(p.recipes[id].params))if(key.startsWith('flour_'))p.recipes[id].params[key]=0;
+  assert.deepEqual(restorePlanner(JSON.parse(JSON.stringify({version:5,plan:p}))).order,p.order);
+  const odd=restorePlanner({version:5,plan:{...p,order:['four-flour','bogus','four-flour'],recipe:'house'}});assert.deepEqual(odd.order,['four-flour']);assert.equal(odd.recipe,'four-flour');
+  assert.deepEqual(createPlanner().order,['house','tartine','white-wheat','red-rye','five-flour','four-flour']);
+});
+test('arithmetic noise never reports a leaven shortfall, while real deficits still do',()=>{
+  const p=plan(),r=calculateRecipe(p,'red-rye')!;
+  assert.equal(r.shortfall,0);assert.equal(r.reserve,0);approx(r.made,312);approx(r.used,312);
+  for(const id of p.order)assert.equal(calculateRecipe(p,id)!.shortfall,0,id);
+  p.recipes['red-rye'].params.buildWater-=1;const short=calculateRecipe(p,'red-rye')!;approx(short.shortfall,.944);assert.equal(short.reserve,0);
+  p.recipes['red-rye'].params.buildWater+=2;const spare=calculateRecipe(p,'red-rye')!;approx(spare.reserve,.944);assert.equal(spare.shortfall,0);
 });
 test('invalid persisted parameters fall back to valid defaults and only the selected recipe resets',()=>{
   const p=plan();p.recipes.house.params.count=1.5;p.recipes.house.params.reserve=200;p.recipes.house.params.hydration=NaN;p.ovenCapacity=0;
