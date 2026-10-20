@@ -4,7 +4,7 @@ export const flourNames:Record<string,string>={red:'Red spring flour',white:'Whi
 export type RecipeDefinition={id:string;name:string;description:string;method:'house'|'custom'|'tartine';flours:string[];late:string[];houseCompletion?:boolean};
 export const definitions:Record<string,RecipeDefinition>={
   house:{id:'house',name:'Preuss House',description:'Our red spring, whole-wheat and rye loaf. Autolyse, then an overnight cold proof.',method:'house',flours:['red','wheat','rye'],late:['rye']},
-  tartine:{id:'tartine',name:'Original Tartine',description:'The book’s 90/10 white and whole-wheat loaf, with leaven in the initial mix.',method:'tartine',flours:['white','wheat'],late:[]},
+  tartine:{id:'tartine',name:'Original Tartine',description:'The book’s 90/10 white and whole-wheat loaf, with leaven in the initial mix. Its 12-hour leaven suits an evening start.',method:'tartine',flours:['white','wheat'],late:[]},
   'white-wheat':{id:'white-wheat',name:'White & Whole Wheat',description:'An 80/20 white and whole-wheat loaf, with a separate autolyse and overnight cold proof.',method:'house',flours:['white','wheat'],late:[]},
   'red-rye':{id:'red-rye',name:'Red Spring & Rye',description:'Red spring, whole wheat and rye with extra leaven, a separate autolyse and an overnight cold proof.',method:'custom',flours:['red','wheat','rye'],late:['rye']},
   'five-flour':{id:'five-flour',name:'Five-Flour Sourdough',description:'All-purpose, red spring, Red Fife, whole wheat and rye.',method:'house',flours:['ap','red','fife','wheat','rye'],late:['rye'],houseCompletion:true},
