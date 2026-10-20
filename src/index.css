@@ -523,19 +523,6 @@ h2 { font-size: 30px; line-height: 1.25; letter-spacing: -.9px; font-weight: 620
   .recipe-settings { padding: 0 20px; }
 }
 
-/* Astro shell and portable browser-local bakes. */
+/* Astro page shell. */
 .site-heading { padding-bottom: 0; }
 .loading-planner { font-size: 18px; line-height: 1.6; padding-top: 24px; }
-.saved-bakes-button { font-size: 15px; color: var(--muted-foreground); min-height: 44px; }
-.backup-dialog { max-height: calc(100dvh - 40px); overflow-y: auto; }
-.backup-dialog>button:not([data-slot=dialog-close]) { min-height: 48px; }
-.backup-import { border-top: 1px solid var(--border); padding-top: 22px; margin-top: 8px; }
-.backup-import>label { font-size: 16px; margin-bottom: 12px; display: block; }
-.backup-file { min-height: 48px; height: auto; padding: 10px; font-size: 15px; }
-.backup-preview { font-size: 15px; line-height: 1.6; margin-top: 20px; }
-.backup-preview p { margin: 0 0 14px; }
-.backup-preview>div { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; }
-.backup-transfer { color: var(--muted-foreground); font-size: 14px; line-height: 1.7; margin: 12px 0 0; }
-.backup-transfer a { color: var(--primary); text-decoration: underline; text-underline-offset: 3px; }
-.backup-success { color: var(--success); font-size: 16px; }
-@media(max-width:640px){ .saved-bakes-button { padding: 10px 8px; } .backup-preview>div { flex-direction: column; } }

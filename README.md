@@ -19,7 +19,7 @@ Astro statically builds the page shell, metadata and404 page. The calculator is 
 
 Preuss House is the default. Six distinct editable recipes retain independent settings and checklists. The calculation engine includes separate leaven made/used/reserved, staged ingredients, all-loaf forward/backward scheduling, overnight proof, readiness cues and quiet-hours checks. Percentages support both sliders and exact number entry.
 
-Browser storage uses `bread-planner.v5`. Saved bakes supports JSON backup/download and validated import, including older stored plans. The original private app exposes `/transfer.html` to download settings from its own browser origin; import them through Saved bakes on the new domain. No transfer happens through a server.
+Browser storage uses `bread-planner.v5`. Each browser starts with the default recipes and remembers edits locally. The first release starts fresh; no data transfer or account system is included.
 
 ## Deployment
 
