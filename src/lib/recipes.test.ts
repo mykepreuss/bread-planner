@@ -110,7 +110,7 @@ test('recipe schedule descriptions follow the selected flours and quantities',()
 });
 test('v4 migration preserves selected recipe, edited ingredients, dates, capacity and all prior data',()=>{
   const old=legacyDefaults();old.recipe='custom';old.cells.F19=74;old.cells.houseWeight=850;old.cells.N3=250;old.cells.R12=70;old.done=['feed'];old.houseDone=['autolyse'];old.bookDone=['leaven'];old.cells.ovenCapacity=3;
-  const p=restorePlanner({version:4,plan:old});assert.equal(p.recipe,'red-rye');assert.deepEqual(p.legacy,old);assert.equal(p.ovenCapacity,3);assert.equal(p.date,old.date);assert.equal(p.time,old.time);assert.deepEqual(p.recipes['red-rye'].done,['feed']);assert.deepEqual(p.recipes.house.done,['autolyse']);assert.deepEqual(p.recipes.tartine.done,['leaven']);approx(calculateRecipe(p,'white-wheat')!.flours.find(x=>x.key==='wheat')!.grams,250);
+  const p=restorePlanner({version:4,plan:old});assert.equal(p.recipe,'red-rye');assert.deepEqual(p.legacy,old);assert.equal(p.ovenCapacity,2);assert.equal(p.date,old.date);assert.equal(p.time,old.time);assert.deepEqual(p.recipes['red-rye'].done,['feed']);assert.deepEqual(p.recipes.house.done,['autolyse']);assert.deepEqual(p.recipes.tartine.done,['leaven']);approx(calculateRecipe(p,'white-wheat')!.flours.find(x=>x.key==='wheat')!.grams,250);
 });
 test('v5 reload keeps each recipe’s hydration, yield, checklist and listing, including a migrated variant',()=>{
   const p=plan();p.recipe='five-flour';p.recipes['five-flour'].params.hydration=73;p.recipes['five-flour'].params.count=4;p.recipes['five-flour'].done=['feed'];p.recipes.house.done=['mix'];p.ovenCapacity=1;

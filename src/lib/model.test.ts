@@ -96,6 +96,18 @@ test('one-pot setting schedules two serial batches, with separate cooling marks'
   const p=plan(),s=schedule(p),at=(id:string)=>local(s.find(x=>x.id===id)!.at);
   assert.equal(batchCount(p),2);assert.equal(at('out-1'),'2026-10-22 09:28');assert.equal(at('reheat-2'),'2026-10-22 09:28');assert.equal(at('covered-2'),'2026-10-22 09:58');assert.equal(at('done'),'2026-10-22 10:41');assert.equal(at('cooled-1'),'2026-10-22 09:43');assert.equal(at('cooled'),'2026-10-22 10:56');
 });
+test('one batch drops batch numbers, while serial batches keep them',()=>{
+  const title=(s:ReturnType<typeof schedule>,id:string)=>s.find(x=>x.id===id)!.title;
+  for(const recipe of ['house','custom'] as const){
+    const p={...plan(),recipe};p.cells.ovenCapacity=2;const s=schedule(p);
+    assert.deepEqual(['warmup','covered','uncovered','done','cooled'].map(id=>title(s,id)),['Take both loaves out of the fridge','Bake covered (both loaves)','Remove lid','All loaves out of the oven','15-minute cooling mark']);
+    p.cells.ovenCapacity=1;const serial=schedule(p);
+    assert.deepEqual(['warmup','covered','uncovered'].map(id=>title(serial,id)),['Take batch 1 out of fridge','Batch 1: bake covered (loaf 1)','Batch 1: remove lid']);
+  }
+  const one=plan();one.cells.F24=1;const s=schedule(one);
+  assert.deepEqual(['warmup','covered','done'].map(id=>title(s,id)),['Take the loaf out of the fridge','Bake covered','Loaf out of the oven']);assert.ok(!s.some(x=>x.id.startsWith('reheat-')));
+  const book={...plan(),recipe:'tartine' as const,proof:'cold' as const};book.cells.ovenCapacity=2;assert.equal(title(schedule(book),'warmup'),'Warm both loaves to room temperature');
+});
 test('parallel capacity and partial final batch cover every loaf once',()=>{
   const p=plan();p.cells.F24=3;p.cells.ovenCapacity=2;const s=schedule(p),covered=s.filter(x=>x.id.startsWith('covered'));
   assert.equal(covered.length,2);assert.match(covered[0].title,/loaves 1 to 2/);assert.match(covered[1].title,/loaf 3/);
@@ -186,7 +198,7 @@ test('v2 upgrade selects House once and preserves prior values, proof choice and
 test('two loaves bake together by default and finish after one bake cycle',()=>{
   const p={...defaults(),date:'2026-10-21',time:'09:00'},s=schedule(p);
   assert.equal(p.cells.ovenCapacity,2);assert.equal(batchCount(p),1);
-  assert.equal(s.filter(x=>x.id.startsWith('covered')).length,1);assert.match(s.find(x=>x.id==='covered')!.title,/loaves 1 to 2/);
+  assert.equal(s.filter(x=>x.id.startsWith('covered')).length,1);assert.match(s.find(x=>x.id==='covered')!.title,/both loaves/);
   assert.equal(local(s.find(x=>x.id==='done')!.at),'2026-10-22 09:28');assert.ok(!s.some(x=>x.id.startsWith('reheat-')));
 });
 test('v3 upgrade applies two-loaf default once while preserving recipes and later capacity edits',()=>{
