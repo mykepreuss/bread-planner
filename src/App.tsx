@@ -75,7 +75,7 @@ function MethodGuide({book}:{book:boolean}){return <Accordion type="multiple" cl
   </div></AccordionContent></AccordionItem>
   <AccordionItem value="shaping"><AccordionTrigger>Shaping, basket preparation and baking</AccordionTrigger><AccordionContent><div className="guide-copy">
     <p><strong>Preshape:</strong> dust the dough top, divide equally and turn flour-side down. Bring cut edges onto themselves and work each piece into a taut round, keeping dusting flour on the outside. Cover and bench-rest for 30 minutes.</p>
-    <p><strong>Baskets:</strong> blend equal weights whole-wheat and rice flour, 100 g of each for the two-loaf book batch. Line baskets or bowls with towels, flour generously, and keep the unused dusting mix.</p>
+    <p><strong>Baskets:</strong> use rice flour, about 200 g for the two-loaf book batch. Line baskets or bowls with towels, flour generously, and keep the unused rice flour.</p>
     <p><strong>Final shape:</strong> dust and flip each round flour-side down. Stretch the bottom corners toward you and fold into the middle; repeat from both sides and the top. Roll seam-side down into a taut round. Transfer to a basket seam-side up and cover for the selected proof.</p>
     <p><strong>Hot pots:</strong> preheat lidded Dutch ovens inside the oven. Dust loaf tops, carefully turn into the hot pots seam-side down, score with a lame or razor, cover and lower to the bake temperature. Remove lids carefully for the uncovered bake because steam may escape.</p>
     <p><strong>Next batch:</strong> remove baked loaves to a rack, clean the pots and reheat them with their lids at the preheat temperature. Wait until they are hot before loading. Keep later refrigerated loaves chilled until their own warm-up; bake only as many as your capacity setting allows.</p>
@@ -109,7 +109,7 @@ function RecipeFormula({values,onReset}:{values:Planner;onReset:()=>void}){
     <Panel title={book?'01 / Initial mix and rest':'01 / Autolyse'} description={book?'Leaven goes into this mix before the initial rest.':'Mix the flour and first water addition. Keep the final-mix ingredients separate.'}><Weights rows={r.initial}/></Panel>
     <Panel title={book?'02 / Salt and remaining water':'02 / Final mix'} description={book?'Add after the initial rest, then begin bulk fermentation.':'Add after the autolyse, once the leaven is ready.'}><Weights rows={r.final}/></Panel>
     <div className="recipe-totals"><span><strong>{g(r.flour)} g</strong> added flour</span><span><strong>{g(r.water)} g</strong> added water</span><span><strong>{g(r.used)} g</strong> leaven used</span></div>
-    {book&&<Panel title="Basket and dusting flour" description="Separate supplies, outside dough weight."><Weights rows={[["Whole-wheat flour",r.dustingWheat],["Rice flour",r.dustingRice]]}/></Panel>}
+    {book&&<Panel title="Basket and dusting flour" description="Separate supplies, outside dough weight."><Weights rows={[["Rice flour",r.dustingRice]]}/></Panel>}
   </>:<p className="notice" role="alert">Set a flour blend to calculate the recipe.</p>}</div></div></>;
 }
 function App(){

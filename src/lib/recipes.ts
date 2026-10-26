@@ -96,7 +96,7 @@ export function calculateRecipe(plan:Planner,id=plan.recipe){
   const final:[string,number][]=[...flours.filter(f=>f.grams>0&&d.late.includes(f.key)).map(f=>[f.name,f.grams] as [string,number]),...(d.method==='tartine'?[]:[['Leaven used',used] as [string,number]]),['Salt',salt],['Water',finalWater]];
   const madeParts=['buildSeed','buildBread','buildWheat','buildWater'].map(k=>p[k]*flour/1000),made=madeParts.reduce((a,b)=>a+b,0);
   const leaven=leavenFractions(p),totalFlour=flour+used*leaven.flour,totalWater=water+used*leaven.water;
-  return {total,flour,water,used,salt,hydration:p.hydration,totalHydration:totalHydration(p),totalFlour,totalWater,flours,initial,final,madeParts,made,reserve:balance(made-used),shortfall:balance(used-made),dustingWheat:flour*.1,dustingRice:flour*.1};
+  return {total,flour,water,used,salt,hydration:p.hydration,totalHydration:totalHydration(p),totalFlour,totalWater,flours,initial,final,madeParts,made,reserve:balance(made-used),shortfall:balance(used-made),dustingRice:flour*.2};
 }
 export function recipeSchedule(plan:Planner):Step[]{
   if(!calculateRecipe(plan))return [];
