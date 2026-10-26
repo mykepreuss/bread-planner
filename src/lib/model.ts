@@ -152,7 +152,7 @@ export function schedule(plan:Plan):Step[] {
     for(let elapsed=30,n=1;elapsed<c.bookBulk;elapsed+=30,n++)push(`turn${n}`,`Turn ${n}`,at+elapsed,Math.min(30,c.bookBulk-elapsed),n===1?'Wet your hand. Stretch one quadrant over the dough; rotate and repeat to fold all four sides.':'Repeat the four-sided stretch and fold, with wet hands.');
     at+=c.bookBulk;
     push('shape','Divide and preshape',at,c.bookPreshape,'Dust the top, divide equally and turn flour-side down. Shape taut rounds with the dusting flour on the outside.',bulkCue);at+=c.bookPreshape;
-    push('bench1','Bench rest and prepare baskets',at,c.bookBench,'Cover the rounds for 30 minutes. Line proofing baskets or bowls with towels and generously dust with the whole-wheat/rice-flour blend.');at+=c.bookBench;
+    push('bench1','Bench rest and prepare baskets',at,c.bookBench,'Cover the rounds for 30 minutes. Line proofing baskets or bowls with towels and generously dust with rice flour.');at+=c.bookBench;
     push('fold','Final shape',at,c.bookShape,'Turn flour-side down. Stretch and fold the bottom, sides and top over the center; roll seam-side down into a taut round. Place seam-side up in a prepared basket.');at+=c.bookShape;
     if(plan.proof==='cold'){
       push('fridge','Refrigerated final proof',at,c.bookCold,'Cover the baskets. The supplied recipe gives 10 to 12 hours in the refrigerator. Later batches remain chilled until their own warm-up.');at+=c.bookCold;
@@ -171,7 +171,7 @@ export function schedule(plan:Plan):Step[] {
     add('rest','Rest','C10','Keep covered in a warm place, about 75°F to 80°F / 24°C to 27°C, for bulk fermentation.');
     for(let i=1;i<=7;i++)add(`turn${i}`,`Turn ${i}`,'C'+(10+i),'Use wet hands to stretch and fold all four sides of the dough.');
     add('shape','Cut and preshape','C19','Divide into equal pieces and form taut rounds.',`Look for a billowy dough and 20% to 30% volume increase. This plan uses a longer bulk than the book’s three hours; judge by the dough’s condition.`);
-    add('bench1','Bench rest','C20','Cover the rounds. Prepare towel-lined baskets with the whole-wheat/rice-flour dusting blend.');
+    add('bench1','Bench rest','C20','Cover the rounds. Prepare towel-lined baskets dusted with rice flour.');
     add('fold','Final shape','C22','Fold the edges toward the center and roll into a taut round.');add('bench2','Bench rest','C23','Leave the shaped loaves covered on the bench.');
     add('basket','Basket rest','C24','Place each loaf seam-side up in its prepared basket. Cover.');
     add('fridge',house?'Overnight cold proof':'Refrigerated final proof','C25',house?'Cover the shaped loaves in their baskets and refrigerate overnight. The default is 12 hours 30 minutes, followed by the morning warm-up and bake. Keep later batches chilled until their own warm-up.':'Cover the shaped loaves in their baskets and refrigerate. Keep later batches refrigerated until their own warm-up.');

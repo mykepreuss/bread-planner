@@ -60,7 +60,7 @@ test('base House stages, hydration and leaven reserve match the supplied recipe 
 });
 test('book recipe retains its quantities, initial leaven, and dusting supplies',()=>{
   const p=plan(),r=calculateRecipe(p,'tartine')!;approx(r.total,1970);approx(r.hydration,75);assert.equal(r.initial[0][0],'Leaven used');
-  r.initial.forEach(([,n],i)=>approx(n,[200,900,100,700][i]));r.final.forEach(([,n],i)=>approx(n,[20,50][i]));approx(r.made,415);approx(r.reserve,215);approx(r.dustingWheat,100);approx(r.dustingRice,100);
+  r.initial.forEach(([,n],i)=>approx(n,[200,900,100,700][i]));r.final.forEach(([,n],i)=>approx(n,[20,50][i]));approx(r.made,415);approx(r.reserve,215);assert.ok(!('dustingWheat' in r));approx(r.dustingRice,200);
 });
 test('white and whole wheat is a separate 80/20 flour recipe with its original staged water',()=>{
   const p=plan(),r=calculateRecipe(p,'white-wheat')!;approx(r.total,2020);approx(r.hydration,80);r.initial.forEach(([,n],i)=>approx(n,[800,200,750][i]));r.final.forEach(([,n],i)=>approx(n,[200,20,50][i]));
