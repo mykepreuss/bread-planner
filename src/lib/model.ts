@@ -140,6 +140,9 @@ export function schedule(plan:Plan):Step[] {
   const leavenCue='Use when aerated and puffy, and a spoonful floats in room-temperature water. If it sinks, allow more fermentation before mixing. The displayed times are estimates and do not move automatically.';
   const bulkCue='Look for a billowy dough and 20% to 30% volume increase. The book allows up to one more hour with folds if needed; wait until the dough is ready before moving on.';
   let firstBake=0,preheat=0,covered=0,uncovered=0,warmup=0;
+  // With one batch every loaf bakes together, so the bake steps drop batch numbers.
+  const count=loafCount(plan),capacity=c.ovenCapacity,batches=batchCount(plan),single=batches===1;
+  const loaves=count===1?'the loaf':count===2?'both loaves':`all ${count} loaves`;
   if(book){
     push('leaven','Make leaven',0,c.bookLeaven,'Keep 1 tbsp of mature starter. Mix with the build water, then the equal white/whole-wheat flour blend. Cover at room temperature.',leavenCue);
     let at=c.bookLeaven;
@@ -153,7 +156,7 @@ export function schedule(plan:Plan):Step[] {
     push('fold','Final shape',at,c.bookShape,'Turn flour-side down. Stretch and fold the bottom, sides and top over the center; roll seam-side down into a taut round. Place seam-side up in a prepared basket.');at+=c.bookShape;
     if(plan.proof==='cold'){
       push('fridge','Refrigerated final proof',at,c.bookCold,'Cover the baskets. The supplied recipe gives 10 to 12 hours in the refrigerator. Later batches remain chilled until their own warm-up.');at+=c.bookCold;
-      warmup=c.bookWarmup;push('warmup','Warm batch 1 to room temperature',at,warmup,'Remove only the loaves in the first batch. The schedule includes a warm-up allowance; wait longer if the dough needs it.', 'Bring the dough back to room temperature before baking; use its condition, rather than the clock alone.');at+=warmup;
+      warmup=c.bookWarmup;push('warmup',single?`Warm ${loaves} to room temperature`:'Warm batch 1 to room temperature',at,warmup,single?`Remove ${count===1?'the loaf':'the loaves'} from the refrigerator. The schedule`:'Remove only the loaves in the first batch. The schedule includes a warm-up allowance; wait longer if the dough needs it.', 'Bring the dough back to room temperature before baking; use its condition, rather than the clock alone.');at+=warmup;
     }else{
       push('proof','Warm final proof',at,c.bookWarm,'Cover and keep at 75°F to 80°F / 24°C to 27°C. The supplied recipe gives 3 to 4 hours.');at+=c.bookWarm;
     }
@@ -173,11 +176,10 @@ export function schedule(plan:Plan):Step[] {
     add('basket','Basket rest','C24','Place each loaf seam-side up in its prepared basket. Cover.');
     add('fridge',house?'Overnight cold proof':'Refrigerated final proof','C25',house?'Cover the shaped loaves in their baskets and refrigerate overnight. The default is 12 hours 30 minutes, followed by the morning warm-up and bake. Keep later batches chilled until their own warm-up.':'Cover the shaped loaves in their baskets and refrigerate. Keep later batches refrigerated until their own warm-up.');
     preheat=c.C28;firstBake=at+preheat;warmup=preheat;covered=c.C29;uncovered=c.C30;
-    push('warmup','Take batch 1 out of fridge',at,warmup,'Allow the first batch to warm while the oven and pots heat.');
+    push('warmup',single?`Take ${loaves} out of the fridge`:'Take batch 1 out of fridge',at,warmup,`Allow ${single?(count===1?'the loaf':'the loaves'):'the first batch'} to warm while the oven and pots heat.`);
     const feed=rows.find(s=>s.id==='feed');if(feed)feed.cell='C2';
   }
   push('preheat','Preheat oven and Dutch oven',firstBake-preheat,preheat,`Place the lidded Dutch oven or pots in the oven and heat to ${book?'500°F / 260°C':'540°F / 282°C'}. Use one suitable pot per loaf baked at once.`,undefined,book?undefined:'C28');
-  const count=loafCount(plan),capacity=c.ovenCapacity,batches=batchCount(plan);
   if(!Number.isInteger(count)||count<1||!Number.isInteger(capacity)||capacity<1||!Number.isFinite(batches)||batches>1000)return [];
   let finish=firstBake;
   for(let i=0;i<batches;i++){
@@ -189,11 +191,11 @@ export function schedule(plan:Plan):Step[] {
       if(!book||plan.proof==='cold')push(`warmup-${n}`,`Warm batch ${n} (${label})`,start-warmup,warmup,'Remove only this batch from the refrigerator. Later loaves have a longer cold proof.','Bring the dough back to room temperature before its own bake.');
     }
     const bakeTemp=book?'450°F / 232°C':'460°F / 238°C';
-    push(i?`covered-${n}`:'covered',`Batch ${n}: bake covered (${label})`,start,covered,`Dust the loaf tops. Carefully turn seam-side down into the hot pot, score with a lame or razor, and cover. Reduce oven to ${bakeTemp}.`,undefined,book?undefined:'C29');
-    push(i?`uncovered-${n}`:'uncovered',`Batch ${n}: remove lid`,start+covered,uncovered,`Remove lid carefully: hot steam can escape. Continue at ${bakeTemp}.`,'Bake until the crust is a rich golden brown; extend the uncovered bake if needed.',book?undefined:'C30');
+    push(i?`covered-${n}`:'covered',single?(count===1?'Bake covered':`Bake covered (${loaves})`):`Batch ${n}: bake covered (${label})`,start,covered,`Dust the loaf tops. Carefully turn seam-side down into the hot pot, score with a lame or razor, and cover. Reduce oven to ${bakeTemp}.`,undefined,book?undefined:'C29');
+    push(i?`uncovered-${n}`:'uncovered',single?'Remove lid':`Batch ${n}: remove lid`,start+covered,uncovered,`Remove lid carefully: hot steam can escape. Continue at ${bakeTemp}.`,'Bake until the crust is a rich golden brown; extend the uncovered bake if needed.',book?undefined:'C30');
     const out=start+covered+uncovered;finish=out;
-    push(last?'done':`out-${n}`,last?'All loaves out of the oven':`Batch ${n} out of the oven`,out,15,'Transfer to a wire rack. The base should sound hollow when tapped. Cool each loaf at least 15 minutes before slicing.');
-    push(last?'cooled':`cooled-${n}`,last?'Last batch: 15-minute cooling mark':`Batch ${n}: 15-minute cooling mark`,out+15,0,'This is the minimum cooling time stated in the supplied recipe.');
+    push(last?'done':`out-${n}`,last?(count===1?'Loaf out of the oven':'All loaves out of the oven'):`Batch ${n} out of the oven`,out,15,'Transfer to a wire rack. The base should sound hollow when tapped. Cool each loaf at least 15 minutes before slicing.');
+    push(last?'cooled':`cooled-${n}`,last?(single?'15-minute cooling mark':'Last batch: 15-minute cooling mark'):`Batch ${n}: 15-minute cooling mark`,out+15,0,'This is the minimum cooling time stated in the supplied recipe.');
   }
   const chosen=new Date(`${plan.date}T${plan.time}:00`);
   if(!Number.isFinite(chosen.getTime())||dateString(chosen)!==plan.date||`${String(chosen.getHours()).padStart(2,'0')}:${String(chosen.getMinutes()).padStart(2,'0')}`!==plan.time)return [];

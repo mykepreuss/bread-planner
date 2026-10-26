@@ -60,7 +60,7 @@ export function createPlanner(legacy:Plan=legacyDefaults()):Planner{
     recipes[id]=profile(flours,water,flour*.2,flour*.02,c[`${prefix}12`],count,(flour*1.22+water)/count,[28,71,71,142].map(n=>n*flour/1000));
   }
   const {order}=consolidate(recipes,['house','tartine','white-wheat','red-rye','five-flour','four-flour','manual-rye']);
-  return {recipes,order,recipe:legacy.recipe==='custom'?'red-rye':legacy.recipe,date:legacy.date,time:legacy.time,anchor:legacy.anchor,proof:legacy.proof,ovenCapacity:c.ovenCapacity,reheat:c.batchReheat,legacy};
+  return {recipes,order,recipe:legacy.recipe==='custom'?'red-rye':legacy.recipe,date:legacy.date,time:legacy.time,anchor:legacy.anchor,proof:legacy.proof,ovenCapacity:Math.min(2,c.ovenCapacity),reheat:c.batchReheat,legacy};
 }
 export function restorePlanner(saved:unknown):Planner{
   const envelope=saved as {version?:number;plan?:Partial<Planner>};
@@ -82,7 +82,7 @@ export function restorePlanner(saved:unknown):Planner{
   if(typeof p.date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(p.date))base.date=p.date;
   if(typeof p.time==='string'&&/^\d{2}:\d{2}$/.test(p.time))base.time=p.time;
   base.anchor=p.anchor==='done'?'done':'leaven';base.proof=p.proof==='warm'?'warm':'cold';
-  if(typeof p.ovenCapacity==='number'&&Number.isInteger(p.ovenCapacity)&&p.ovenCapacity>0)base.ovenCapacity=p.ovenCapacity;
+  if(typeof p.ovenCapacity==='number'&&Number.isInteger(p.ovenCapacity)&&p.ovenCapacity>0)base.ovenCapacity=Math.min(2,p.ovenCapacity);
   if(typeof p.reheat==='number'&&Number.isFinite(p.reheat)&&p.reheat>=0)base.reheat=p.reheat;
   return base;
 }
