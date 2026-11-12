@@ -29,8 +29,19 @@ test('original time cells are preserved when both loaves fit in the oven',()=>{
   assert.deepEqual(actual,{
     feed:'2026-10-20 22:00',leaven:'2026-10-21 09:00',autolyse:'2026-10-21 09:30',mix:'2026-10-21 14:00',rest:'2026-10-21 14:15',
     turn1:'2026-10-21 14:45',turn2:'2026-10-21 15:15',turn3:'2026-10-21 15:45',turn4:'2026-10-21 16:15',turn5:'2026-10-21 16:45',turn6:'2026-10-21 17:15',turn7:'2026-10-21 17:45',
-    shape:'2026-10-21 18:15',bench1:'2026-10-21 18:20',fold:'2026-10-21 18:50',bench2:'2026-10-21 18:55',basket:'2026-10-21 19:00',fridge:'2026-10-21 19:15',preheat:'2026-10-22 07:45',covered:'2026-10-22 08:45',uncovered:'2026-10-22 09:05',done:'2026-10-22 09:28',cooled:'2026-10-22 09:43',
+    shape:'2026-10-21 18:15',bench1:'2026-10-21 18:20',fold:'2026-10-21 18:50',basket:'2026-10-21 18:55',fridge:'2026-10-21 19:15',preheat:'2026-10-22 07:45',covered:'2026-10-22 08:45',uncovered:'2026-10-22 09:05',done:'2026-10-22 09:28',cooled:'2026-10-22 09:43',
   });
+});
+test('shaped loaves go straight into baskets and the fridge time stays the same',()=>{
+  for(const recipe of ['house','custom'] as const){
+    const p={...plan(),recipe};
+    const s=schedule(p),ids=s.map(x=>x.id),basket=s.find(x=>x.id==='basket')!;
+    assert.ok(!ids.includes('bench2'),recipe);assert.equal(ids[ids.indexOf('fold')+1],'basket',recipe);
+    assert.equal(basket.duration,20,recipe);assert.equal(local(s.find(x=>x.id==='fridge')!.at),'2026-10-21 19:15',recipe);
+  }
+  // Durations saved by an earlier version still add up to the same fridge time.
+  const p=plan();p.cells.C23=10;p.cells.C24=25;const s=schedule(p);
+  assert.equal(s.find(x=>x.id==='basket')!.duration,35);assert.equal(local(s.find(x=>x.id==='fridge')!.at),'2026-10-21 19:30');
 });
 test('backward planning reproduces the identical forward schedule',()=>{
   const p=plan();const a=schedule(p);const b=schedule({...p,anchor:'done',date:'2026-10-22',time:'10:41'});

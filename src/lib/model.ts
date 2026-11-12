@@ -172,8 +172,9 @@ export function schedule(plan:Plan):Step[] {
     for(let i=1;i<=7;i++)add(`turn${i}`,`Turn ${i}`,'C'+(10+i),i===1?'Use wet hands to stretch and fold all four sides of the dough.':'Repeat the four-sided stretch and fold, with wet hands.');
     add('shape','Cut and preshape','C19','Divide into equal pieces and form taut rounds.','Look for a billowy dough and 20% to 30% volume increase.');
     add('bench1','Bench rest','C20','Cover the rounds. Prepare towel-lined baskets dusted with rice flour.');
-    add('fold','Final shape','C22','Fold the edges toward the center and roll into a taut round.');add('bench2','Rest shaped loaves','C23','Leave the shaped loaves covered on the bench.');
-    add('basket','Basket rest','C24','Place each loaf seam-side up in its prepared basket. Cover.');
+    add('fold','Final shape','C22','Fold the edges toward the center and roll into a taut round. Place it seam-side up in a prepared basket.');
+    // Loaves go straight into baskets. The sheet's separate rest after shaping (C23) counts toward the basket rest, so the fridge time is unchanged.
+    push('basket','Basket rest',at,c.C23+c.C24,'Leave the baskets covered at room temperature.',undefined,'C24');at+=c.C23+c.C24;
     add('fridge',house?'Overnight cold proof':'Refrigerated final proof','C25',house?'Cover the shaped loaves in their baskets and refrigerate overnight. The default is 12 hours 30 minutes, followed by the morning warm-up and bake. Keep later batches chilled until their own warm-up.':'Cover the shaped loaves in their baskets and refrigerate. Keep later batches refrigerated until their own warm-up.');
     preheat=c.C28;firstBake=at+preheat;warmup=preheat;covered=c.C29;uncovered=c.C30;
     push('warmup',single?`Take ${loaves} out of the fridge`:'Take batch 1 out of fridge',at,warmup,`Allow ${single?(count===1?'the loaf':'the loaves'):'the first batch'} to warm while the oven and pots heat.`);
