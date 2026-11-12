@@ -192,7 +192,6 @@ h2 { font-size: 30px; line-height: 1.25; letter-spacing: -.9px; font-weight: 620
 .recipe-switch label { display: block; margin-bottom: 8px; color: var(--muted-foreground); }
 .recipe-switch [data-slot=select-trigger] { width: 100%; background: var(--background); font-weight: 550; }
 .recipe-switch p { font-size: 16px; line-height: 1.6; margin: 0; }
-.recipe-switch p span { display: block; color: var(--muted-foreground); font-size: 14px; margin-top: 4px; }
 .main-tabs { gap: 0; }
 .nav-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
 .nav-tabs { background: var(--secondary); padding: 5px; height: auto; gap: 4px; border-radius: 14px; }
@@ -243,7 +242,6 @@ h2 { font-size: 30px; line-height: 1.25; letter-spacing: -.9px; font-weight: 620
 .batch-card [data-slot=card-content] { padding: 24px; }
 .card-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .card-title-row>svg { color: var(--muted-foreground); }
-.batch-card .eyebrow { margin: 0; }
 .batch-title { font-size: 20px; line-height: 1.4; font-weight: 600; display: block; margin-top: 18px; letter-spacing: -.4px; }
 .batch-facts { display: flex; flex-direction: column; gap: 7px; font-size: 15px; color: var(--muted-foreground); margin-top: 14px; }
 .batch-facts strong { font-weight: 550; color: var(--foreground); }
@@ -285,7 +283,6 @@ h2 { font-size: 30px; line-height: 1.25; letter-spacing: -.9px; font-weight: 620
 
 .page-heading { margin-bottom: 32px; }
 .page-heading h2 { font-size: 36px; letter-spacing: -1.2px; }
-.page-heading>p:last-child { font-size: 17px; color: var(--muted-foreground); margin: 14px 0 0; max-width: 760px; line-height: 1.7; }
 .formula-layout { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 28px; align-items: start; }
 .form-stack, .result-stack { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
 .work-card { box-shadow: none; padding: 0; gap: 0; border-radius: var(--radius-card); background: var(--card); overflow: hidden; margin-bottom: 28px; min-width: 0; }
@@ -421,7 +418,6 @@ h2 { font-size: 30px; line-height: 1.25; letter-spacing: -.9px; font-weight: 620
   .step-details p { font-size: 15px; }
   .step-details .readiness-cue { font-size: 14px; }
   .page-heading h2 { font-size: 32px; letter-spacing: -1px; }
-  .page-heading>p:last-child { font-size: 16px; }
   .work-card [data-slot=card-header] { padding: 24px 20px 20px; }
   .work-card [data-slot=card-content] { padding: 0 20px 24px; }
   .field-grid { gap: 22px 16px; }
@@ -474,7 +470,6 @@ h2 { font-size: 30px; line-height: 1.25; letter-spacing: -.9px; font-weight: 620
   .day-group, .work-card, .formula-result { break-inside: avoid; }
   .formula-layout { grid-template-columns: 1fr 1fr; }
   .recipe-switch { padding: 12px; margin-bottom: 20px; }
-  .recipe-switch p span { display: none; }
 }
 
 

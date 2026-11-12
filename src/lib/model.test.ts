@@ -107,6 +107,14 @@ test('one batch drops batch numbers, while serial batches keep them',()=>{
   const one=plan();one.cells.F24=1;const s=schedule(one);
   assert.deepEqual(['warmup','covered','done'].map(id=>title(s,id)),['Take the loaf out of the fridge','Bake covered','Loaf out of the oven']);assert.ok(!s.some(x=>x.id.startsWith('reheat-')));
   const book={...plan(),recipe:'tartine' as const,proof:'cold' as const};book.cells.ovenCapacity=2;assert.equal(title(schedule(book),'warmup'),'Warm both loaves to room temperature');
+  assert.equal(schedule(book).find(x=>x.id==='warmup')!.note,'Remove the loaves from the refrigerator.');
+  book.cells.ovenCapacity=1;assert.equal(schedule(book).find(x=>x.id==='warmup')!.note,'Remove only the loaves in the first batch.');
+});
+test('every schedule note ends as a complete sentence',()=>{
+  for(const recipe of ['house','custom','tartine'] as const)for(const capacity of [1,2]){
+    const p={...plan(),recipe,proof:'cold' as const};p.cells.ovenCapacity=capacity;
+    for(const step of schedule(p))if(step.note)assert.match(step.note,/[.!?]$/,`${recipe} ${step.id}: ${step.note}`);
+  }
 });
 test('parallel capacity and partial final batch cover every loaf once',()=>{
   const p=plan();p.cells.F24=3;p.cells.ovenCapacity=2;const s=schedule(p),covered=s.filter(x=>x.id.startsWith('covered'));
