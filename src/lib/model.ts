@@ -3,7 +3,7 @@ export const durationSpecs: InputSpec[] = [
   ['feed','Starter feed to leaven','C2',660], ['leaven','Leaven fermentation','C4',300], ['autolyse','Autolyse','C6',270],
   ['mix','Mix final dough','C9',15], ['rest','Initial rest','C10',30],
   ...Array.from({length:7},(_,i)=>[`turn${i+1}`,`After turn ${i+1}`,`C${11+i}`,30]),
-  ['shape','Cut and shape','C19',5], ['bench1','First bench rest','C20',30], ['fold','Fold','C22',5],
+  ['shape','Cut and shape','C19',10], ['bench1','First bench rest','C20',30], ['fold','Fold','C22',5],
   ['bench2','Second bench rest','C23',5], ['basket','Basket rest','C24',15], ['fridge','Fridge rest','C25',750],
   ['preheat','Preheat oven','C28',60], ['covered','Bake covered','C29',20], ['uncovered','Bake uncovered','C30',23],
 ].map(([key,label,cell,value])=>({key:String(key),label:String(label),cell:String(cell),value:Number(value),unit:'min',step:1}));
@@ -115,6 +115,8 @@ export function restorePlan(saved:unknown):Plan{
   if(![1,2,3,4].includes(envelope.version??0)||!envelope.plan||typeof envelope.plan!=='object')return base;
   const p=envelope.plan;
   for(const spec of allSpecs){const n=p.cells?.[spec.cell];if(typeof n==='number'&&Number.isFinite(n)&&n>=(spec.min??0)&&(spec.step!==1||Number.isInteger(n)))base.cells[spec.cell]=n;}
+  // Preshaping was 5 minutes until 2026-11. Durations have no editor, so a saved 5 is that old default.
+  for(const cell of ['C19','houseShape'])if(base.cells[cell]===5)base.cells[cell]=10;
   if(typeof p.date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(p.date))base.date=p.date;
   if(typeof p.time==='string'&&/^\d{2}:\d{2}$/.test(p.time))base.time=p.time;
   base.anchor=p.anchor==='done'?'done':'leaven';base.recipe=(envelope.version??0)>=3&&['house','custom','tartine'].includes(p.recipe??'')?p.recipe!:'house';base.proof=p.proof==='warm'?'warm':'cold';base.customUseAll=p.customUseAll!==false;
@@ -170,7 +172,7 @@ export function schedule(plan:Plan):Step[] {
     add('mix','Mix final dough','C9','Add the rye, leaven used, salt and reserved water to the autolysed dough. Mix until incorporated.');
     add('rest','Start bulk fermentation','C10','Keep covered in a warm place, about 75°F to 80°F / 24°C to 27°C.');
     for(let i=1;i<=7;i++)add(`turn${i}`,`Turn ${i}`,'C'+(10+i),i===1?'Use wet hands to stretch and fold all four sides of the dough.':'Repeat the four-sided stretch and fold, with wet hands.');
-    add('shape','Cut and preshape','C19','Divide into equal pieces and form taut rounds.','Look for a billowy dough and 20% to 30% volume increase.');
+    add('shape','Cut and preshape','C19','Turn the dough out of its container onto your work surface. Cut it into equal pieces and shape each into a taut round.','Look for a billowy dough and 20% to 30% volume increase.');
     add('bench1','Bench rest','C20','Cover the rounds. Prepare towel-lined baskets dusted with rice flour.');
     add('fold','Final shape','C22','Fold the edges toward the center and roll into a taut round. Place it seam-side up in a prepared basket.');
     // Loaves go straight into baskets. The sheet's separate rest after shaping (C23) counts toward the basket rest, so the fridge time is unchanged.
