@@ -3,7 +3,7 @@ export const durationSpecs: InputSpec[] = [
   ['feed','Starter feed to leaven','C2',660], ['leaven','Leaven fermentation','C4',300], ['autolyse','Autolyse','C6',270],
   ['mix','Mix final dough','C9',15], ['rest','Initial rest','C10',30],
   ...Array.from({length:7},(_,i)=>[`turn${i+1}`,`After turn ${i+1}`,`C${11+i}`,30]),
-  ['shape','Cut and shape','C19',5], ['bench1','First bench rest','C20',30], ['fold','Fold','C22',5],
+  ['shape','Cut and shape','C19',10], ['bench1','First bench rest','C20',30], ['fold','Fold','C22',5],
   ['bench2','Second bench rest','C23',5], ['basket','Basket rest','C24',15], ['fridge','Fridge rest','C25',750],
   ['preheat','Preheat oven','C28',60], ['covered','Bake covered','C29',20], ['uncovered','Bake uncovered','C30',23],
 ].map(([key,label,cell,value])=>({key:String(key),label:String(label),cell:String(cell),value:Number(value),unit:'min',step:1}));
@@ -115,6 +115,8 @@ export function restorePlan(saved:unknown):Plan{
   if(![1,2,3,4].includes(envelope.version??0)||!envelope.plan||typeof envelope.plan!=='object')return base;
   const p=envelope.plan;
   for(const spec of allSpecs){const n=p.cells?.[spec.cell];if(typeof n==='number'&&Number.isFinite(n)&&n>=(spec.min??0)&&(spec.step!==1||Number.isInteger(n)))base.cells[spec.cell]=n;}
+  // Preshaping was 5 minutes until 2026-11. Durations have no editor, so a saved 5 is that old default.
+  for(const cell of ['C19','houseShape'])if(base.cells[cell]===5)base.cells[cell]=10;
   if(typeof p.date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(p.date))base.date=p.date;
   if(typeof p.time==='string'&&/^\d{2}:\d{2}$/.test(p.time))base.time=p.time;
   base.anchor=p.anchor==='done'?'done':'leaven';base.recipe=(envelope.version??0)>=3&&['house','custom','tartine'].includes(p.recipe??'')?p.recipe!:'house';base.proof=p.proof==='warm'?'warm':'cold';base.customUseAll=p.customUseAll!==false;
@@ -137,7 +139,7 @@ export function schedule(plan:Plan):Step[] {
   if(house)durationSpecs.forEach((s,i)=>{c[s.cell]=c[houseDurationSpecs[i].cell];});
   const book=plan.recipe==='tartine',rows:Omit<Step,'at'>[]=[];
   const push=(id:string,title:string,offset:number,duration:number,note?:string,readiness?:string,cell?:string)=>rows.push({id,title,offset,duration,note,readiness,cell});
-  const leavenCue='Use when aerated and puffy, and a spoonful floats in room-temperature water. If it sinks, allow more fermentation before mixing. The displayed times are estimates and do not move automatically.';
+  const leavenCue='Use when aerated and puffy, and a spoonful floats in room-temperature water. If it sinks, allow more fermentation before mixing.';
   const bulkCue='Look for a billowy dough and 20% to 30% volume increase. The book allows up to one more hour with folds if needed; wait until the dough is ready before moving on.';
   let firstBake=0,preheat=0,covered=0,uncovered=0,warmup=0;
   // With one batch every loaf bakes together, so the bake steps drop batch numbers.
@@ -156,7 +158,7 @@ export function schedule(plan:Plan):Step[] {
     push('fold','Final shape',at,c.bookShape,'Turn flour-side down. Stretch and fold the bottom, sides and top over the center; roll seam-side down into a taut round. Place seam-side up in a prepared basket.');at+=c.bookShape;
     if(plan.proof==='cold'){
       push('fridge','Refrigerated final proof',at,c.bookCold,'Cover the baskets. The supplied recipe gives 10 to 12 hours in the refrigerator. Later batches remain chilled until their own warm-up.');at+=c.bookCold;
-      warmup=c.bookWarmup;push('warmup',single?`Warm ${loaves} to room temperature`:'Warm batch 1 to room temperature',at,warmup,single?`Remove ${count===1?'the loaf':'the loaves'} from the refrigerator. The schedule`:'Remove only the loaves in the first batch. The schedule includes a warm-up allowance; wait longer if the dough needs it.', 'Bring the dough back to room temperature before baking; use its condition, rather than the clock alone.');at+=warmup;
+      warmup=c.bookWarmup;push('warmup',single?`Warm ${loaves} to room temperature`:'Warm batch 1 to room temperature',at,warmup,single?`Remove ${count===1?'the loaf':'the loaves'} from the refrigerator.`:'Remove only the loaves in the first batch.','Bring the dough back to room temperature before baking; use its condition, rather than the clock alone.');at+=warmup;
     }else{
       push('proof','Warm final proof',at,c.bookWarm,'Cover and keep at 75°F to 80°F / 24°C to 27°C. The supplied recipe gives 3 to 4 hours.');at+=c.bookWarm;
     }
@@ -168,12 +170,13 @@ export function schedule(plan:Plan):Step[] {
     let at=c.C4;
     const add=(id:string,title:string,cell:string,note?:string,readiness?:string)=>{push(id,title,at,c[cell],note,readiness,cell);at+=c[cell];};
     add('mix','Mix final dough','C9','Add the rye, leaven used, salt and reserved water to the autolysed dough. Mix until incorporated.');
-    add('rest','Rest','C10','Keep covered in a warm place, about 75°F to 80°F / 24°C to 27°C, for bulk fermentation.');
-    for(let i=1;i<=7;i++)add(`turn${i}`,`Turn ${i}`,'C'+(10+i),'Use wet hands to stretch and fold all four sides of the dough.');
-    add('shape','Cut and preshape','C19','Divide into equal pieces and form taut rounds.','Look for a billowy dough and 20% to 30% volume increase.');
+    add('rest','Start bulk fermentation','C10','Keep covered in a warm place, about 75°F to 80°F / 24°C to 27°C.');
+    for(let i=1;i<=7;i++)add(`turn${i}`,`Turn ${i}`,'C'+(10+i),i===1?'Use wet hands to stretch and fold all four sides of the dough.':'Repeat the four-sided stretch and fold, with wet hands.');
+    add('shape','Cut and preshape','C19','Turn the dough out of its container onto your work surface. Cut it into equal pieces and shape each into a taut round.','Look for a billowy dough and 20% to 30% volume increase.');
     add('bench1','Bench rest','C20','Cover the rounds. Prepare towel-lined baskets dusted with rice flour.');
-    add('fold','Final shape','C22','Fold the edges toward the center and roll into a taut round.');add('bench2','Bench rest','C23','Leave the shaped loaves covered on the bench.');
-    add('basket','Basket rest','C24','Place each loaf seam-side up in its prepared basket. Cover.');
+    add('fold','Final shape','C22','Fold the edges toward the center and roll into a taut round. Place it seam-side up in a prepared basket.');
+    // Loaves go straight into baskets. The sheet's separate rest after shaping (C23) counts toward the basket rest, so the fridge time is unchanged.
+    push('basket','Basket rest',at,c.C23+c.C24,'Leave the baskets covered at room temperature.',undefined,'C24');at+=c.C23+c.C24;
     add('fridge',house?'Overnight cold proof':'Refrigerated final proof','C25',house?'Cover the shaped loaves in their baskets and refrigerate overnight. The default is 12 hours 30 minutes, followed by the morning warm-up and bake. Keep later batches chilled until their own warm-up.':'Cover the shaped loaves in their baskets and refrigerate. Keep later batches refrigerated until their own warm-up.');
     preheat=c.C28;firstBake=at+preheat;warmup=preheat;covered=c.C29;uncovered=c.C30;
     push('warmup',single?`Take ${loaves} out of the fridge`:'Take batch 1 out of fridge',at,warmup,`Allow ${single?(count===1?'the loaf':'the loaves'):'the first batch'} to warm while the oven and pots heat.`);
@@ -187,7 +190,7 @@ export function schedule(plan:Plan):Step[] {
     const firstLoaf=i*capacity+1,lastLoaf=Math.min(count,(i+1)*capacity);
     const label=firstLoaf===lastLoaf?`loaf ${firstLoaf}`:`loaves ${firstLoaf} to ${lastLoaf}`;
     if(i>0){
-      push(`reheat-${n}`,`Reheat for batch ${n}`,start-c.batchReheat,c.batchReheat,`Clean the pot, replace its lid and return the oven to ${book?'500°F / 260°C':'540°F / 282°C'}. This interval is a planning allowance; wait for the pot and oven to reheat.`);
+      push(`reheat-${n}`,`Reheat for batch ${n}`,start-c.batchReheat,c.batchReheat,`Clean the pot, replace its lid and return the oven to ${book?'500°F / 260°C':'540°F / 282°C'}. Load the next batch once the pot and oven are hot.`);
       if(!book||plan.proof==='cold')push(`warmup-${n}`,`Warm batch ${n} (${label})`,start-warmup,warmup,'Remove only this batch from the refrigerator. Later loaves have a longer cold proof.','Bring the dough back to room temperature before its own bake.');
     }
     const bakeTemp=book?'450°F / 232°C':'460°F / 238°C';

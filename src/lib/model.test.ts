@@ -29,11 +29,22 @@ test('original time cells are preserved when both loaves fit in the oven',()=>{
   assert.deepEqual(actual,{
     feed:'2026-10-20 22:00',leaven:'2026-10-21 09:00',autolyse:'2026-10-21 09:30',mix:'2026-10-21 14:00',rest:'2026-10-21 14:15',
     turn1:'2026-10-21 14:45',turn2:'2026-10-21 15:15',turn3:'2026-10-21 15:45',turn4:'2026-10-21 16:15',turn5:'2026-10-21 16:45',turn6:'2026-10-21 17:15',turn7:'2026-10-21 17:45',
-    shape:'2026-10-21 18:15',bench1:'2026-10-21 18:20',fold:'2026-10-21 18:50',bench2:'2026-10-21 18:55',basket:'2026-10-21 19:00',fridge:'2026-10-21 19:15',preheat:'2026-10-22 07:45',covered:'2026-10-22 08:45',uncovered:'2026-10-22 09:05',done:'2026-10-22 09:28',cooled:'2026-10-22 09:43',
+    shape:'2026-10-21 18:15',bench1:'2026-10-21 18:25',fold:'2026-10-21 18:55',basket:'2026-10-21 19:00',fridge:'2026-10-21 19:20',preheat:'2026-10-22 07:50',covered:'2026-10-22 08:50',uncovered:'2026-10-22 09:10',done:'2026-10-22 09:33',cooled:'2026-10-22 09:48',
   });
 });
+test('shaped loaves go straight into baskets and the fridge follows the basket rest',()=>{
+  for(const recipe of ['house','custom'] as const){
+    const p={...plan(),recipe};
+    const s=schedule(p),ids=s.map(x=>x.id),basket=s.find(x=>x.id==='basket')!;
+    assert.ok(!ids.includes('bench2'),recipe);assert.equal(ids[ids.indexOf('fold')+1],'basket',recipe);
+    assert.equal(basket.duration,20,recipe);assert.equal(local(s.find(x=>x.id==='fridge')!.at),'2026-10-21 19:20',recipe);
+  }
+  // Durations saved by an earlier version still add up to the same fridge time.
+  const p=plan();p.cells.C23=10;p.cells.C24=25;const s=schedule(p);
+  assert.equal(s.find(x=>x.id==='basket')!.duration,35);assert.equal(local(s.find(x=>x.id==='fridge')!.at),'2026-10-21 19:35');
+});
 test('backward planning reproduces the identical forward schedule',()=>{
-  const p=plan();const a=schedule(p);const b=schedule({...p,anchor:'done',date:'2026-10-22',time:'10:41'});
+  const p=plan();const a=schedule(p);const b=schedule({...p,anchor:'done',date:'2026-10-22',time:'10:46'});
   assert.deepEqual(a,b);
 });
 test('autolyse overlaps leaven; changing its duration leaves final mix unchanged',()=>{
@@ -94,7 +105,7 @@ test('book build controls change made and reserved amounts without changing the 
 });
 test('one-pot setting schedules two serial batches, with separate cooling marks',()=>{
   const p=plan(),s=schedule(p),at=(id:string)=>local(s.find(x=>x.id===id)!.at);
-  assert.equal(batchCount(p),2);assert.equal(at('out-1'),'2026-10-22 09:28');assert.equal(at('reheat-2'),'2026-10-22 09:28');assert.equal(at('covered-2'),'2026-10-22 09:58');assert.equal(at('done'),'2026-10-22 10:41');assert.equal(at('cooled-1'),'2026-10-22 09:43');assert.equal(at('cooled'),'2026-10-22 10:56');
+  assert.equal(batchCount(p),2);assert.equal(at('out-1'),'2026-10-22 09:33');assert.equal(at('reheat-2'),'2026-10-22 09:33');assert.equal(at('covered-2'),'2026-10-22 10:03');assert.equal(at('done'),'2026-10-22 10:46');assert.equal(at('cooled-1'),'2026-10-22 09:48');assert.equal(at('cooled'),'2026-10-22 11:01');
 });
 test('one batch drops batch numbers, while serial batches keep them',()=>{
   const title=(s:ReturnType<typeof schedule>,id:string)=>s.find(x=>x.id===id)!.title;
@@ -107,6 +118,14 @@ test('one batch drops batch numbers, while serial batches keep them',()=>{
   const one=plan();one.cells.F24=1;const s=schedule(one);
   assert.deepEqual(['warmup','covered','done'].map(id=>title(s,id)),['Take the loaf out of the fridge','Bake covered','Loaf out of the oven']);assert.ok(!s.some(x=>x.id.startsWith('reheat-')));
   const book={...plan(),recipe:'tartine' as const,proof:'cold' as const};book.cells.ovenCapacity=2;assert.equal(title(schedule(book),'warmup'),'Warm both loaves to room temperature');
+  assert.equal(schedule(book).find(x=>x.id==='warmup')!.note,'Remove the loaves from the refrigerator.');
+  book.cells.ovenCapacity=1;assert.equal(schedule(book).find(x=>x.id==='warmup')!.note,'Remove only the loaves in the first batch.');
+});
+test('every schedule note ends as a complete sentence',()=>{
+  for(const recipe of ['house','custom','tartine'] as const)for(const capacity of [1,2]){
+    const p={...plan(),recipe,proof:'cold' as const};p.cells.ovenCapacity=capacity;
+    for(const step of schedule(p))if(step.note)assert.match(step.note,/[.!?]$/,`${recipe} ${step.id}: ${step.note}`);
+  }
 });
 test('parallel capacity and partial final batch cover every loaf once',()=>{
   const p=plan();p.cells.F24=3;p.cells.ovenCapacity=2;const s=schedule(p),covered=s.filter(x=>x.id.startsWith('covered'));
@@ -172,8 +191,8 @@ test('House leaven made and used remain separate, including shortfalls',()=>{
 test('House autolyse overlaps leaven and cold proof runs from evening to next morning',()=>{
   const p={...plan(),recipe:'house' as const},s=schedule(p),at=(id:string)=>local(s.find(x=>x.id===id)!.at),w=coldProofWindow(s)!;
   assert.equal(at('leaven'),'2026-10-21 09:00');assert.equal(at('autolyse'),'2026-10-21 09:30');assert.equal(at('mix'),'2026-10-21 14:00');
-  assert.equal(local(w.start),'2026-10-21 19:15');assert.equal(local(w.end),'2026-10-22 07:45');assert.equal(w.minutes,750);assert.equal(w.overnight,true);
-  assert.equal(at('covered'),'2026-10-22 08:45');assert.equal(at('done'),'2026-10-22 10:41');
+  assert.equal(local(w.start),'2026-10-21 19:20');assert.equal(local(w.end),'2026-10-22 07:50');assert.equal(w.minutes,750);assert.equal(w.overnight,true);
+  assert.equal(at('covered'),'2026-10-22 08:50');assert.equal(at('done'),'2026-10-22 10:46');
   assert.ok(s.every(x=>!x.cell));assert.match(s.find(x=>x.id==='autolyse')!.note!,/flour and first water addition only/);
   p.cells.houseAutolyse=60;assert.equal(local(schedule(p).find(x=>x.id==='autolyse')!.at),'2026-10-21 13:00');assert.equal(+schedule(p).find(x=>x.id==='mix')!.at,+s.find(x=>x.id==='mix')!.at);
 });
@@ -199,11 +218,21 @@ test('two loaves bake together by default and finish after one bake cycle',()=>{
   const p={...defaults(),date:'2026-10-21',time:'09:00'},s=schedule(p);
   assert.equal(p.cells.ovenCapacity,2);assert.equal(batchCount(p),1);
   assert.equal(s.filter(x=>x.id.startsWith('covered')).length,1);assert.match(s.find(x=>x.id==='covered')!.title,/both loaves/);
-  assert.equal(local(s.find(x=>x.id==='done')!.at),'2026-10-22 09:28');assert.ok(!s.some(x=>x.id.startsWith('reheat-')));
+  assert.equal(local(s.find(x=>x.id==='done')!.at),'2026-10-22 09:33');assert.ok(!s.some(x=>x.id.startsWith('reheat-')));
 });
 test('v3 upgrade applies two-loaf default once while preserving recipes and later capacity edits',()=>{
   const old=plan();old.recipe='tartine';old.cells.houseWeight=850;old.houseDone=['autolyse'];
   const p=restorePlan({version:3,plan:old});assert.equal(p.cells.ovenCapacity,2);assert.equal(p.recipe,'tartine');assert.equal(p.cells.houseWeight,850);assert.deepEqual(p.houseDone,['autolyse']);
   p.cells.ovenCapacity=1;assert.equal(restorePlan({version:4,plan:p}).cells.ovenCapacity,1);
   p.cells.ovenCapacity=3;assert.equal(restorePlan({version:3,plan:p}).cells.ovenCapacity,3);
+});
+test('preshaping takes 10 minutes and starts by turning the dough out',()=>{
+  for(const recipe of ['house','custom'] as const){
+    const step=schedule({...plan(),recipe}).find(x=>x.id==='shape')!;
+    assert.equal(step.duration,10,recipe);assert.match(step.note!,/^Turn the dough out of its container onto your work surface\./,recipe);
+  }
+  // Plans saved with the old 5-minute default move to 10; any other saved value is kept.
+  const old=plan();old.cells.C19=5;old.cells.houseShape=5;
+  const r=restorePlan({version:4,plan:old});assert.equal(r.cells.C19,10);assert.equal(r.cells.houseShape,10);
+  old.cells.C19=7;assert.equal(restorePlan({version:4,plan:old}).cells.C19,7);
 });
