@@ -19,6 +19,8 @@ Astro statically builds the page shell, metadata and404 page. The calculator is 
 
 Preuss House is the default. Six distinct editable recipes retain independent settings and checklists. The calculation engine includes separate leaven made/used/reserved, staged ingredients, all-loaf forward/backward scheduling, overnight proof, readiness cues and quiet-hours checks. Percentages support both sliders and exact number entry.
 
+On bake day, an "Up next" card shows the next step with a countdown. Checking a step records when it was done, and later steps move to keep their planned spacing from it. Remaining steps can be exported to a calendar file with an alert for each.
+
 Browser storage uses `bread-planner.v5`. Each browser starts with the default recipes and remembers edits locally. The first release starts fresh; no data transfer or account system is included.
 
 The main hydration figure and slider show total water divided by total flour, including only the leaven used in the dough. Existing ingredient weights and stored v5 added-water percentages are preserved through a display/input conversion. Leaven composition follows its build, assuming equal flour and water in mature starter; an empty build assumes a 100% hydration leaven until specified.
