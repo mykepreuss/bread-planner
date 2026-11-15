@@ -11,7 +11,8 @@ export const definitions:Record<string,RecipeDefinition>={
   'four-flour':{id:'four-flour',name:'Four-Flour Sourdough',description:'All-purpose, red spring, whole wheat and rye, with more whole wheat than the five-flour recipe.',method:'house',flours:['ap','red','fife','wheat','rye'],late:['rye'],houseCompletion:true},
   'manual-rye':{id:'manual-rye',name:'Red Spring & Rye Variation',description:'Your separately edited red-spring-and-rye formula.',method:'house',flours:['red','wheat','rye'],late:['rye']},
 };
-export type Profile={params:Record<string,number>;done:string[]};
+/** `doneAt` records when each checked step was actually done, in epoch milliseconds, so the schedule can follow the dough. */
+export type Profile={params:Record<string,number>;done:string[];doneAt:Record<string,number>};
 export type Planner={recipes:Record<string,Profile>;order:string[];recipe:string;date:string;time:string;anchor:'leaven'|'done';proof:'cold'|'warm';ovenCapacity:number;reheat:number;legacy:Plan};
 const clean=(n:number)=>Math.abs(n)<1e-12?0:n;
 /** Leaven balances compare sums of separately scaled parts, so sub-microgram differences are arithmetic noise, not a deficit. */
@@ -33,7 +34,7 @@ export function addedHydration(total:number,p:Record<string,number>){
 }
 function profile(flours:Record<string,number>,water:number,leaven:number,salt:number,finalWater:number,count:number,weight:number,build:number[],done:string[]=[]):Profile{
   const flour=Object.values(flours).reduce((a,b)=>a+b,0),denominator=flour||1;
-  return {params:{count,weight,hydration:water/denominator*100,leaven:leaven/denominator*100,salt:salt/denominator*100,reserve:water?finalWater/water*100:0,...Object.fromEntries(Object.entries(flours).map(([k,n])=>[`flour_${k}`,n/denominator*100])),buildSeed:build[0]/denominator*1000,buildBread:build[1]/denominator*1000,buildWheat:build[2]/denominator*1000,buildWater:build[3]/denominator*1000},done:[...done]};
+  return {params:{count,weight,hydration:water/denominator*100,leaven:leaven/denominator*100,salt:salt/denominator*100,reserve:water?finalWater/water*100:0,...Object.fromEntries(Object.entries(flours).map(([k,n])=>[`flour_${k}`,n/denominator*100])),buildSeed:build[0]/denominator*1000,buildBread:build[1]/denominator*1000,buildWheat:build[2]/denominator*1000,buildWater:build[3]/denominator*1000},done:[...done],doneAt:{}};
 }
 /** Identity ignores hydration, water staging and yield, but retains flour, leaven, salt and mixing method. */
 export function recipeSignature(id:string,p:Profile){
@@ -73,7 +74,9 @@ export function restorePlanner(saved:unknown):Planner{
       const n=source.params?.[key],min=key==='count'||key==='weight'?1:0;
       if(typeof n==='number'&&Number.isFinite(n)&&n>=min&&(key!=='count'||Number.isInteger(n))&&(key!=='reserve'||n<=100))base.recipes[id].params[key]=n;else base.recipes[id].params[key]=defaultValue;
     }
-    base.recipes[id].done=Array.isArray(source.done)?source.done.filter(x=>typeof x==='string'):[];
+    const done=base.recipes[id].done=Array.isArray(source.done)?source.done.filter(x=>typeof x==='string'):[];
+    const times=source.doneAt&&typeof source.doneAt==='object'?Object.entries(source.doneAt):[];
+    base.recipes[id].doneAt=Object.fromEntries(times.filter(([step,t])=>done.includes(step)&&typeof t==='number'&&Number.isFinite(t)));
   }
   base.order=Array.isArray(p.order)?[...new Set(p.order.filter(id=>typeof id==='string'&&Object.hasOwn(definitions,id)))]:base.order;
   if(!base.order.length)base.order=['house'];

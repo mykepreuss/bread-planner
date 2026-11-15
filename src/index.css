@@ -276,8 +276,32 @@ h2 { font-size: 30px; line-height: 1.25; letter-spacing: -.9px; font-weight: 620
 .step-duration { font-size: 14px; color: var(--muted-foreground); text-align: right; white-space: nowrap; display: flex; justify-content: flex-end; line-height: 28px; }
 .next-badge { font-size: 12px; font-weight: 550; padding: 3px 8px; height: auto; color: var(--primary); border: 0; background: var(--secondary); border-radius: 6px; }
 .is-next { color: var(--primary); }
-.timeline-step time, .step-details { transition: opacity 150ms var(--ease-out); }
-.is-done time, .is-done .step-details { opacity: .55; }
+.timeline-step time, .step-details>[data-slot=label], .step-details>p { transition: opacity 150ms var(--ease-out); }
+.is-done time, .is-done .step-details>[data-slot=label], .is-done .step-details>p { opacity: .55; }
+.done-at { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.step-details .done-at [data-slot=label] { font-size: 14px; font-weight: 500; color: var(--muted-foreground); cursor: default; }
+.done-at [data-slot=input] { width: auto; min-width: 0; height: 40px; padding: 6px 10px; font-size: 15px; background: var(--background); box-shadow: none; }
+
+/* Bake day: the next step, its countdown and a single action, ahead of the planning controls. */
+.now-card { margin-bottom: 28px; padding: 26px 28px; border: 1px solid var(--border); border-left: 4px solid var(--primary); border-radius: var(--radius-card); background: var(--card); }
+.now-card.is-due { background: var(--warning-surface); border-color: var(--warning); border-left-color: var(--primary); }
+.now-when { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.now-when .eyebrow { margin: 0; }
+.now-countdown { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--primary); }
+.now-card h2 { margin-top: 6px; font-size: 32px; letter-spacing: -1px; }
+.now-time { margin: 6px 0 0; font-size: 17px; font-weight: 550; font-variant-numeric: tabular-nums; }
+.now-time span { font-weight: 400; color: var(--muted-foreground); }
+.now-note { margin: 14px 0 0; font-size: 16px; line-height: 1.7; color: var(--ink-soft); max-width: 720px; }
+.now-card .readiness-cue { color: var(--ink-soft); background: var(--secondary); border-radius: var(--radius-inset); padding: 12px 14px; margin: 14px 0 0; font-size: 15px; line-height: 1.7; max-width: 720px; }
+.now-shift { display: flex; align-items: flex-start; gap: 8px; margin: 14px 0 0; font-size: 15px; line-height: 1.6; color: var(--warning-foreground); }
+.now-shift svg { margin-top: 3px; }
+.now-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 20px; margin-top: 20px; }
+.now-actions [data-slot=button] { min-height: 52px; min-width: 140px; font-size: 17px; }
+.now-actions p { margin: 0; font-size: 15px; color: var(--muted-foreground); line-height: 1.6; }
+.calendar-export { margin-top: 24px; }
+.calendar-export [data-slot=button] { width: 100%; background: transparent; color: var(--primary-foreground); border-color: var(--espresso-border); }
+.calendar-export [data-slot=button]:hover { background: #ffffff10; color: var(--primary-foreground); }
+.calendar-export p { margin: 10px 0 0; font-size: 14px; line-height: 1.6; color: var(--espresso-muted); }
 .is-done .step-details label { text-decoration: line-through; }
 .bake-complete { display: flex; align-items: center; gap: 12px; padding: 24px; background: var(--secondary); border-radius: var(--radius-inset); color: var(--success); }
 
@@ -427,6 +451,10 @@ h2 { font-size: 30px; line-height: 1.25; letter-spacing: -.9px; font-weight: 620
   .leaven-balance { padding: 18px 12px; gap: 8px; }
   .leaven-balance strong { font-size: 20px; }
   [data-slot=dialog-title] { font-size: 24px; }
+  .now-card { padding: 22px 20px; margin-bottom: 24px; }
+  .now-card h2 { font-size: 28px; }
+  .now-note { font-size: 15px; }
+  .now-actions [data-slot=button] { width: 100%; }
   .quiet-warning { padding: 20px; gap: 12px; }
   .quiet-warning h2 { font-size: 18px; }
   .quiet-details li { display: block; }
@@ -454,7 +482,7 @@ h2 { font-size: 30px; line-height: 1.25; letter-spacing: -.9px; font-weight: 620
   .app-shell { max-width: none; padding: 0; }
   .intro { padding: 20px 0; }
   h1 { font-size: 32px; }
-  .nav-row, .section-heading button, .timeline-meta button, .text-link { display: none!important; }
+  .nav-row, .section-heading button, .timeline-meta button, .text-link, .now-card, .calendar-export { display: none!important; }
   .schedule-layout { display: grid; grid-template-columns: 240px minmax(0,1fr); gap: 24px; }
   .schedule-sidebar { display: flex; }
   .plan-card, .formula-result { background: white; color: black; border: 1px solid var(--border); }
