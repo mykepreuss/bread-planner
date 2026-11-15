@@ -72,9 +72,9 @@ Live acceptance MET: existing saved House bake opened at80% total hydration,2000
 
 Responsive/browser verification MET:390px Recipe document width390, desktop927px document width927, no browser errors/warnings. Viewport override reset. All test values restored; Preuss House / Recipe selected for handoff. Evidence: artifacts/total-hydration-live.png, artifacts/total-hydration-mobile.png, artifacts/hydration-deployment.json, artifacts/hydration-production-build.log. Static live verifier passed12 checks,10 assets and the missing-asset negative fixture. This checkpoint follows functional verification; subsequent documentation-only deployments retain the same application code. No remaining work in the authorized scope.
 
-## Bake-day view and live schedule, November 15, 2026: locally verified, not committed
+## Bake-day view and live schedule, November 15, 2026: released and verified live
 
-Branch `bake-day-view`, cut from `interface-copy-cleanup` (three commits not yet on main). Authorized in session: build the bake-day view first.
+Built on branch `bake-day-view`, which was stacked on `interface-copy-cleanup`. Authorized in session: build the bake-day view first, then merge #7 and #8.
 
 - An "Up next" card at the top of Schedule shows the next unchecked step, a countdown that refreshes every 30 seconds and when the page is shown again, the step's note and readiness cue, and a Done button. It is hidden when the plan has ended or every step is checked.
 - Checking a step records the time, rounded to the minute, in `recipes.<id>.doneAt`. The schedule then follows the dough: every later unchecked step keeps its planned spacing from the most recent timed check. Checking the starter feed or the autolyse never moves the plan. Checked steps show an editable "Done at" time for corrections, including across midnight. Clearing the checklist clears the times.
@@ -84,4 +84,6 @@ Branch `bake-day-view`, cut from `interface-copy-cleanup` (three commits not yet
 
 Evidence: `TZ=America/Vancouver npm test` passed 83 of 83. `npm run build` passed with 0 errors, 0 warnings and 4 hints, all pre-existing unused imports in `recipes.test.ts`. `git diff --check` passed. Browser at 375px: with the leaven planned for 2:47 PM and checked at 3:48 PM, autolyse moved 3:17 → 4:18 PM, mix 7:47 → 8:48 PM, and the card showed "Running 1h 1m behind plan". Correcting "Done at" to 14:47 removed the shift, and the correction persisted through a reload. The calendar button generated `preuss-house-2026-11-15.ics` with 21 events and 21 alerts (23 steps less the 2 checked). Document width was 375 at mobile and 1280 at desktop, and the console logged no errors. Test values were restored to Nov 13, 09:00 with an empty checklist.
 
-Not verified: importing the .ics file into iOS or Google Calendar on a real device, and the countdown on a phone that has been asleep. Not deployed.
+Release: PR #7 (copy cleanup: the preshape step gets 10 minutes and starts by turning out the dough, and shaped loaves go straight into baskets) merged as `d8ccaec`. Vercel production completed, and the live verifier passed 12 checks with the new preshape wording in the live bundle. PR #8 (bake-day view) merged as `b1fca0f`, with both Vercel checks passing before the merge. Vercel production completed, and `node scripts/verify-deployment.mjs https://bread.assemblydigital.com` passed 12 checks, 10 assets and the missing-asset negative fixture. The live site at 375px had the calendar button and the new sidebar note, a document width of 375 and no console errors. A plan dated tomorrow showed "Up next · in 5h 53m · Feed starter · 10:00 PM" with the Done button. The pane's saved plan was then restored to Nov 8, 09:00, with no steps checked.
+
+Not verified: importing the .ics file into iOS or Google Calendar on a real device, and the countdown on a phone that has been asleep. The `bake-day-view` and `interface-copy-cleanup` branches remain on GitHub.
