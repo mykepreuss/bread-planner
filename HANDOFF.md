@@ -128,3 +128,13 @@ Michael's decision: checking a turn must not move the schedule, because cumulati
 Evidence: 96 of 96 tests pass. Three new tests cover late and early turns, bulk staying 240 minutes after a late start whatever the turns do, and Tartine. They fail against the previous code. The build had 0 errors and 0 warnings. In the browser at 375px, with bulk starting at 8:58 AM, turn 1 checked 30 minutes early and then corrected to 22 minutes late changed only turn 1's own time. The 12:58 PM preshape and everything after it were unchanged. Test values were restored.
 
 Not verified: a bake stepped through on the live site.
+
+## Astro security upgrade, November 16, 2026: released and verified live
+
+PR #14 merged as `7bedc0d`. It supersedes the Astro 7.4.1 and explicit cookie 2.0.1 pins recorded in the original release sections above. It also resolves the "Proposal, not done" audit item in the identity section.
+
+- `astro` 7.4.1 → 7.4.12 and `cookie` 2.0.1 → 2.0.2. Astro 7.4.12 requires `cookie ^2.0.2`, so the explicit pin moved with it and a single deduplicated copy remains. The React integration 7.0.0 and the `@vitejs/plugin-react` 6.1.1 override are unchanged.
+- The upgrade clears GHSA-mh32-jxcr-mh9f (XSS via dynamic tag names) and GHSA-r3h5-4585-7x3w (`@astrojs/node` image endpoint). Reading the code, neither looked reachable in this static site; that was not tested.
+- All lockfile changes are within Astro's own dependency tree. Of the 48 additions, most are per-platform bundler binaries. One nested pre-release, `@emnapi/core` 2.0.0-beta.2, sits under the optional `wasm32-wasi` binding and is not installed on macOS or Vercel.
+
+Evidence: locally on Node 26, `npm ci` was clean, `npm audit` found 0 vulnerabilities, 96 of 96 tests passed, and the build had 0 errors and 0 warnings with the same output file set. The dev server hydrated with no errors, and a loaf-count edit recalculated and was restored. The Vercel PR build on Node 24 passed. Production deploy completed, and the verifier passed with 9 checks and 7 assets, unchanged. The live app hydrated 23 steps with the Atkinson font and no console errors. `npm audit` on `main` after `npm ci` found 0 vulnerabilities.
