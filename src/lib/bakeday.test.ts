@@ -20,9 +20,9 @@ test('a late check moves every later step by the same amount and leaves earlier 
   assert.equal(+steps.find(s=>s.id==='leaven')!.actual!,leaven+minutes(40));
 });
 
-test('the latest checked step sets the shift, so catching up early pulls the rest back',()=>{
+test('the latest plan-moving step sets the shift, so catching up early pulls the rest back',()=>{
   const planned=recipeSchedule(plan());
-  const {steps,shift}=liveSchedule(planned,['leaven','mix','turn1'],{leaven:at(planned,'leaven')+minutes(40),mix:at(planned,'mix')+minutes(25),turn1:at(planned,'turn1')+minutes(10)});
+  const {steps,shift}=liveSchedule(planned,['leaven','mix','rest'],{leaven:at(planned,'leaven')+minutes(40),mix:at(planned,'mix')+minutes(25),rest:at(planned,'rest')+minutes(10)});
   assert.equal(shift,10);assert.equal(at(steps,'turn2'),at(planned,'turn2')+minutes(10));
   const early=liveSchedule(planned,['mix'],{mix:at(planned,'mix')-minutes(15)});
   assert.equal(early.shift,-15);assert.equal(at(early.steps,'fridge'),at(planned,'fridge')-minutes(15));
@@ -142,4 +142,31 @@ test('each step is coloured by its temperature: only the cold proof is cold, and
   assert.deepEqual(Object.keys(phases).filter(id=>phases[id]==='oven').sort(),['covered','covered-2','done','out-1','preheat','reheat-2','uncovered','uncovered-2'].sort());
   for(const id of ['feed','leaven','autolyse','mix','rest','turn1','shape','bench1','fold','basket','warmup','warmup-2','cooled'])assert.equal(phases[id],'room',id);
   const t=plan();t.recipe='tartine';t.proof='warm';assert.equal(recipeSchedule(t).find(s=>s.id==='proof')&&stepPhase('proof'),'room','a warm proof is room temperature');
+});
+
+test('a late or early turn moves nothing: later turns stay on their marks and bulk keeps its planned length',()=>{
+  const planned=recipeSchedule(plan()),bulk=at(planned,'shape')-at(planned,'rest');
+  assert.equal(bulk,minutes(240));
+  const late=liveSchedule(planned,['rest','turn1','turn2','turn3'],{rest:at(planned,'rest'),turn1:at(planned,'turn1')+minutes(5),turn2:at(planned,'turn2')+minutes(10),turn3:at(planned,'turn3')+minutes(18)});
+  assert.equal(late.shift,0,'no "running behind" from turns');
+  for(const id of ['turn4','turn5','turn6','turn7','shape','fridge','covered','done'])assert.equal(at(late.steps,id),at(planned,id),id);
+  assert.equal(at(late.steps,'turn3'),at(planned,'turn3')+minutes(18),'a checked turn keeps its recorded time');
+  const early=liveSchedule(planned,['rest','turn1','turn2'],{rest:at(planned,'rest'),turn1:at(planned,'turn1')-minutes(8),turn2:at(planned,'turn2')-minutes(12)});
+  assert.equal(early.shift,0);assert.equal(at(early.steps,'turn3'),at(planned,'turn3'));assert.equal(at(early.steps,'shape'),at(planned,'shape'));
+});
+
+test('starting bulk late moves the turns and preshape together, so bulk length is unchanged whatever the turns do',()=>{
+  const planned=recipeSchedule(plan()),rest=at(planned,'rest');
+  for(const lateTurns of [0,7,25]){
+    const done=['rest','turn1','turn2'],times={rest:rest+minutes(20),turn1:at(planned,'turn1')+minutes(20+lateTurns),turn2:at(planned,'turn2')+minutes(20+lateTurns)};
+    const {steps,shift}=liveSchedule(planned,done,times);
+    assert.equal(shift,20);assert.equal(at(steps,'turn3'),at(planned,'turn3')+minutes(20));
+    assert.equal(at(steps,'shape')-at(steps,'rest'),minutes(240),`bulk with turns ${lateTurns} min late`);
+  }
+});
+
+test('Tartine turns follow the same rule',()=>{
+  const p=plan();p.recipe='tartine';const planned=recipeSchedule(p);
+  const {steps,shift}=liveSchedule(planned,['rest','turn1'],{rest:at(planned,'rest'),turn1:at(planned,'turn1')+minutes(15)});
+  assert.equal(shift,0);assert.equal(at(steps,'turn2'),at(planned,'turn2'));assert.equal(at(steps,'shape'),at(planned,'shape'));
 });
