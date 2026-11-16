@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createPlanner,recipeSchedule,restorePlanner} from './recipes.ts';
-import {liveSchedule,retime,untilText,shiftText,scheduleCalendar,stampNow,skippedSteps,bulkEstimate,bulkAdvice,toF,fromF,BULK_REFERENCE_F} from './bakeday.ts';
+import {liveSchedule,retime,untilText,shiftText,scheduleCalendar,stampNow,skippedSteps,stepPhase,bulkEstimate,bulkAdvice,toF,fromF,BULK_REFERENCE_F} from './bakeday.ts';
 const plan=()=>{const p=createPlanner();p.date='2026-10-21';p.time='09:00';return p;};
 const minutes=(n:number)=>n*60000;
 const at=(steps:{id:string;at:Date}[],id:string)=>+steps.find(s=>s.id===id)!.at;
@@ -133,4 +133,13 @@ test('dough temperature and unit survive a reload; out-of-range or missing value
   const r=restorePlanner(odd);assert.equal(r.recipes.house.doughTemp,null);assert.equal(r.tempUnit,'F');
   const older=JSON.parse(JSON.stringify({version:5,plan:p}));delete older.plan.recipes.house.doughTemp;delete older.plan.tempUnit;
   const o=restorePlanner(older);assert.equal(o.recipes.house.doughTemp,null);assert.equal(o.tempUnit,'F');
+});
+
+test('each step is coloured by its temperature: only the cold proof is cold, and preheat through the last loaf out is oven',()=>{
+  const p=plan();p.recipes.house.params.count=4;p.ovenCapacity=2;
+  const phases=Object.fromEntries(recipeSchedule(p).map(s=>[s.id,stepPhase(s.id)]));
+  assert.deepEqual(Object.keys(phases).filter(id=>phases[id]==='cold'),['fridge']);
+  assert.deepEqual(Object.keys(phases).filter(id=>phases[id]==='oven').sort(),['covered','covered-2','done','out-1','preheat','reheat-2','uncovered','uncovered-2'].sort());
+  for(const id of ['feed','leaven','autolyse','mix','rest','turn1','shape','bench1','fold','basket','warmup','warmup-2','cooled'])assert.equal(phases[id],'room',id);
+  const t=plan();t.recipe='tartine';t.proof='warm';assert.equal(recipeSchedule(t).find(s=>s.id==='proof')&&stepPhase('proof'),'room','a warm proof is room temperature');
 });
