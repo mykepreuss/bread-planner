@@ -171,7 +171,7 @@ export function schedule(plan:Plan):Step[] {
     const add=(id:string,title:string,cell:string,note?:string,readiness?:string)=>{push(id,title,at,c[cell],note,readiness,cell);at+=c[cell];};
     add('mix','Mix final dough','C9','Add the rye, leaven used, salt and reserved water to the autolysed dough. Mix until incorporated.');
     add('rest','Start bulk fermentation','C10','Keep covered in a warm place, about 75°F to 80°F / 24°C to 27°C.');
-    for(let i=1;i<=7;i++)add(`turn${i}`,`Turn ${i}`,'C'+(10+i),i===1?'Use wet hands to stretch and fold all four sides of the dough.':'Repeat the four-sided stretch and fold, with wet hands.');
+    for(let i=1;i<=7;i++)add(`turn${i}`,`Turn ${i}`,'C'+(10+i),i===1?'With wet hands, stretch and fold all four sides vigorously, then go around a second time. These early turns build the gluten structure.':i<=3?'Vigorously again: stretch and fold all four sides twice, with wet hands.':i===4?'From here, one round: stretch and fold all four sides once, with wet hands.':'Stretch and fold all four sides once, with wet hands.');
     add('shape','Cut and preshape','C19','Turn the dough out of its container onto your work surface. Cut it into equal pieces and shape each into a taut round.','Look for a billowy dough and 20% to 30% volume increase.');
     add('bench1','Bench rest','C20','Cover the rounds. Prepare towel-lined baskets dusted with rice flour.');
     add('fold','Final shape','C22','Fold the edges toward the center and roll into a taut round. Place it seam-side up in a prepared basket.');
