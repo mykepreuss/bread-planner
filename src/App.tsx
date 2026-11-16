@@ -67,7 +67,7 @@ function MethodGuide({book}:{book:boolean}){return <Accordion type="multiple" cl
     <p><strong>Bulk:</strong> keep covered at 75°F to 80°F / 24°C to 27°C. Fold all four sides with a wet hand every half-hour. The book calls for a billowy dough with 20% to 30% volume increase after about three hours; if needed, allow up to another hour with folds. Allow more time when the dough needs it.</p>
     <p><strong>Proof and bake:</strong> the book gives 3 to 4 hours warm, or 10 to 12 hours refrigerated with a return to room temperature. Later serial batches may spend longer chilled or waiting to bake. Judge the dough's condition as well as the planned times.</p>
     <p><strong>Crust and cooling:</strong> bake uncovered until rich golden brown, extending the time if needed. The base should sound hollow when tapped. Move to a rack and cool at least 15 minutes before slicing.</p>
-    {!book&&<p>This recipe uses a separate flour-and-water autolyse, followed by the final mix and an overnight cold proof. The dated schedule shows when to refrigerate and bake.</p>}
+    {!book&&<p>This recipe uses a separate flour-and-water autolyse, followed by the final mix and an overnight cold proof. Work the first three turns vigorously, going around all four sides twice, to build gluten structure early; later turns are a single round. The dated schedule shows when to refrigerate and bake.</p>}
   </div></AccordionContent></AccordionItem>
   <AccordionItem value="starter"><AccordionTrigger>Establishing a starter from scratch</AccordionTrigger><AccordionContent><div className="guide-copy">
     <p>Make a reserve of equal weights white-bread and whole-wheat flour. The supplied recipe prepares 1,000 g of each; that reserve is for repeated feedings, not one dough batch.</p>

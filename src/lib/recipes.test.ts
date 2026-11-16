@@ -187,3 +187,14 @@ test('every refrigerated proof tells you to cover and refrigerate, and no step i
     for(const step of s)assert.ok(step.note&&step.note.length>10,`${id}: ${step.id} has no note`);
   }
 });
+
+test('House-method turns 1 to 3 are vigorous double rounds and later turns a single round; Tartine keeps the book wording',()=>{
+  for(const id of ['house','white-wheat','red-rye','five-flour','four-flour']){
+    const p=plan();p.recipe=id;const notes=Object.fromEntries(recipeSchedule(p).filter(s=>/^turn\d+$/.test(s.id)).map(s=>[s.id,s.note!]));
+    assert.equal(Object.keys(notes).length,7,id);
+    for(const n of [1,2,3])assert.match(notes[`turn${n}`],/vigorously/i,`${id} turn ${n}`),assert.match(notes[`turn${n}`],/second time|twice/,`${id} turn ${n}`);
+    for(const n of [4,5,6,7])assert.match(notes[`turn${n}`],/once/,`${id} turn ${n}`),assert.doesNotMatch(notes[`turn${n}`],/vigorous|twice/i,`${id} turn ${n}`);
+  }
+  const t=plan();t.recipe='tartine';const turns=recipeSchedule(t).filter(s=>/^turn\d+$/.test(s.id));
+  assert.equal(turns[0].note,'Wet your hand. Stretch one quadrant over the dough; rotate and repeat to fold all four sides.');assert.ok(turns.slice(1).every(s=>s.note==='Repeat the four-sided stretch and fold, with wet hands.'));
+});
