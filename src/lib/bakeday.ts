@@ -3,8 +3,12 @@ import {durationText,type Step} from './model.ts';
 /** A step as it stands on bake day: when it was planned, and when it now falls or was actually done. */
 export type LiveStep=Step&{planned:Date;actual?:Date};
 
-/** Checking these steps never moves the rest of the plan. The starter feed sits outside the bake, and the autolyse only needs to be ready before the leaven is. */
-const fixedSteps=new Set(['feed','autolyse']);
+/**
+ * Checking these steps never moves the rest of the plan. The starter feed sits outside the bake, and the autolyse
+ * only needs to be ready before the leaven is. Turns happen during bulk rather than starting a clock: bulk runs its
+ * planned length from when bulk started, so a late or early turn must not lengthen or shorten it.
+ */
+const movesPlan=(id:string)=>id!=='feed'&&id!=='autolyse'&&!/^turn\d+$/.test(id);
 
 /** Check-off times are kept to the minute, so shifted steps land on whole minutes. */
 export function stampNow(now=Date.now()){return Math.round(now/60000)*60000;}
@@ -12,13 +16,14 @@ export function stampNow(now=Date.now()){return Math.round(now/60000)*60000;}
 /**
  * Moves the plan to follow the dough. Each checked step with a recorded time takes that time.
  * Unchecked steps after it keep their planned spacing from it, so a late leaven moves everything that follows.
+ * Checked turns keep their recorded time but move nothing, so later turns stay on their 30-minute marks from bulk start.
  */
 export function liveSchedule(steps:Step[],done:string[],doneAt:Record<string,number>={}){
   const checked=new Set(done);let shift=0;
   const live:LiveStep[]=steps.map(step=>{
     const t=checked.has(step.id)?doneAt[step.id]:undefined;
     if(typeof t==='number'&&Number.isFinite(t)){
-      if(!fixedSteps.has(step.id))shift=t-+step.at;
+      if(movesPlan(step.id))shift=t-+step.at;
       return {...step,planned:step.at,actual:new Date(t),at:new Date(t)};
     }
     return {...step,planned:step.at,at:new Date(+step.at+shift)};
