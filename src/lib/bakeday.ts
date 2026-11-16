@@ -26,6 +26,37 @@ export function liveSchedule(steps:Step[],done:string[],doneAt:Record<string,num
   return {steps:live,shift:Math.round(shift/60000)};
 }
 
+/** Bulk steps (its start and the turns) left unchecked once a later step is checked were skipped: the dough was ready sooner. */
+export function skippedSteps(steps:Step[],done:string[]){
+  const checked=new Set(done),last=steps.reduce((index,step,i)=>checked.has(step.id)?i:index,-1);
+  return steps.filter((step,i)=>i<last&&!checked.has(step.id)&&/^(rest|turn\d+)$/.test(step.id)).map(step=>step.id);
+}
+
+/**
+ * Bulk estimate from dough temperature, agreed with Michael on 2026-11-15: the planned bulk counts as dough at 78°F,
+ * and fermentation time doubles for every 15°F (8°C) cooler and halves for every 15°F warmer (The Sourdough Journey's rule).
+ * It is advice only. Planned steps and the turn count stay as they are.
+ */
+export const BULK_REFERENCE_F=78,BULK_DOUBLING_F=15;
+export const toF=(n:number,unit:'F'|'C')=>unit==='F'?n:n*9/5+32;
+export const fromF=(n:number,unit:'F'|'C')=>unit==='F'?n:(n-32)*5/9;
+export const tempLimits={F:{min:50,max:100},C:{min:10,max:38}} as const;
+export function bulkEstimate(steps:LiveStep[],doughTempF:number|null){
+  const start=steps.find(s=>s.id==='rest'),end=steps.find(s=>s.id==='shape');
+  if(doughTempF===null||!Number.isFinite(doughTempF)||!start||!end)return null;
+  const planned=Math.round((+end.planned-+start.planned)/60000);
+  const minutes=Math.round(planned*2**((BULK_REFERENCE_F-doughTempF)/BULK_DOUBLING_F));
+  const readyAt=new Date(+start.at+minutes*60000),checkFrom=new Date(Math.max(+start.at,+readyAt-30*60000));
+  return {planned,minutes,difference:minutes-planned,readyAt,checkFrom,plannedEnd:end.at};
+}
+export function bulkAdvice(e:NonNullable<ReturnType<typeof bulkEstimate>>,time:(d:Date)=>string){
+  const lead=`Bulk should take about ${durationText(e.minutes)}, ready around ${time(e.readyAt)}.`;
+  if(Math.abs(e.difference)<15)return `${lead} That is close to the plan. Start checking the dough from ${time(e.checkFrom)}.`;
+  return e.difference<0
+    ?`${lead} That is ${durationText(-e.difference)} before the planned preshape. Start checking from ${time(e.checkFrom)}. If the dough is ready before the last turn, skip the remaining turns and preshape.`
+    :`${lead} That is ${durationText(e.difference)} after the planned preshape. Keep folding every 30 minutes until the dough is ready.`;
+}
+
 /** Applies an edited clock time to a recorded check-off, choosing the nearest matching day so a correction across midnight stays on the right date. */
 export function retime(original:number,hhmm:string){
   const m=/^(\d{2}):(\d{2})$/.exec(hhmm);if(!m||!Number.isFinite(original))return null;

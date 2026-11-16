@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createPlanner,recipeSchedule,restorePlanner} from './recipes.ts';
-import {liveSchedule,retime,untilText,shiftText,scheduleCalendar,stampNow} from './bakeday.ts';
+import {liveSchedule,retime,untilText,shiftText,scheduleCalendar,stampNow,skippedSteps,bulkEstimate,bulkAdvice,toF,fromF,BULK_REFERENCE_F} from './bakeday.ts';
 const plan=()=>{const p=createPlanner();p.date='2026-10-21';p.time='09:00';return p;};
 const minutes=(n:number)=>n*60000;
 const at=(steps:{id:string;at:Date}[],id:string)=>+steps.find(s=>s.id===id)!.at;
@@ -77,4 +77,60 @@ test('check-off times survive a save and reload, and stray times are dropped',()
   assert.deepEqual(restorePlanner(odd).recipes.house.doneAt,{mix:+new Date(2026,9,21,14,25)});
   const older=JSON.parse(JSON.stringify({version:5,plan:p}));delete older.plan.recipes.house.doneAt;
   const restored=restorePlanner(older);assert.deepEqual(restored.recipes.house.done,['leaven','mix']);assert.deepEqual(restored.recipes.house.doneAt,{});
+});
+
+const clock=(d:Date)=>`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+test('at the 78°F reference, the bulk estimate is the planned 4 hours, from start of bulk to preshape',()=>{
+  const {steps}=liveSchedule(recipeSchedule(plan()),[]),e=bulkEstimate(steps,BULK_REFERENCE_F)!;
+  assert.equal(e.planned,240);assert.equal(e.minutes,240);assert.equal(e.difference,0);
+  assert.equal(+e.readyAt,at(steps,'shape'));assert.equal(+e.checkFrom,at(steps,'shape')-minutes(30));
+  assert.match(bulkAdvice(e,clock),/^Bulk should take about 4h, ready around 18:15\. That is close to the plan\. Start checking the dough from 17:45\.$/);
+});
+
+test('bulk time halves for every 15°F warmer and doubles for every 15°F cooler',()=>{
+  const {steps}=liveSchedule(recipeSchedule(plan()),[]);
+  assert.equal(bulkEstimate(steps,93)!.minutes,120);assert.equal(bulkEstimate(steps,63)!.minutes,480);
+  assert.equal(bulkEstimate(steps,82)!.minutes,199);assert.equal(bulkEstimate(steps,72)!.minutes,317);
+  assert.equal(bulkEstimate(steps,null),null);assert.equal(bulkEstimate(steps,Number.NaN),null);
+});
+
+test('warm dough advice says when to start checking and to skip remaining turns; cool dough says keep folding',()=>{
+  const {steps}=liveSchedule(recipeSchedule(plan()),[]);
+  const warm=bulkAdvice(bulkEstimate(steps,82)!,clock),cool=bulkAdvice(bulkEstimate(steps,72)!,clock);
+  assert.equal(warm,'Bulk should take about 3h 19m, ready around 17:34. That is 41 min before the planned preshape. Start checking from 17:04. If the dough is ready before the last turn, skip the remaining turns and preshape.');
+  assert.equal(cool,'Bulk should take about 5h 17m, ready around 19:32. That is 1h 17m after the planned preshape. Keep folding every 30 minutes until the dough is ready.');
+});
+
+test('the estimate runs from when bulk actually started, and leaves the planned steps alone',()=>{
+  const planned=recipeSchedule(plan()),rest=at(planned,'rest');
+  const {steps}=liveSchedule(planned,['rest'],{rest:rest+minutes(20)}),e=bulkEstimate(steps,82)!;
+  assert.equal(+e.readyAt,rest+minutes(20)+minutes(199));assert.equal(at(steps,'shape'),at(planned,'shape')+minutes(20));
+});
+
+test('Tartine estimates its 3-hour warm bulk the same way',()=>{
+  const p=plan();p.recipe='tartine';const {steps}=liveSchedule(recipeSchedule(p),[]);
+  assert.equal(bulkEstimate(steps,78)!.planned,180);assert.equal(bulkEstimate(steps,93)!.minutes,90);
+});
+
+test('°C converts through °F and back',()=>{
+  assert.equal(toF(25,'C'),77);assert.equal(toF(80,'F'),80);assert.ok(Math.abs(fromF(77,'C')-25)<1e-9);
+});
+
+test('bulk steps left unchecked before a later checked step count as skipped; nothing else does',()=>{
+  const steps=recipeSchedule(plan());
+  assert.deepEqual(skippedSteps(steps,[]),[]);
+  assert.deepEqual(skippedSteps(steps,['leaven','rest','turn1','turn2','turn3','turn4','shape']),['turn5','turn6','turn7']);
+  assert.deepEqual(skippedSteps(steps,['mix','shape']),['rest','turn1','turn2','turn3','turn4','turn5','turn6','turn7'],'jumping to preshape passes the whole bulk');
+  assert.deepEqual(skippedSteps(steps,['mix']),[],'feed, leaven and autolyse are never skipped');
+  assert.deepEqual(skippedSteps(steps,['fridge']),['rest','turn1','turn2','turn3','turn4','turn5','turn6','turn7'],'only bulk steps, even when much later steps are checked');
+  assert.deepEqual(skippedSteps(steps,['turn1','turn2']),['rest']);
+});
+
+test('dough temperature and unit survive a reload; out-of-range or missing values are dropped',()=>{
+  const p=plan();p.tempUnit='C';p.recipes.house.doughTemp=81.5;
+  assert.deepEqual(restorePlanner(JSON.parse(JSON.stringify({version:5,plan:p}))),p);
+  const odd=JSON.parse(JSON.stringify({version:5,plan:p}));odd.plan.recipes.house.doughTemp=140;odd.plan.tempUnit='K';
+  const r=restorePlanner(odd);assert.equal(r.recipes.house.doughTemp,null);assert.equal(r.tempUnit,'F');
+  const older=JSON.parse(JSON.stringify({version:5,plan:p}));delete older.plan.recipes.house.doughTemp;delete older.plan.tempUnit;
+  const o=restorePlanner(older);assert.equal(o.recipes.house.doughTemp,null);assert.equal(o.tempUnit,'F');
 });
