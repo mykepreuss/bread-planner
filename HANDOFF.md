@@ -102,3 +102,19 @@ Evidence: `TZ=America/Vancouver npm test` passed 91 of 91, including the 82°F e
 Release: PR #9 merged as `c0e165d`, with both Vercel checks passing before the merge. Vercel production completed, and `node scripts/verify-deployment.mjs https://bread.assemblydigital.com` passed 12 checks and 10 assets. The live app bundle contains the dough temperature field, the bulk advice and the Skipped badge. The live page was not exercised in a browser for this release.
 
 Not verified: the estimate against a real bake. Whether 78°F and 15°F match the Preuss dough needs Michael's next bake log.
+
+## Turn wording, design review and new identity, November 15, 2026: released and verified live
+
+Released in this order, each with both Vercel checks passing before merge, a completed production deploy, and a passing `node scripts/verify-deployment.mjs https://bread.assemblydigital.com`:
+
+- **PR #10, `3cee59e`: turn wording.** House-method recipes (House, White & Whole Wheat, Red Spring & Rye, Five-Flour and Four-Flour) say turns 1–3 are vigorous, going around all four sides twice to build gluten early. Turns 4–7 are a single round. This is how Michael does them. Tartine keeps the book's wording. Timing is unchanged.
+- **PR #11, `6075696`: alignment and design review.** The recipe description lines up with the recipe menu text. Timeline notices are spaced from the first day. "Up next" is hidden on an ended plan. The Recipe tab is renamed **Ingredients**, so it no longer shares a name with the recipe menu. The repeated recipe-name heading and the "Ready to weigh" label are removed. The oven note reads "Count one pot per loaf."
+- **PR #12, `25234ac`: new identity, approved by Michael in session.** This supersedes the earlier instruction to keep the existing design.
+  - The cream and terracotta palette and Geist are replaced by flour-grey surfaces (Rye flour `#ecebe6` page, Rice flour `#fafaf7` cards), Cast iron `#22221f` type and buttons, and Bran `#625d54` muted text.
+  - Colour means temperature. The overnight cold proof is Fridge `#2c5a78` in its time, title, checkbox, rail and sidebar summary. Preheat through the last loaf out is Crust `#6f3a1c`. Everything else is neutral, apart from the amber quiet-hours warning. The phase comes from `stepPhase()` in `src/lib/bakeday.ts`.
+  - The typeface is Atkinson Hyperlegible Next (`@fontsource-variable/atkinson-hyperlegible-next`, OFL), which draws zero with a slash. Tabular figures were measured equal width.
+  - Every text pairing meets WCAG AA (lowest 4.99:1). Input borders were raised from 1.86:1 to 3.47:1.
+
+Evidence: 93 of 93 tests and a build with 0 errors and 0 warnings before each PR. Browser checks covered 1200px and 375px. The live site has the new font, background, Schedule and Ingredients tabs, one cold and four oven steps, a document width of 375 and no console errors. The verifier now reports 9 checks and 7 assets, down from 12 and 10. The whole difference is the font: Geist shipped five font files (Cyrillic, Cyrillic extended, Latin, Latin extended and Vietnamese) and Atkinson ships two (Latin and Latin extended).
+
+Not verified: the Up next card with a cold or oven step up next on a real bake, and the font on a physical phone. Proposal, not done: `npm audit` reports a moderate vulnerability in Astro ≤ 7.4.6, and the app pins 7.4.1. This predates these changes.
