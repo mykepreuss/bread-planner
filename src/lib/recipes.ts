@@ -11,9 +11,9 @@ export const definitions:Record<string,RecipeDefinition>={
   'four-flour':{id:'four-flour',name:'Four-Flour Sourdough',description:'All-purpose, red spring, whole wheat and rye, with more whole wheat than the five-flour recipe.',method:'house',flours:['ap','red','fife','wheat','rye'],late:['rye'],houseCompletion:true},
   'manual-rye':{id:'manual-rye',name:'Red Spring & Rye Variation',description:'Your separately edited red-spring-and-rye formula.',method:'house',flours:['red','wheat','rye'],late:['rye']},
 };
-/** `doneAt` records when each checked step was actually done, in epoch milliseconds, so the schedule can follow the dough. */
-export type Profile={params:Record<string,number>;done:string[];doneAt:Record<string,number>};
-export type Planner={recipes:Record<string,Profile>;order:string[];recipe:string;date:string;time:string;anchor:'leaven'|'done';proof:'cold'|'warm';ovenCapacity:number;reheat:number;legacy:Plan};
+/** `doneAt` records when each checked step was actually done, in epoch milliseconds, so the schedule can follow the dough. `doughTemp` is this bake's measured dough temperature in °F. */
+export type Profile={params:Record<string,number>;done:string[];doneAt:Record<string,number>;doughTemp:number|null};
+export type Planner={recipes:Record<string,Profile>;order:string[];recipe:string;date:string;time:string;anchor:'leaven'|'done';proof:'cold'|'warm';ovenCapacity:number;reheat:number;tempUnit:'F'|'C';legacy:Plan};
 const clean=(n:number)=>Math.abs(n)<1e-12?0:n;
 /** Leaven balances compare sums of separately scaled parts, so sub-microgram differences are arithmetic noise, not a deficit. */
 const balance=(n:number)=>Math.max(0,Math.abs(n)<1e-6?0:n);
@@ -34,7 +34,7 @@ export function addedHydration(total:number,p:Record<string,number>){
 }
 function profile(flours:Record<string,number>,water:number,leaven:number,salt:number,finalWater:number,count:number,weight:number,build:number[],done:string[]=[]):Profile{
   const flour=Object.values(flours).reduce((a,b)=>a+b,0),denominator=flour||1;
-  return {params:{count,weight,hydration:water/denominator*100,leaven:leaven/denominator*100,salt:salt/denominator*100,reserve:water?finalWater/water*100:0,...Object.fromEntries(Object.entries(flours).map(([k,n])=>[`flour_${k}`,n/denominator*100])),buildSeed:build[0]/denominator*1000,buildBread:build[1]/denominator*1000,buildWheat:build[2]/denominator*1000,buildWater:build[3]/denominator*1000},done:[...done],doneAt:{}};
+  return {params:{count,weight,hydration:water/denominator*100,leaven:leaven/denominator*100,salt:salt/denominator*100,reserve:water?finalWater/water*100:0,...Object.fromEntries(Object.entries(flours).map(([k,n])=>[`flour_${k}`,n/denominator*100])),buildSeed:build[0]/denominator*1000,buildBread:build[1]/denominator*1000,buildWheat:build[2]/denominator*1000,buildWater:build[3]/denominator*1000},done:[...done],doneAt:{},doughTemp:null};
 }
 /** Identity ignores hydration, water staging and yield, but retains flour, leaven, salt and mixing method. */
 export function recipeSignature(id:string,p:Profile){
@@ -61,7 +61,7 @@ export function createPlanner(legacy:Plan=legacyDefaults()):Planner{
     recipes[id]=profile(flours,water,flour*.2,flour*.02,c[`${prefix}12`],count,(flour*1.22+water)/count,[28,71,71,142].map(n=>n*flour/1000));
   }
   const {order}=consolidate(recipes,['house','tartine','white-wheat','red-rye','five-flour','four-flour','manual-rye']);
-  return {recipes,order,recipe:legacy.recipe==='custom'?'red-rye':legacy.recipe,date:legacy.date,time:legacy.time,anchor:legacy.anchor,proof:legacy.proof,ovenCapacity:Math.min(2,c.ovenCapacity),reheat:c.batchReheat,legacy};
+  return {recipes,order,recipe:legacy.recipe==='custom'?'red-rye':legacy.recipe,date:legacy.date,time:legacy.time,anchor:legacy.anchor,proof:legacy.proof,ovenCapacity:Math.min(2,c.ovenCapacity),reheat:c.batchReheat,tempUnit:'F',legacy};
 }
 export function restorePlanner(saved:unknown):Planner{
   const envelope=saved as {version?:number;plan?:Partial<Planner>};
@@ -77,6 +77,7 @@ export function restorePlanner(saved:unknown):Planner{
     const done=base.recipes[id].done=Array.isArray(source.done)?source.done.filter(x=>typeof x==='string'):[];
     const times=source.doneAt&&typeof source.doneAt==='object'?Object.entries(source.doneAt):[];
     base.recipes[id].doneAt=Object.fromEntries(times.filter(([step,t])=>done.includes(step)&&typeof t==='number'&&Number.isFinite(t)));
+    const temp=source.doughTemp;base.recipes[id].doughTemp=typeof temp==='number'&&temp>=50&&temp<=100?temp:null;
   }
   base.order=Array.isArray(p.order)?[...new Set(p.order.filter(id=>typeof id==='string'&&Object.hasOwn(definitions,id)))]:base.order;
   if(!base.order.length)base.order=['house'];
@@ -87,6 +88,7 @@ export function restorePlanner(saved:unknown):Planner{
   base.anchor=p.anchor==='done'?'done':'leaven';base.proof=p.proof==='warm'?'warm':'cold';
   if(typeof p.ovenCapacity==='number'&&Number.isInteger(p.ovenCapacity)&&p.ovenCapacity>0)base.ovenCapacity=Math.min(2,p.ovenCapacity);
   if(typeof p.reheat==='number'&&Number.isFinite(p.reheat)&&p.reheat>=0)base.reheat=p.reheat;
+  base.tempUnit=p.tempUnit==='C'?'C':'F';
   return base;
 }
 export function calculateRecipe(plan:Planner,id=plan.recipe){
