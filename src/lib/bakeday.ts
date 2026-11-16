@@ -26,6 +26,14 @@ export function liveSchedule(steps:Step[],done:string[],doneAt:Record<string,num
   return {steps:live,shift:Math.round(shift/60000)};
 }
 
+/** The temperature a step happens at. The page colours steps by it: neutral at room temperature, Fridge for the cold proof, Crust for the oven. */
+export type Phase='room'|'cold'|'oven';
+export function stepPhase(id:string):Phase{
+  if(id==='fridge')return 'cold';
+  if(/^(preheat|reheat-\d+|covered(-\d+)?|uncovered(-\d+)?|out-\d+|done)$/.test(id))return 'oven';
+  return 'room';
+}
+
 /** Bulk steps (its start and the turns) left unchecked once a later step is checked were skipped: the dough was ready sooner. */
 export function skippedSteps(steps:Step[],done:string[]){
   const checked=new Set(done),last=steps.reduce((index,step,i)=>checked.has(step.id)?i:index,-1);
