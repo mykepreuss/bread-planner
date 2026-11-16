@@ -118,3 +118,13 @@ Released in this order, each with both Vercel checks passing before merge, a com
 Evidence: 93 of 93 tests and a build with 0 errors and 0 warnings before each PR. Browser checks covered 1200px and 375px. The live site has the new font, background, Schedule and Ingredients tabs, one cold and four oven steps, a document width of 375 and no console errors. The verifier now reports 9 checks and 7 assets, down from 12 and 10. The whole difference is the font: Geist shipped five font files (Cyrillic, Cyrillic extended, Latin, Latin extended and Vietnamese) and Atkinson ships two (Latin and Latin extended).
 
 Not verified: the Up next card with a cold or oven step up next on a real bake, and the font on a physical phone. Proposal, not done: `npm audit` reports a moderate vulnerability in Astro ≤ 7.4.6, and the app pins 7.4.1. This predates these changes.
+
+## Turns keep bulk length, November 16, 2026: released and verified live
+
+PR #13 merged as `1c5185b`, with both Vercel checks passing before the merge. Vercel production completed, and `node scripts/verify-deployment.mjs https://bread.assemblydigital.com` passed. The live bundle contains the new `movesPlan` rule.
+
+Michael's decision: checking a turn must not move the schedule, because cumulative drift from late or early taps lengthens or shortens bulk and risks over- or under-proofing. Turns now join the starter feed and the autolyse as steps that record their time but move nothing. Later turns stay on their 30-minute marks from bulk start, and preshape stays at bulk start plus the planned bulk. Starting bulk late still moves the turns and preshape together. Leaven, mix, start of bulk, preshape, shaping, the cold proof and the oven steps still move the plan.
+
+Evidence: 96 of 96 tests pass. Three new tests cover late and early turns, bulk staying 240 minutes after a late start whatever the turns do, and Tartine. They fail against the previous code. The build had 0 errors and 0 warnings. In the browser at 375px, with bulk starting at 8:58 AM, turn 1 checked 30 minutes early and then corrected to 22 minutes late changed only turn 1's own time. The 12:58 PM preshape and everything after it were unchanged. Test values were restored.
+
+Not verified: a bake stepped through on the live site.
