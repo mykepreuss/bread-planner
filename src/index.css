@@ -187,11 +187,11 @@ input { font-variant-numeric: tabular-nums; }
 h1 { font-size: clamp(36px, 4.1vw, 56px); line-height: 1.1; letter-spacing: -2.2px; font-weight: 650; margin: 0; text-wrap: balance; }
 h2 { font-size: 30px; line-height: 1.25; letter-spacing: -.9px; font-weight: 620; margin: 0; text-wrap: balance; }
 
-.recipe-switch { display: flex; align-items: center; gap: 32px; margin-bottom: 24px; padding: 24px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-card); }
+.recipe-switch { display: flex; align-items: flex-end; gap: 32px; margin-bottom: 24px; padding: 24px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-card); }
 .recipe-switch>div { min-width: 300px; }
 .recipe-switch label { display: block; margin-bottom: 8px; color: var(--muted-foreground); }
 .recipe-switch [data-slot=select-trigger] { width: 100%; background: var(--background); font-weight: 550; }
-.recipe-switch p { font-size: 16px; line-height: 1.6; margin: 0; }
+.recipe-switch p { font-size: 16px; line-height: 1.6; margin: 0; min-height: 48px; display: flex; align-items: center; }
 .main-tabs { gap: 0; }
 .nav-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
 .nav-tabs { background: var(--secondary); padding: 5px; height: auto; gap: 4px; border-radius: 14px; }
@@ -315,8 +315,6 @@ h2 { font-size: 30px; line-height: 1.25; letter-spacing: -.9px; font-weight: 620
 .is-done .step-details label { text-decoration: line-through; }
 .bake-complete { display: flex; align-items: center; gap: 12px; padding: 24px; background: var(--secondary); border-radius: var(--radius-inset); color: var(--success); }
 
-.page-heading { margin-bottom: 32px; }
-.page-heading h2 { font-size: 36px; letter-spacing: -1.2px; }
 .formula-layout { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 28px; align-items: start; }
 .form-stack, .result-stack { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
 .work-card { box-shadow: none; padding: 0; gap: 0; border-radius: var(--radius-card); background: var(--card); overflow: hidden; margin-bottom: 28px; min-width: 0; }
@@ -349,7 +347,6 @@ h2 { font-size: 30px; line-height: 1.25; letter-spacing: -.9px; font-weight: 620
 .field-note { margin: 20px 0 0; font-size: 14px; color: var(--muted-foreground); line-height: 1.75; }
 .formula-result { border: 0; box-shadow: none; background: var(--espresso); color: var(--primary-foreground); padding: 0; border-radius: 18px; }
 .formula-result [data-slot=card-content] { padding: 32px; }
-.formula-result .eyebrow { color: var(--espresso-muted); margin: 0 0 16px; }
 .result-total { font-size: clamp(56px,6vw,76px); line-height: 1.1; letter-spacing: -3px; font-weight: 500; font-variant-numeric: tabular-nums; }
 .result-total>span { font-size: 32px; margin-left: 8px; letter-spacing: -1px; }
 .formula-result p { font-size: 16px; color: var(--espresso-muted); margin: 14px 0 0; }
@@ -371,7 +368,7 @@ h2 { font-size: 30px; line-height: 1.25; letter-spacing: -.9px; font-weight: 620
 .cold-proof-summary p { margin: 14px 0 10px; font-size: 15px; line-height: 1.75; }
 .cold-proof-summary p span { display: block; }
 .cold-proof-status { font-size: 14px; color: var(--muted-foreground); line-height: 1.7; display: block; }
-.overnight-warning { margin: 0 0 24px; }
+.timeline-section>.notice { margin: 0 0 24px; }
 .schedule-sidebar .work-card [data-slot=card-header] { padding: 24px 24px 20px; }
 .schedule-sidebar .work-card [data-slot=card-content] { padding: 0 24px 24px; }
 .schedule-sidebar .field-grid { grid-template-columns: 1fr; gap: 20px; }
@@ -425,7 +422,7 @@ h2 { font-size: 30px; line-height: 1.25; letter-spacing: -.9px; font-weight: 620
   h1 { font-size: 40px; letter-spacing: -1.7px; max-width: 360px; }
   .recipe-switch { flex-direction: column; align-items: stretch; padding: 20px; gap: 18px; margin-bottom: 24px; }
   .recipe-switch>div { min-width: 0; }
-  .recipe-switch p { font-size: 15px; }
+  .recipe-switch p { font-size: 15px; min-height: 0; display: block; }
   .nav-row { margin-bottom: 28px; gap: 12px; padding-bottom: 20px; }
   .nav-tabs { width: 100%; gap: 2px; padding: 4px; }
   .nav-tabs [data-slot=tabs-trigger] { flex: 1; flex-direction: column; min-height: 78px; padding: 10px 6px; gap: 6px; font-size: 14px; white-space: normal; line-height: 1.4; }
@@ -451,7 +448,6 @@ h2 { font-size: 30px; line-height: 1.25; letter-spacing: -.9px; font-weight: 620
   .step-details [data-slot=label] { font-size: 18px; }
   .step-details p { font-size: 15px; }
   .step-details .readiness-cue { font-size: 14px; }
-  .page-heading h2 { font-size: 32px; letter-spacing: -1px; }
   .work-card [data-slot=card-header] { padding: 24px 20px 20px; }
   .work-card [data-slot=card-content] { padding: 0 20px 24px; }
   .field-grid { gap: 22px 16px; }
