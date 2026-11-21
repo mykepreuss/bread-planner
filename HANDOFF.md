@@ -138,3 +138,7 @@ PR #14 merged as `7bedc0d`. It supersedes the Astro 7.4.1 and explicit cookie 2.
 - All lockfile changes are within Astro's own dependency tree. Of the 48 additions, most are per-platform bundler binaries. One nested pre-release, `@emnapi/core` 2.0.0-beta.2, sits under the optional `wasm32-wasi` binding and is not installed on macOS or Vercel.
 
 Evidence: locally on Node 26, `npm ci` was clean, `npm audit` found 0 vulnerabilities, 96 of 96 tests passed, and the build had 0 errors and 0 warnings with the same output file set. The dev server hydrated with no errors, and a loaf-count edit recalculated and was restored. The Vercel PR build on Node 24 passed. Production deploy completed, and the verifier passed with 9 checks and 7 assets, unchanged. The live app hydrated 23 steps with the Atkinson font and no console errors. `npm audit` on `main` after `npm ci` found 0 vulnerabilities.
+
+## Calendar export removed, November 21, 2026: locally verified, not released
+
+Michael's decision: remove the "Add steps to calendar" feature. This supersedes the calendar button described in the bake-day view section above. The button, its sidebar note, the `.ics` generator `scheduleCalendar`, its test and its styles are gone. Nothing else in the schedule or bake-day view changed.
