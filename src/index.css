@@ -293,8 +293,9 @@ h2 { font-size: 30px; line-height: 1.25; letter-spacing: -.4px; font-weight: 700
 .phase-cold .step-check [data-state=checked], .phase-oven .step-check [data-state=checked] { background: var(--phase); }
 .timeline-step time, .step-details>[data-slot=label], .step-details>p { transition: opacity 150ms var(--ease-out); }
 .is-done time, .is-done .step-details>[data-slot=label], .is-done .step-details>p { opacity: .55; }
-.done-at { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
-.step-details .done-at [data-slot=label] { font-size: 14px; font-weight: 500; color: var(--muted-foreground); cursor: default; }
+.done-at { display: grid; grid-template-columns: repeat(2, max-content); justify-content: start; align-items: center; gap: 6px 10px; margin-top: 8px; }
+.done-at-label { grid-column: 1 / -1; }
+.step-details .done-at-label { font-size: 14px; font-weight: 500; color: var(--muted-foreground); cursor: default; }
 .done-at [data-slot=input] { width: auto; min-width: 0; height: 40px; padding: 6px 10px; font-size: 15px; background: var(--background); box-shadow: none; }
 
 .is-skipped time, .is-skipped .step-details>[data-slot=label], .is-skipped .step-details>p { opacity: .45; }
@@ -432,6 +433,8 @@ h2 { font-size: 30px; line-height: 1.25; letter-spacing: -.4px; font-weight: 700
   .recipe-switch>div { min-width: 265px; }
 }
 @media (max-width: 640px) {
+  .done-at { grid-template-columns: minmax(0,1.3fr) minmax(0,1fr); }
+  .done-at [data-slot=input] { width: 100%; }
   .app-shell { padding: 0 20px 32px; }
   .intro { padding: 32px 0 26px; }
   h1 { font-size: 40px; letter-spacing: -.8px; max-width: 360px; }

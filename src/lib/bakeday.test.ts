@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createPlanner,recipeSchedule,restorePlanner} from './recipes.ts';
-import {liveSchedule,retime,untilText,shiftText,scheduleCalendar,stampNow,skippedSteps,stepPhase,bulkEstimate,bulkAdvice,toF,fromF,BULK_REFERENCE_F} from './bakeday.ts';
+import {liveSchedule,retime,clockText,untilText,shiftText,scheduleCalendar,stampNow,skippedSteps,stepPhase,bulkEstimate,bulkAdvice,toF,fromF,BULK_REFERENCE_F} from './bakeday.ts';
 const plan=()=>{const p=createPlanner();p.date='2026-10-21';p.time='09:00';return p;};
 const minutes=(n:number)=>n*60000;
 const at=(steps:{id:string;at:Date}[],id:string)=>+steps.find(s=>s.id===id)!.at;
@@ -43,12 +43,13 @@ test('check-off times round to the minute',()=>{
   assert.equal(stampNow(Date.UTC(2026,9,21,9,0,29)),Date.UTC(2026,9,21,9,0));assert.equal(stampNow(Date.UTC(2026,9,21,9,0,31)),Date.UTC(2026,9,21,9,1));
 });
 
-test('editing a recorded time picks the nearest day, including across midnight',()=>{
-  const evening=+new Date(2026,9,21,23,50),afterMidnight=+new Date(2026,9,22,0,10);
-  assert.equal(retime(evening,'23:35'),+new Date(2026,9,21,23,35));
-  assert.equal(retime(evening,'00:05'),+new Date(2026,9,22,0,5));
-  assert.equal(retime(afterMidnight,'23:55'),+new Date(2026,9,21,23,55));
-  assert.equal(retime(evening,''),null);assert.equal(retime(evening,'7pm'),null);
+test('a recorded check-off takes the date and time from its fields',()=>{
+  assert.equal(retime('2026-10-21','23:35'),+new Date(2026,9,21,23,35));
+  assert.equal(retime('2026-10-22','00:05'),+new Date(2026,9,22,0,5),'a correction past midnight uses the date given');
+  assert.equal(retime('2026-10-20','15:22'),+new Date(2026,9,20,15,22),'the day can move back without touching the time');
+  assert.equal(retime('2026-12-31','09:00'),+new Date(2026,11,31,9,0));
+  for(const [date,time] of [['2026-10-21',''],['2026-10-21','7pm'],['','09:00'],['2026-02-30','09:00'],['2026-10-21','24:00']])assert.equal(retime(date,time),null,`${date} ${time}`);
+  assert.equal(clockText(new Date(2026,9,21,7,5)),'07:05');
 });
 
 test('countdown and shift wording',()=>{
