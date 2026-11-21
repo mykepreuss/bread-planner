@@ -245,11 +245,8 @@ h2 { font-size: 30px; line-height: 1.25; letter-spacing: -.4px; font-weight: 700
 .finish-summary span { display: block; font-size: 14px; color: var(--espresso-muted); }
 .finish-summary strong { display: block; font-size: 36px; line-height: 1.25; font-weight: 550; margin-top: 6px; letter-spacing: -.6px; font-variant-numeric: tabular-nums; }
 .finish-summary small { font-size: 14px; color: var(--espresso-muted); display: block; margin-top: 6px; }
-.batch-card { padding: 0; border-color: var(--border); box-shadow: none; background: transparent; gap: 0; border-radius: var(--radius-card); }
-.batch-card [data-slot=card-content] { padding: 24px; }
 .card-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .card-title-row>svg { color: var(--muted-foreground); }
-.batch-title { font-size: 20px; line-height: 1.4; font-weight: 600; display: block; margin-top: 18px; letter-spacing: -.4px; }
 .batch-facts { display: flex; flex-direction: column; gap: 7px; font-size: 15px; color: var(--muted-foreground); margin-top: 14px; }
 .batch-facts strong { font-weight: 550; color: var(--foreground); }
 .text-link { padding: 8px 0; margin-top: 16px; font-size: 15px; gap: 8px; justify-content: flex-start; }
@@ -268,7 +265,7 @@ h2 { font-size: 30px; line-height: 1.25; letter-spacing: -.4px; font-weight: 700
 .day-number { font-size: 13px; font-weight: 550; color: var(--primary); font-variant-numeric: tabular-nums; }
 .day-heading h3 { font-size: 16px; font-weight: 600; margin: 0; white-space: nowrap; }
 .day-rule { height: 1px; background: var(--border); flex: 1; }
-.timeline-step { display: grid; grid-template-columns: 40px 88px minmax(0,1fr) 62px; gap: 12px; align-items: start; position: relative; padding: 20px 0; min-height: 84px; }
+.timeline-step { display: grid; grid-template-columns: 40px 88px minmax(0,1fr); gap: 12px; align-items: start; position: relative; padding: 20px 0; min-height: 84px; }
 .timeline-step:after { content: ''; position: absolute; left: 16px; top: 54px; bottom: -20px; width: 2px; background: var(--rail); z-index: 0; }
 .timeline-step:last-child:after { display: none; }
 .step-check { display: flex; justify-content: flex-start; align-items: flex-start; position: relative; z-index: 1; }
@@ -280,7 +277,9 @@ h2 { font-size: 30px; line-height: 1.25; letter-spacing: -.4px; font-weight: 700
 .step-details p { font-size: 15px; color: var(--muted-foreground); margin: 8px 0 0; line-height: 1.7; }
 .step-details .readiness-cue { color: var(--ink-soft); background: var(--secondary); border-radius: var(--radius-inset); padding: 12px 14px; margin-top: 12px; font-size: 14px; line-height: 1.7; }
 .readiness-cue strong { font-weight: 600; color: var(--primary); }
-.step-duration { font-size: 14px; color: var(--muted-foreground); text-align: right; white-space: nowrap; display: flex; justify-content: flex-end; line-height: 28px; }
+/* The gap to the next step, centred on the rail where one step meets the next. */
+.step-gap { position: absolute; left: 17px; bottom: 0; transform: translate(-50%, 50%); z-index: 1; padding: 3px 8px; border: 1px solid var(--rail); border-radius: 999px; background: var(--background); color: var(--muted-foreground); font-size: 12px; font-weight: 550; line-height: 1.4; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.phase-cold .step-gap, .phase-oven .step-gap { border-color: var(--phase); color: var(--phase); }
 .next-badge { font-size: 12px; font-weight: 550; padding: 3px 8px; height: auto; color: var(--primary); border: 0; background: var(--secondary); border-radius: 6px; }
 .is-next { color: var(--primary); }
 .is-next .step-check [data-slot=checkbox] { border-width: 2px; border-color: var(--primary); }
@@ -404,7 +403,6 @@ h2 { font-size: 30px; line-height: 1.25; letter-spacing: -.4px; font-weight: 700
   .schedule-layout { grid-template-columns: 300px minmax(0,1fr); gap: 28px; }
   .section-heading { align-items: flex-start; flex-wrap: wrap; gap: 16px; }
   .timeline-step { grid-template-columns: 36px 80px minmax(0,1fr); gap: 10px; }
-  .step-duration { grid-column: 2; grid-row: 2; text-align: left; justify-content: flex-start; line-height: 1.5; margin-top: -4px; }
   .step-details { grid-column: 3; grid-row: 1 / span 2; }
   .timeline-meta>span:nth-child(2) { margin-left: 0; }
   .timeline-meta [data-slot=button] { margin-left: auto; }
@@ -415,12 +413,15 @@ h2 { font-size: 30px; line-height: 1.25; letter-spacing: -.4px; font-weight: 700
 }
 @media (max-width: 850px) {
   .schedule-layout { grid-template-columns: 1fr; gap: 36px; }
+  /* Once the bake is underway, the steps come before the batch and oven settings. */
+  .schedule-layout.is-underway .schedule-sidebar { display: contents; }
+  .schedule-layout.is-underway .timeline-section { order: 1; }
+  .schedule-layout.is-underway .setup-card { order: 2; }
   .schedule-sidebar { display: grid; grid-template-columns: 1fr 1fr; align-items: start; }
   .plan-card { grid-row: span 2; }
   .sidebar-note { grid-column: 1 / -1; }
-  .timeline-step { grid-template-columns: 40px 88px minmax(0,1fr) 62px; gap: 12px; }
+  .timeline-step { grid-template-columns: 40px 88px minmax(0,1fr); gap: 12px; }
   .step-details { grid-column: auto; grid-row: auto; }
-  .step-duration { grid-column: auto; grid-row: auto; justify-content: flex-end; line-height: 28px; margin: 0; }
   .section-heading { flex-wrap: nowrap; align-items: center; }
   .timeline-meta>span:nth-child(2) { margin-left: auto; }
   .timeline-meta [data-slot=button] { margin: 0; }
@@ -454,10 +455,9 @@ h2 { font-size: 30px; line-height: 1.25; letter-spacing: -.4px; font-weight: 700
   .timeline-meta>span:nth-child(2) { margin-left: 0; }
   .timeline-meta [data-slot=button] { margin-left: auto; }
   .day-heading h3 { font-size: 16px; }
-  .timeline-step { grid-template-columns: 40px minmax(0,1fr) auto; gap: 6px 12px; padding: 20px 0; }
+  .timeline-step { grid-template-columns: 40px minmax(0,1fr); gap: 6px 12px; padding: 20px 0; }
   .step-check { grid-row: 1 / span 2; }
   .timeline-step time { grid-column: 2; font-size: 16px; }
-  .step-duration { grid-column: 3; grid-row: 1; font-size: 14px; }
   .step-details { grid-column: 2 / -1; grid-row: 2; }
   .step-details [data-slot=label] { font-size: 18px; }
   .step-details p { font-size: 15px; }
@@ -504,13 +504,14 @@ h2 { font-size: 30px; line-height: 1.25; letter-spacing: -.4px; font-weight: 700
   h1 { font-size: 32px; }
   .nav-row, .section-heading button, .timeline-meta button, .text-link, .now-card { display: none!important; }
   .schedule-layout { display: grid; grid-template-columns: 240px minmax(0,1fr); gap: 24px; }
-  .schedule-sidebar { display: flex; }
+  .schedule-sidebar, .schedule-layout.is-underway .schedule-sidebar { display: flex; }
+  .schedule-layout.is-underway .timeline-section, .schedule-layout.is-underway .setup-card { order: 0; }
   .plan-card, .formula-result { background: white; color: black; border: 1px solid var(--border); }
   .plan-card *, .formula-result * { color: black!important; }
   .plan-card input, .plan-card .anchor-select { background: white; color-scheme: light; }
-  .timeline-step { grid-template-columns: 70px minmax(0,1fr) 50px; gap: 8px; padding: 10px 0; min-height: 40px; break-inside: avoid; }
-  .step-check, .timeline-step:after { display: none; }
-  .timeline-step time, .step-details, .step-duration { grid-column: auto; grid-row: auto; font-size: 12px; }
+  .timeline-step { grid-template-columns: 70px minmax(0,1fr); gap: 8px; padding: 10px 0; min-height: 40px; break-inside: avoid; }
+  .step-check, .timeline-step:after, .step-gap { display: none; }
+  .timeline-step time, .step-details { grid-column: auto; grid-row: auto; font-size: 12px; }
   .step-details [data-slot=label] { font-size: 14px; }
   .step-details p, .step-details .readiness-cue { font-size: 11px; }
   .step-details .readiness-cue { background: transparent; padding: 4px 0; }

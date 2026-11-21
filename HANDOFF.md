@@ -150,3 +150,26 @@ Michael's request: a checked step's "Done at" should let you change the day as w
 Evidence: 96 of 96 tests pass. The nearest-day test was replaced by one covering a date move, a past-midnight correction, a year end and five invalid entries. The build had 0 errors, 0 warnings and the 4 existing hints. In the dev server at 375px, moving the leaven from Nov 21 to Nov 20 moved the record and the autolyse back a day. Setting 23:50 kept Nov 20, and a cleared date was ignored. The label sits above the two fields at 375px and 861px, with a document width of 375 at phone size. The local plan was restored to the leaven done at 3:22 PM on Nov 21.
 
 Not verified: the native date picker on a real phone, and the live site.
+
+## Loaf count on the Schedule tab, November 21, 2026: locally verified, not released
+
+Michael's request: be able to make 3, 4, 6 or 8 loaves instead of the default 2. The loaf count already had no upper limit, but it was only editable on the Ingredients tab. The Schedule tab's only loaf control was "Loaves baked at once", which is capped at 2 on purpose (one pot per loaf). The batch card on the Schedule tab now has the same "Number of loaves" field, under its "N loaves at W g each" summary. Both tabs edit the same saved setting. Inactive tabs are unmounted, so the shared `field-count` id appears once on the page.
+
+Evidence: 95 of 95 tests pass, and the build had 0 errors, 0 warnings and the 4 existing hints. No logic changed, so no test was added. In the dev server, typing 3, 4, 6 and 8 into the Schedule field updated the summary, total dough, batch count and finish time: 3 and 4 loaves gave 2 batches finishing at 5:08 PM, 6 gave 3 batches at 6:21 PM, and 8 gave 4 batches at 7:34 PM with 41 steps. The Ingredients tab then showed 8 and 8,000 g, and 8 survived a reload. At 375px the field fits the card with a document width of 375. The local plan was restored to 2 loaves.
+
+Not verified: the live site.
+
+## Schedule review fixes, November 21, 2026: locally verified, not released
+
+Michael asked for all five findings from a design and content review of the Schedule tab. They sit on the same branch as the loaf-count field above.
+
+1. **Gap between steps.** The right-hand duration column read as how long a step takes ("Start bulk fermentation · 30 min", while bulk runs about 4 hours). It was the step's modelled length, not always the time to the next step: the warm-up and preheat both start at once and each showed 1h. The column is gone. `stepGaps` in `bakeday.ts` computes the minutes from each step's live start to the next one's, shown as a small label on the rail between them (phase-coloured in the cold and oven stretches, hidden in print). Steps that start together, and the last step, show none.
+2. **Copy for the baker, not the source sheet.** Removed "The default is 12 hours 30 minutes…", "The supplied recipe gives…" and the starter guide's "The supplied recipe prepares…". "Keep later batches chilled until their own warm-up" appears only with more than one batch. The cooling mark now says "The loaves are ready to slice." (or "This batch…") instead of citing the source. The existing rule that every step has guidance is kept.
+3. **Your batch card.** Titled "Your batch", as on the Ingredients tab, with the loaf field and "per loaf", "total dough" and "total hydration" below it. It uses the same card surface as "Oven and proof".
+4. **Steps first once underway.** At 850px and below, once any step is checked (and the plan has not ended), the batch and oven cards move below the step list. Up next, the plan card and the readiness note stay above it. Unchecking everything restores the original order.
+5. **Wording.** "Your bake, step by step." became "Bake schedule", which also labels the section. Days read "Day 1 Saturday, Nov 21" instead of "01".
+6. **Oven card.** Michael removed the "Count one pot per loaf." description under "Oven and proof"; it did not make sense there.
+
+Evidence: 97 of 97 tests pass. New tests cover the step gaps (bulk start 30 min, parallel warm-up 0, preheat 60, last step 0) and the copy rules (no "supplied recipe" or "default is" in any recipe's step notes, and the later-batches sentence only with several batches). The build had 0 errors, 0 warnings and the 4 existing hints. In the dev server with a fresh plan at 1280px, the gap labels matched those values and the colours followed the phases. At 375px, checking the first step moved the first timeline step from 2,400px to 1,835px from the top and the batch card from 1,326px to 6,620px. At 768px the reorder held, unchecking restored it, the document width matched the viewport, and the console had no errors. The local plan was restored.
+
+Not verified: the live site, and a real phone.
