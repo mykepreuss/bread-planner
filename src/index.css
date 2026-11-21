@@ -324,10 +324,6 @@ h2 { font-size: 30px; line-height: 1.25; letter-spacing: -.4px; font-weight: 700
 .now-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px 20px; margin-top: 20px; }
 .now-actions [data-slot=button] { min-height: 52px; min-width: 140px; font-size: 17px; }
 .now-actions p { margin: 0; font-size: 15px; color: var(--muted-foreground); line-height: 1.6; }
-.calendar-export { margin-top: 24px; }
-.calendar-export [data-slot=button] { width: 100%; background: transparent; color: var(--primary-foreground); border-color: var(--espresso-border); }
-.calendar-export [data-slot=button]:hover { background: #ffffff10; color: var(--primary-foreground); }
-.calendar-export p { margin: 10px 0 0; font-size: 14px; line-height: 1.6; color: var(--espresso-muted); }
 .is-done .step-details label { text-decoration: line-through; }
 .bake-complete { display: flex; align-items: center; gap: 12px; padding: 24px; background: var(--secondary); border-radius: var(--radius-inset); color: var(--success); }
 
@@ -506,7 +502,7 @@ h2 { font-size: 30px; line-height: 1.25; letter-spacing: -.4px; font-weight: 700
   .app-shell { max-width: none; padding: 0; }
   .intro { padding: 20px 0; }
   h1 { font-size: 32px; }
-  .nav-row, .section-heading button, .timeline-meta button, .text-link, .now-card, .calendar-export { display: none!important; }
+  .nav-row, .section-heading button, .timeline-meta button, .text-link, .now-card { display: none!important; }
   .schedule-layout { display: grid; grid-template-columns: 240px minmax(0,1fr); gap: 24px; }
   .schedule-sidebar { display: flex; }
   .plan-card, .formula-result { background: white; color: black; border: 1px solid var(--border); }

@@ -19,7 +19,7 @@ Astro statically builds the page shell, metadata and404 page. The calculator is 
 
 Preuss House is the default. Six distinct editable recipes retain independent settings and checklists. The calculation engine includes separate leaven made/used/reserved, staged ingredients, all-loaf forward/backward scheduling, overnight proof, readiness cues and quiet-hours checks. Percentages support both sliders and exact number entry.
 
-On bake day, an "Up next" card shows the next step with a countdown. Checking a step records when it was done, and later steps move to keep their planned spacing from it. Turns are the exception: they are recorded but move nothing, so bulk always runs its planned length from when it started. Remaining steps can be exported to a calendar file with an alert for each.
+On bake day, an "Up next" card shows the next step with a countdown. Checking a step records when it was done, and later steps move to keep their planned spacing from it. Turns are the exception: they are recorded but move nothing, so bulk always runs its planned length from when it started.
 
 Entering the dough temperature after mixing gives a bulk estimate: the planned bulk counts as 78°F dough, and time doubles for every 15°F cooler and halves for every 15°F warmer. It advises when to start checking; it does not change the planned steps.
 

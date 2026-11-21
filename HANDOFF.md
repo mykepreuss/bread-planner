@@ -139,6 +139,10 @@ PR #14 merged as `7bedc0d`. It supersedes the Astro 7.4.1 and explicit cookie 2.
 
 Evidence: locally on Node 26, `npm ci` was clean, `npm audit` found 0 vulnerabilities, 96 of 96 tests passed, and the build had 0 errors and 0 warnings with the same output file set. The dev server hydrated with no errors, and a loaf-count edit recalculated and was restored. The Vercel PR build on Node 24 passed. Production deploy completed, and the verifier passed with 9 checks and 7 assets, unchanged. The live app hydrated 23 steps with the Atkinson font and no console errors. `npm audit` on `main` after `npm ci` found 0 vulnerabilities.
 
+## Calendar export removed, November 21, 2026: locally verified, not released
+
+Michael's decision: remove the "Add steps to calendar" feature. This supersedes the calendar button described in the bake-day view section above. The button, its sidebar note, the `.ics` generator `scheduleCalendar`, its test and its styles are gone. Nothing else in the schedule or bake-day view changed.
+
 ## Done at takes a date, November 21, 2026: locally verified, not released
 
 Michael's request: a checked step's "Done at" should let you change the day as well as the time. It now has a date field beside the time field, and the record is set to exactly the date and time shown. This supersedes the nearest-day rule from the bake-day view, where a time-only edit picked whichever of yesterday, today or tomorrow was closest. An incomplete or impossible entry, such as a cleared date, is ignored and the field keeps the recorded value. "Done at" is now plain text above the two fields, so it is no longer struck through with the step title.

@@ -1,7 +1,7 @@
 import {createContext,useContext,useEffect,useMemo,useState,type ReactNode} from 'react';
 import {useForm,useSelector} from '@tanstack/react-form';
 import {useTable,tableFeatures,flexRender,type ColumnDef} from '@tanstack/react-table';
-import {Wheat,Clock3,Check,RotateCcw,Info,Flame,Snowflake,Scale,CalendarDays,CalendarPlus,Moon} from 'lucide-react';
+import {Wheat,Clock3,Check,RotateCcw,Info,Flame,Snowflake,Scale,CalendarDays,Moon} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Slider} from '@/components/ui/slider';
@@ -17,7 +17,7 @@ import {Tooltip,TooltipTrigger,TooltipContent,TooltipProvider} from '@/component
 import {AlertDialog,AlertDialogTrigger,AlertDialogContent,AlertDialogHeader,AlertDialogTitle,AlertDialogDescription,AlertDialogFooter,AlertDialogCancel,AlertDialogAction} from '@/components/ui/alert-dialog';
 import {coldProofWindow,calendarText,dateString,durationText,loafText,timeText,round,type InputSpec} from '@/lib/model';
 import {definitions,flourNames,createPlanner,restorePlanner,calculateRecipe,recipeSchedule,recipeDefaults,quietHourActions,totalHydration,addedHydration,type Planner} from '@/lib/recipes';
-import {liveSchedule,retime,clockText,scheduleCalendar,shiftText,stampNow,untilText,skippedSteps,stepPhase,bulkEstimate,bulkAdvice,toF,fromF,tempLimits,type LiveStep} from '@/lib/bakeday';
+import {liveSchedule,retime,clockText,shiftText,stampNow,untilText,skippedSteps,stepPhase,bulkEstimate,bulkAdvice,toF,fromF,tempLimits,type LiveStep} from '@/lib/bakeday';
 
 const STORAGE='bread-planner.v5';
 function loadPlan():Planner {
@@ -117,10 +117,6 @@ function NowCard({next,then,shift,now,onDone,bulk}:{next:LiveStep;then?:LiveStep
     <div className="now-actions"><Button size="lg" onClick={onDone}><Check/> Done</Button>{then&&<p>Then: {then.title} · {whenText(then.at,now)}</p>}</div>
   </section>;
 }
-function downloadCalendar(text:string,filename:string){
-  const url=URL.createObjectURL(new Blob([text],{type:'text/calendar;charset=utf-8'})),link=document.createElement('a');
-  link.href=url;link.download=filename;document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
-}
 const features=tableFeatures({});
 function FlourTable({values}:{values:Planner}){
   const r=calculateRecipe(values),d=definitions[values.recipe];
@@ -173,7 +169,6 @@ function App(){
   const setProgress=(done:string[],times:Record<string,number>)=>form.setFieldValue('recipes',previous=>({...previous,[values.recipe]:{...previous[values.recipe],done,doneAt:times}}));
   const toggle=(id:string,checked:boolean)=>{const times={...doneAt};if(checked)times[id]=stampNow();else delete times[id];setProgress(checked?[...checks.filter(x=>x!==id),id]:checks.filter(x=>x!==id),times);};
   const retimeStep=(id:string,date:string,hhmm:string)=>{const t=retime(date,hhmm);if(t!==null)setProgress(checks,{...doneAt,[id]:t});};
-  function exportCalendar(){downloadCalendar(scheduleCalendar(steps,definition.name,settled,now),`${definition.name.toLowerCase().replace(/[^a-z0-9]+/g,'-')}-${dateString(remaining[0]?.at??new Date(now))}.ics`);}
   function changeAnchor(anchor:'leaven'|'done'){const step=planned.find(s=>s.id===anchor);if(step){form.setFieldValue('date',dateString(step.at));form.setFieldValue('time',`${String(step.at.getHours()).padStart(2,'0')}:${String(step.at.getMinutes()).padStart(2,'0')}`);}form.setFieldValue('anchor',anchor);}
   function resetRecipe(){form.setFieldValue('recipes',{...values.recipes,[values.recipe]:recipeDefaults(values)});}
   return <TooltipProvider><FormContext.Provider value={form}><div className="app-shell">
@@ -184,7 +179,6 @@ function App(){
           <Label>Plan around</Label><Select value={values.anchor} onValueChange={v=>changeAnchor(v as 'leaven'|'done')}><SelectTrigger className="anchor-select" aria-label="Plan around"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="leaven">Starting the leaven</SelectItem><SelectItem value="done">All loaves out of the oven</SelectItem></SelectContent></Select>
           <div className="date-time-fields"><form.Field name="date">{f=><div><Label htmlFor="plan-date">{values.anchor==='leaven'?'Leaven date':'Last batch date'}</Label><Input id="plan-date" type="date" value={f.state.value} onChange={e=>f.handleChange(e.target.value)} onBlur={f.handleBlur}/></div>}</form.Field><form.Field name="time">{f=><div><Label htmlFor="plan-time">Time</Label><Input id="plan-time" type="time" value={f.state.value} onChange={e=>f.handleChange(e.target.value)} onBlur={f.handleBlur}/></div>}</form.Field></div>
           {doneStep&&<div className="finish-summary"><Flame size={19}/><div><span>Baking complete</span><strong>{timeText(doneStep.at)}</strong><small>{calendarText(doneStep.at)}</small></div></div>}
-          {remaining.length>0&&<div className="calendar-export"><Button variant="outline" onClick={exportCalendar}><CalendarPlus/> Add steps to calendar</Button><p>Each remaining step gets an alert. Add them again if the times change.</p></div>}
         </CardContent></Card>
         <Card className="batch-card"><CardContent><div className="card-title-row"><strong className="batch-title">{loafText(count)} at {g(weight)} g each</strong><Wheat size={18}/></div><div className="batch-facts"><span><strong>{Math.round(hydration)}%</strong> total hydration</span><span><strong>{total===undefined?'—':g(total)} g</strong> total dough</span></div><Button variant="link" className="text-link" onClick={()=>setTab('formula')}>View ingredients</Button></CardContent></Card>
         <Panel title="Oven and proof" description="Count one pot per loaf."><div className="field-grid"><div className="number-field"><Label htmlFor="oven-capacity">Loaves baked at once</Label><Select value={String(values.ovenCapacity)} onValueChange={v=>form.setFieldValue('ovenCapacity',Number(v))}><SelectTrigger id="oven-capacity"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="1">1 loaf</SelectItem><SelectItem value="2">2 loaves</SelectItem></SelectContent></Select></div>{batches>1&&<NumberField spec={{key:'reheat',cell:'reheat',label:'Reheat between batches',value:30,unit:'min',step:1}}/>}</div><p className="field-note"><strong>{batches} {batches===1?'batch':'batches'}</strong> for {loafText(count)}.</p>{!book&&proofWindow&&<div className="cold-proof-summary"><div><Snowflake size={18}/><strong>Cold proof, {durationText(proofWindow.minutes)}</strong></div><p><span>{calendarText(proofWindow.start)} at {timeText(proofWindow.start)}</span><span>to {calendarText(proofWindow.end)} at {timeText(proofWindow.end)}</span></p><span className="cold-proof-status">{proofWindow.overnight?'Overnight cold ferment':'Daytime proof with this start time'}</span></div>}{book&&<><Label className="proof-label">Final proof</Label><Select value={values.proof} onValueChange={v=>form.setFieldValue('proof',v as 'cold'|'warm')}><SelectTrigger aria-label="Final proof"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="cold">Refrigerated, 10 to 12 hours</SelectItem><SelectItem value="warm">Warm, 3 to 4 hours</SelectItem></SelectContent></Select><p className="field-note">{values.proof==='cold'?'Allows 60 minutes to warm each batch.':'Later batches wait longer during serial baking. Judge their condition before loading.'}</p></>}</Panel>
