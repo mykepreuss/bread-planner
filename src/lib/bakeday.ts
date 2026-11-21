@@ -70,12 +70,14 @@ export function bulkAdvice(e:NonNullable<ReturnType<typeof bulkEstimate>>,time:(
     :`${lead} That is ${durationText(e.difference)} after the planned preshape. Keep folding every 30 minutes until the dough is ready.`;
 }
 
-/** Applies an edited clock time to a recorded check-off, choosing the nearest matching day so a correction across midnight stays on the right date. */
-export function retime(original:number,hhmm:string){
-  const m=/^(\d{2}):(\d{2})$/.exec(hhmm);if(!m||!Number.isFinite(original))return null;
-  const candidates=[-1,0,1].map(offset=>{const d=new Date(original);d.setDate(d.getDate()+offset);d.setHours(+m[1],+m[2],0,0);return +d;});
-  return candidates.reduce((best,t)=>Math.abs(t-original)<Math.abs(best-original)?t:best);
+/** Sets a recorded check-off to the local date and clock time shown in its two fields. Returns null for an incomplete or impossible entry. */
+export function retime(date:string,hhmm:string){
+  const d=/^(\d{4})-(\d{2})-(\d{2})$/.exec(date),t=/^(\d{2}):(\d{2})$/.exec(hhmm);
+  if(!d||!t||+t[1]>23||+t[2]>59)return null;
+  const at=new Date(+d[1],+d[2]-1,+d[3],+t[1],+t[2]);
+  return at.getFullYear()===+d[1]&&at.getMonth()===+d[2]-1&&at.getDate()===+d[3]?+at:null;
 }
+export const clockText=(d:Date)=>`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 
 export function untilText(ms:number){
   const min=Math.round(ms/60000);
