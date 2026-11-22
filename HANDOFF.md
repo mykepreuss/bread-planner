@@ -298,7 +298,7 @@ Not verified: the browser records on any machine but this Mac (the screenshots a
 
 Decisions for Michael are listed at the end of `docs/BEHAVIOUR.md`, including one defect found here: 38°C is accepted, then lost on reload.
 
-## Rebuild step 1: readable screen code, November 21, 2026: committed, pull request open
+## Rebuild step 1: readable screen code, November 21, 2026: released and verified live
 
 Michael asked to start step 1 after merging step 0: make the screen code readable without changing what it does. Branch `rebuild-readable-screen`, from `main` at `5eea38c`, in two commits.
 
@@ -323,5 +323,41 @@ Evidence (this session, on `rebuild-readable-screen`):
   - It found the docs said a pull request was open before one existed, and three cosmetic slips; all are fixed.
 - Vercel's preview build of `58ea3bb` succeeded.
 
+Release: Michael asked to merge PR #21, which merged as `99f615e` with both Vercel checks passing on `a3d9d3c`. Production completed. `node scripts/verify-deployment.mjs https://bread.assemblydigital.com` passed 9 checks and 7 assets. A fresh visit to the live site in Playwright's Chromium at 375 px showed all 23 steps, the Up next card and 2,000 g on the Ingredients tab, with no console errors and a document width of 375.
+
 Not verified: a real phone.
+
+## Rebuild step 2: the new core beside the old one, November 21, 2026: committed, pull request open
+
+Michael asked to merge step 1 and start step 2: build the new core beside the old one and prove they agree. Branch `rebuild-new-core`, from `main` at `99f615e`. The app still uses `src/lib/`; nothing it runs changed.
+
+`src/domain/` is the new core:
+- `recipes.ts`: the six recipes as data, in menu order. Each default is the sum it came from, such as `share(100, 780)` for House's water held back, or Red Spring & Rye's 724 g of water over 944 g of flour. Settings are named (`flours`, `build.starter`) instead of v5's `flour_x` and `buildSeed` keys.
+- `formula.ts`: the weights, the mixing stages, the leaven balance, and total and added hydration.
+- `methods.ts`: the House and Tartine timings as named constants. They will replace the spreadsheet cells each save carries once step 3 switches the app over.
+- `schedule.ts`: the steps for a bake, notes included.
+  - Every step carries its facts: kind, phase, hands-on and active minutes, moves the plan, part of bulk, turn number. Step ids are unchanged, because saved checklists use them.
+  - Red Spring & Rye's different cold-proof wording is a recipe field, `overnightProof: false` (decision 2 in BEHAVIOUR.md).
+- `bakeday.ts`: the live schedule, skipping, the bulk estimate, turns that follow the dough, the advice, retiming and gaps. These now read the step facts instead of matching ids. Turn numbers are still read from checked ids, because a checklist can hold turns added for cool dough.
+- `quiet.ts` and `text.ts`: quiet hours, rounding, dates and durations.
+
+How the agreement is checked:
+- `tests/baseline/cores.ts` gives the record two interchangeable cores. `observe.ts` now runs plans, recipe settings and helpers through either, so `baseline.test.ts` checks the record against both. Saved data stays with the old core until step 3.
+- `tests/baseline/agree.test.ts` checks that the new recipes equal the old ones, defaults to the last bit. It then compares 4,000 seeded random plans and bake days and 2,000 random recipe settings through both cores; text and times must match exactly, numbers to one part in a billion. The random plans cover random settings, loaf counts, oven capacity, reheat, anchor, proof, dates (the daylight-saving days included), check-offs, extra checked turns, temperatures and readings.
+
+Evidence (this session, on `rebuild-new-core`):
+- `npm test` passed 126 of 126 with the host zone and with `BASELINE_ZONE=rule`, in about 6 seconds. The new core reproduced all 214 recorded plans, 45 recipe calculations and 53 helper results, and agreed with the old core on every random case.
+- Three deliberate breaks in the new core were each caught by both the comparison and the record: a turn margin of 14 instead of 15 minutes (13 random plans and 2 recorded plans), one word of a note, and the bench rest made not hands-on. The new core was restored byte for byte.
+- `npm run build` had 0 errors, 0 warnings and the 4 existing hints. The browser record passed 38 of 38, and Prettier is clean.
+
+Code review fixes, same day (Michael asked for the six findings from a code review at extra-high effort):
+- Recipes are found with `recipeById`, a Map, so an id such as `constructor` from a corrupt save finds nothing instead of a built-in. The new core has no `manual-rye`.
+- The recipes and their defaults are frozen. `defaultSettings(recipe)` returns a fresh copy to start or restore a plan from, so no code can change the defaults in place.
+- `agree.test.ts` now also compares the new `totalHydration` and `addedHydration` with the old ones, and checks the round trip, on 2,000 random settings plus the edge builds. Before, every test converted with the old function.
+- It also compares the new `dateString`, `clockText`, `round`, `durationText`, `untilText` and `shiftText` with the old ones, every 7 minutes through 2026 and on 20,000 random values. Before, every check formatted times with the old helpers.
+- Each new check failed on a deliberate break, which was then restored: wrong brackets in `addedHydration`, and minutes without padding in `clockText`.
+- The header of `observe.ts` and the `methods.ts` line above were corrected.
+- Not done: the 38°C defect stays in both cores until Michael decides (decision 5).
+
+Not verified: nothing in the app runs the new core yet; step 3 switches it over.
 
