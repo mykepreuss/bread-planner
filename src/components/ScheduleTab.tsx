@@ -103,7 +103,15 @@ export function ScheduleTab({ onViewIngredients }: { onViewIngredients: () => vo
             onTime={(time) => update((s) => act.setTime(s, time))}
             doneStep={v.doneStep}
           />
-          <BatchCard weight={v.weight} total={v.total} hydration={v.hydration} onViewIngredients={onViewIngredients} />
+          <BatchCard
+            weight={v.weight}
+            total={v.total}
+            hydration={v.hydration}
+            mixCapacity={state.mixCapacity}
+            bowls={v.bowls}
+            onMixCapacity={(loaves) => update((s) => act.setMixCapacity(s, loaves))}
+            onViewIngredients={onViewIngredients}
+          />
           <OvenCard
             ovenCapacity={state.ovenCapacity}
             proof={state.proof}

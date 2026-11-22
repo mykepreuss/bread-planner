@@ -32,6 +32,8 @@ export type PlannerState = {
   anchor: 'leaven' | 'done';
   proof: 'cold' | 'warm';
   ovenCapacity: number;
+  /** The most loaves mixed in one bowl; a bigger batch is mixed in several bowls. */
+  mixCapacity: number;
   reheat: number;
   tempUnit: TempUnit;
   recipes: Record<string, RecipeState>;
@@ -56,6 +58,7 @@ export function freshState(now: number): PlannerState {
     anchor: 'leaven',
     proof: 'cold',
     ovenCapacity: 2,
+    mixCapacity: 2,
     reheat: 30,
     tempUnit: 'F',
     recipes: Object.fromEntries(RECIPES.map((r) => [r.id, { settings: defaultSettings(r), bake: emptyBake() }])),
@@ -78,6 +81,7 @@ export function planOf(state: PlannerState): PlanInput {
     anchor: state.anchor,
     proof: state.proof,
     ovenCapacity: state.ovenCapacity,
+    mixCapacity: state.mixCapacity,
     reheat: state.reheat,
   };
 }

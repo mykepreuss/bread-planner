@@ -925,7 +925,18 @@ h2 {
 .bulk-readings [data-slot='button'] {
   width: 44px;
 }
-/* What a mixing step adds to the dough, each with its own tick-off. */
+/* What a mixing step adds to the dough, each with its own tick-off; with several bowls, one list per bowl. */
+.additions-bowls .additions-bowl,
+.step-details .additions-bowls .additions-bowl {
+  margin: 14px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.additions-bowls .additions {
+  margin-top: 4px;
+}
 .additions {
   list-style: none;
   margin: 10px 0 0;

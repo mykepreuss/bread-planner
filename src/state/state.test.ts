@@ -368,6 +368,23 @@ test('a new date or time clears the final-mix ticks while nothing is checked, as
   assert.deepEqual(selected(act.clearChecklist(ticked)).bake.added, []);
 });
 
+test('loaves per mix is shared by every recipe, saved, and falls back to 2 when missing or not a whole number of 1 or more', () => {
+  const s = act.setMixCapacity(plan(), 3);
+  assert.equal(s.mixCapacity, 3);
+  assert.equal(planOf(act.selectRecipe(s, 'tartine')).mixCapacity, 3);
+  assert.equal(fromV6(JSON.parse(serialize(s)), NOW)!.mixCapacity, 3);
+  assert.equal(freshState(NOW).mixCapacity, 2);
+  const saved = JSON.parse(serialize(s));
+  for (const bad of [undefined, 0, -1, 1.5, '3', null, Infinity]) {
+    saved.plan.mixCapacity = bad;
+    assert.equal(fromV6(saved, NOW)!.mixCapacity, 2, String(bad));
+  }
+  saved.plan.mixCapacity = 12;
+  assert.equal(fromV6(saved, NOW)!.mixCapacity, 12);
+  const five = { version: 5, plan: { recipe: 'house', recipes: { house: { params: {} } } } };
+  assert.equal(fromV5(five, NOW).mixCapacity, 2);
+});
+
 test('a save from before the tick-offs loads with nothing ticked, from version 5 or version 6', () => {
   const six = JSON.parse(serialize(act.setChecked(plan(), 'mix', true, NOW)));
   delete six.plan.recipes.house.bake.added;

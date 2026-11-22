@@ -71,6 +71,11 @@ export const setOvenCapacity = (state: PlannerState, capacity: number): PlannerS
   ...state,
   ovenCapacity: capacity,
 });
+/** Loaves per mix: the most loaves of dough one bowl holds. The field accepts only whole numbers of 1 or more. */
+export const setMixCapacity = (state: PlannerState, loaves: number): PlannerState => ({
+  ...state,
+  mixCapacity: loaves,
+});
 export const setReheat = (state: PlannerState, minutes: number): PlannerState => ({ ...state, reheat: minutes });
 export const setProof = (state: PlannerState, proof: 'cold' | 'warm'): PlannerState => ({ ...state, proof });
 export const setTempUnit = (state: PlannerState, unit: TempUnit): PlannerState => ({ ...state, tempUnit: unit });

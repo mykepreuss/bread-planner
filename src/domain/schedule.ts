@@ -31,9 +31,10 @@ export type Phase = 'room' | 'cold' | 'oven';
 
 /**
  * Something that goes into the dough at a mixing step, ticked off on its own so none is left out. A saved bake keeps
- * the `id`, such as `mix:salt`.
+ * the `id`: `mix:salt` with one mixing bowl, and `mix:1:salt`, `mix:2:salt` and so on with several, each with its
+ * `bowl` number.
  */
-export type Addition = { id: string; name: string; grams: number };
+export type Addition = { id: string; name: string; grams: number; bowl?: number };
 
 /**
  * A step and the facts about it:
@@ -120,14 +121,35 @@ function row(
  * after a bake went into the oven without its salt: the step's note listed everything in one sentence. An ingredient
  * the recipe has none of is left out, and the dough's share of the leaven reads "Leaven".
  */
-function additionsFor(step: string, stage: Weighed[]): Addition[] {
-  return stage
+function additionsFor(step: string, stage: Weighed[], bowls: number): Addition[] {
+  const one = stage
     .filter(([, grams]) => grams > 0)
-    .map(([label, grams]) => {
-      const name = label === 'Leaven used' ? 'Leaven' : label;
-      return { id: `${step}:${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`, name, grams };
-    });
+    .map(([label, grams]) => ({
+      key: (label === 'Leaven used' ? 'Leaven' : label).toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      name: label === 'Leaven used' ? 'Leaven' : label,
+      grams: grams / bowls,
+    }));
+  if (bowls === 1) return one.map(({ key, name, grams }) => ({ id: `${step}:${key}`, name, grams }));
+  return Array.from({ length: bowls }, (_, i) =>
+    one.map(({ key, name, grams }) => ({ id: `${step}:${i + 1}:${key}`, name, grams, bowl: i + 1 })),
+  ).flat();
 }
+
+/**
+ * How many bowls the dough is mixed in: enough that none holds more than `perMix` loaves, with every bowl the same
+ * size. Michael's request on November 22, 2026: a doubled batch is mixed in two bowls and a tripled one in three,
+ * then everything goes into one container for bulk. An odd loaf count splits equally too; Michael only bakes an odd
+ * number when one loaf's worth becomes pizza dough, and then enters the dough he mixes.
+ */
+export function mixingBowls(count: number, perMix: number) {
+  return Number.isInteger(perMix) && perMix >= 1 && Number.isFinite(count) && count > 0
+    ? Math.max(1, Math.ceil(count / perMix))
+    : 1;
+}
+/** A stage's weights for one of `bowls` equal bowls. */
+const perBowl = (stage: Weighed[], bowls: number): Weighed[] => stage.map(([name, g]) => [name, g / bowls]);
+/** "both bowls" or "all 3 bowls". */
+const allBowls = (bowls: number) => (bowls === 2 ? 'both bowls' : `all ${bowls} bowls`);
 
 export type PlanInput = {
   recipe: Recipe;
@@ -137,6 +159,8 @@ export type PlanInput = {
   anchor: 'leaven' | 'done';
   proof: 'cold' | 'warm';
   ovenCapacity: number;
+  /** The most loaves mixed in one bowl, 2 when not given; see `mixingBowls`. */
+  mixCapacity?: number;
   reheat: number;
 };
 
@@ -152,7 +176,7 @@ const listed = (rows: [string, number][]) =>
   rows.map(([name, n]) => `${inSentence(name)} (${Math.round(n * 10) / 10} g)`).join(', ');
 
 /** The leaven step's note: the scaled build, and what is kept or still needed. */
-function leavenNote(recipe: Recipe, r: Formula) {
+function leavenNote(recipe: Recipe, r: Formula, bowls: number) {
   const [starter, flour, wheat, water] = r.madeParts,
     buildFlour = inSentence(FLOUR_NAMES[recipe.buildFlour]);
   const keep =
@@ -161,9 +185,10 @@ function leavenNote(recipe: Recipe, r: Formula) {
       : r.shortfall > 0
         ? ` This makes ${gram(r.shortfall)} less than the ${gram(r.used)} the dough needs; increase the build.`
         : ` All ${gram(r.used)} goes into the dough.`;
+  const split = bowls > 1 && r.used > 0 ? ` Each of the ${bowls} bowls gets ${gram(r.used / bowls)}.` : '';
   return recipe.method === 'tartine'
-    ? `Mix ${gram(starter)} (about 1 tbsp) of mature starter with ${gram(water)} water, then add ${gram(flour)} ${buildFlour} and ${gram(wheat)} whole-wheat flour. Cover at room temperature.${keep}`
-    : `Mix ${gram(starter)} mature starter, ${gram(flour)} ${buildFlour}, ${gram(wheat)} whole-wheat flour and ${gram(water)} water. Keep it separate from the autolyse and cover.${keep}`;
+    ? `Mix ${gram(starter)} (about 1 tbsp) of mature starter with ${gram(water)} water, then add ${gram(flour)} ${buildFlour} and ${gram(wheat)} whole-wheat flour. Cover at room temperature.${keep}${split}`
+    : `Mix ${gram(starter)} mature starter, ${gram(flour)} ${buildFlour}, ${gram(wheat)} whole-wheat flour and ${gram(water)} water. Keep it separate from the autolyse and cover.${keep}${split}`;
 }
 
 /** House turns: the first three are vigorous double rounds that build gluten early; the rest are a single round. */
@@ -196,13 +221,25 @@ export function schedule(input: PlanInput): Step[] {
     single = batches === 1;
   const loaves = count === 1 ? 'the loaf' : count === 2 ? 'both loaves' : `all ${count} loaves`;
   const later = single ? '' : ' Keep later batches chilled until their own warm-up.';
+  // Mixed in several bowls, the dough comes together in one container at the start of bulk.
+  const bowls = mixingBowls(count, input.mixCapacity ?? 2),
+    combine = bowls > 1 ? `Combine ${allBowls(bowls)} in one container. ` : '';
   let firstBake: number, preheat: number, covered: number, uncovered: number, warmup: number;
   if (tartine) {
     const t = TARTINE,
       initial = recipe.initialMix ?? TARTINE_MIX;
-    push('leaven', 'leaven', 'Make leaven', 0, t.leaven, leavenNote(recipe, r), LEAVEN_CUE);
+    push('leaven', 'leaven', 'Make leaven', 0, t.leaven, leavenNote(recipe, r, bowls), LEAVEN_CUE);
     let at = t.leaven;
-    push('autolyse', 'autolyse', 'Mix dough and rest', at, initial.rest, initial.note);
+    push(
+      'autolyse',
+      'autolyse',
+      'Mix dough and rest',
+      at,
+      initial.rest,
+      bowls > 1
+        ? `Split this mix between ${bowls} bowls, with an equal share of everything in each. ${initial.note}`
+        : initial.note,
+    );
     at += initial.rest;
     push(
       'mix',
@@ -210,9 +247,11 @@ export function schedule(input: PlanInput): Step[] {
       'Add salt and final water',
       at,
       0,
-      'Work in the salt and reserved water. Keep mixing if the dough separates; it should come together again.',
+      bowls > 1
+        ? 'Work the salt and reserved water into each bowl. Keep mixing if the dough separates; it should come together again.'
+        : 'Work in the salt and reserved water. Keep mixing if the dough separates; it should come together again.',
       undefined,
-      additionsFor('mix', r.final),
+      additionsFor('mix', r.final, bowls),
     );
     push(
       'rest',
@@ -220,7 +259,7 @@ export function schedule(input: PlanInput): Step[] {
       'Begin warm bulk fermentation',
       at,
       Math.min(t.turnEvery, t.bulk),
-      'Cover and keep at 75°F to 80°F / 24°C to 27°C.',
+      `${combine}Cover and keep at 75°F to 80°F / 24°C to 27°C.`,
     );
     for (let elapsed = t.turnEvery, n = 1; elapsed < t.bulk; elapsed += t.turnEvery, n++) {
       push(
@@ -331,17 +370,19 @@ export function schedule(input: PlanInput): Step[] {
       h.feed,
       'Keep an established starter on its regular feeding routine.',
     );
-    push('leaven', 'leaven', 'Start leaven', 0, h.leaven, leavenNote(recipe, r), LEAVEN_CUE);
+    push('leaven', 'leaven', 'Start leaven', 0, h.leaven, leavenNote(recipe, r, bowls), LEAVEN_CUE);
     push(
       'autolyse',
       'autolyse',
       'Start autolyse',
       h.leaven - h.autolyse,
       h.autolyse,
-      `Mix ${listed(r.initial)}. Cover. Keep the remaining ingredients for the final mix.`,
+      bowls > 1
+        ? `In each of ${bowls} bowls, mix ${listed(perBowl(r.initial, bowls))}. Cover. Keep the remaining ingredients for the final mix.`
+        : `Mix ${listed(r.initial)}. Cover. Keep the remaining ingredients for the final mix.`,
     );
     let at = h.leaven;
-    const added = additionsFor('mix', r.final);
+    const added = additionsFor('mix', r.final, bowls);
     push(
       'mix',
       'mix',
@@ -349,7 +390,11 @@ export function schedule(input: PlanInput): Step[] {
       at,
       h.mix,
       // The tick-offs under the note name each ingredient and its weight.
-      added.length ? 'Add these after the autolyse. Mix until incorporated.' : 'Mix until incorporated.',
+      !added.length
+        ? 'Mix until incorporated.'
+        : bowls > 1
+          ? 'Add these to each bowl after the autolyse. Mix until incorporated.'
+          : 'Add these after the autolyse. Mix until incorporated.',
       undefined,
       added,
     );
@@ -360,7 +405,7 @@ export function schedule(input: PlanInput): Step[] {
       'Start bulk fermentation',
       at,
       h.turnEvery,
-      'Keep covered in a warm place, about 75°F to 80°F / 24°C to 27°C.',
+      `${combine}Keep covered in a warm place, about 75°F to 80°F / 24°C to 27°C.`,
     );
     at += h.turnEvery;
     for (let n = 1; n <= h.turns; n++) {

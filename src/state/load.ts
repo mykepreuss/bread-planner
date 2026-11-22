@@ -145,6 +145,9 @@ function assemble(
     proof: p.proof === 'warm' ? 'warm' : 'cold',
     ovenCapacity:
       typeof capacity === 'number' && Number.isInteger(capacity) && capacity > 0 ? Math.min(2, capacity) : 2,
+    // Loaves per mix: a whole number of 1 or more. Saves from before November 22, 2026 have none, and mix 2.
+    mixCapacity:
+      typeof p.mixCapacity === 'number' && Number.isInteger(p.mixCapacity) && p.mixCapacity >= 1 ? p.mixCapacity : 2,
     reheat: isFinite(p.reheat) && p.reheat >= 0 ? p.reheat : 30,
     tempUnit: p.tempUnit === 'C' ? 'C' : 'F',
     recipes,

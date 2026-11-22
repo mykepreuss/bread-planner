@@ -1041,7 +1041,7 @@ Evidence:
 
 Release of the two sections above, recorded on the `final-mix-tick-offs` branch from what that session observed on November 22, 2026: pull request #34 merged as `5ff796c` and #35 as `82759e9`, and no pull request was open. `node scripts/verify-deployment.mjs https://bread.assemblydigital.com` passed 9 checks and 7 assets, and the live bundle held neither "cooling mark" nor "Basket and dusting flour". The live page itself was not opened in a browser for this note.
 
-## Final-mix tick-offs, November 22, 2026: committed, pull request open
+## Final-mix tick-offs, November 22, 2026: merged and verified live
 
 Why: Michael baked Preuss House loaves that came out flat, and after a long diagnosis realised he had forgotten the salt. The "Mix final dough" note listed rye flour, leaven, salt and water in one sentence. Asked "Should the planner list the final-mix additions as separate tick-offs?", he answered "Yes, add it". Branch `final-mix-tick-offs`, from `main` at `82759e9`.
 
@@ -1080,3 +1080,38 @@ Independent check (the verifier, on `11cda78`): PASS on all seven criteria.
 - One real defect, fixed in the next commit: a tick made with nothing checked survived a new date, and Clear checklist stayed disabled, so last bake's tick could show on the next one. A new date or time while nothing is checked now clears the ticks as it does the temperatures, and Clear checklist is available once anything is ticked. A new test covers it; `npm test` passed 171 of 171 in both zones, the build was clean and `npm run test:browser` passed 54 of 54.
 - Its doc nits are corrected in BEHAVIOUR.md: the 66 plans are those with a schedule, Tartine gets a list of its own, and Restore defaults and Clear checklist mention the ticks.
 - Noted, not changed: no check box in the app shows a visible keyboard focus ring (`box-shadow: none` in `src/index.css`), which predates this change.
+
+Release, recorded on the `mixing-bowls` branch: Michael asked to merge, and pull request #36 merged as `7dfe425` once both Vercel checks passed on `b554c5a`. Production deployment `dpl_DdU4EkB3cy2nGS4JX94rUofusKNw` served the new bundle within about a minute. `node scripts/verify-deployment.mjs https://bread.assemblydigital.com` passed 9 checks and 7 assets, and the live bundle holds "Add to the dough" and the new House note. In the in-app browser at 375 px, the live site's saved plan (Original Tartine) showed Salt 20 g and Water 50 g as tick-offs under "Add salt and final water", with a document width of 375 and no console errors. Preuss House's list was not opened live, to leave that saved plan as it was.
+
+## Mixing bowls, November 22, 2026: committed, pull request open
+
+Why: Michael mixes a doubled batch in two bowls and a tripled one in three, then puts everything in one container from bulk on, so the planner's single list of final-mix weights still needed dividing by hand. In session he chose: a "Loaves per mix" setting (default 2); the autolyse and final mix in each bowl, with the leaven built once and divided; and, for pizza dough, to enter all the dough he mixes (he bakes an odd count only when one loaf's worth becomes pizza). Branch `mixing-bowls`, from `main` at `7dfe425`.
+
+Done means: with 4 loaves, the House plan's autolyse says "In each of 2 bowls" with one bowl's weights, the final mix shows Bowl 1 and Bowl 2 each with Rye flour 100 g, Leaven 200 g, Salt 20 g and Water 100 g to tick, and the start of bulk says to combine both bowls; and `npm test`, the build and `npm run test:browser` pass.
+
+Change:
+- `src/domain/schedule.ts`: `mixingBowls(count, perMix)` is the number of equal bowls, `ceil(count / perMix)`. A plan's `mixCapacity` (2 when not given) sets it. With more than one bowl: the leaven note adds each bowl's share; the House autolyse lists one bowl's weights "In each of N bowls"; Tartine's initial mix starts "Split this mix between N bowls, with an equal share of everything in each."; the final-mix note says "to each bowl" (Tartine: "into each bowl"); the tick-offs repeat per bowl with ids `mix:1:salt`, `mix:2:salt` and a `bowl` number; and the start of bulk begins "Combine both bowls in one container." (or "all N bowls"). With one bowl everything is as before, ids included. No time changes.
+- `src/state/`: `mixCapacity` is shared, saved, 2 by default, and loads as 2 unless it is a whole number of 1 or more. `setMixCapacity` sets it. The save stays version 6.
+- Screen: the Schedule tab's "Your batch" card has a "Loaves per mix" field under "Number of loaves" and says "N bowls to mix in". The final mix's tick-offs show one labelled list per bowl ("Bowl 1", list name "Add to bowl 1"). The Ingredients tab's autolyse and final-mix panels show one bowl's weights and say "Weights for each of N bowls."
+- docs/BEHAVIOUR.md records it as decision 14, with the choices made for Michael: the field is on the batch card and shared by every recipe; mixing steps keep their times; ticks are per bowl, so ticks made at one bowl don't carry to several.
+
+Tests:
+- `schedule.test.ts`: 4 loaves give two bowls with the default batch's weights, notes and eight tick-offs, and times and every step from Turn 1 on match a single bowl; 6 loaves give three; 3 loaves split 1.5 and 1.5; counts up to the bowl's size keep the single list and wording; every Tartine recipe splits its initial mix and salt step. The scaled 3-loaf tick-off test now uses one bowl of 3. The Whole Wheat comparison test expects the split note.
+- `state.test.ts`: the setting is shared, saved, defaults to 2, and rejects bad values.
+- The record gained four plans (four loaves with bowl 2 missing its salt, six in three bowls, four in one bowl of four, Tartine with four), and its plans now record each plan's bowl count and each tick-off's bowl. One browser flow: 4 loaves, both bowls listed, bowl 2's salt ticked alone, reload, then 4 per mix gives one list of the whole batch and the Ingredients tab drops the per-bowl note, and the setting survives a reload.
+
+Record changes, checked by scripts that decode both records and compare them field by field against `main`:
+- Exactly the 46 existing plans with more than one bowl changed, and in each only the leaven, autolyse, final-mix and start-of-bulk steps: notes, and the final mix's tick-offs (split per bowl, with ids and grams per bowl). Every plan gained its `bowls` count in the view; nothing else in any view changed. Recipe calculations and helpers are identical, and each saved-data case gained `mixCapacity: 2`.
+- The browser record: 45 text records changed (30 accessibility records, 15 screens and 15 flows, and 15 layout records), each gaining the "Loaves per mix" field and the bowl count; the two with more than 2 loaves (`quiet-batches` and `flow-loaves-and-oven`) also show the bowl split. Five whole-page screenshots changed; no first-screen screenshot did. One record was added for the new flow.
+
+Evidence (this session, on `mixing-bowls`):
+- `npm test` passed 175 of 175 with the host zone and with `BASELINE_ZONE=rule`. Prettier is clean, and `npm run test:browser` passed 55 of 55.
+- In the dev server with 4 loaves and the final mix up next: the card listed Bowl 1 and Bowl 2, each Rye flour 100 g, Leaven 200 g, Salt 20 g, Water 100 g; ticking bowl 2's salt saved `mix:2:salt` only; the autolyse and start of bulk read as above; the batch card said "2 bowls to mix in"; every id on the page was unique. Setting Loaves per mix to 4 saved it and showed one list of 200, 400, 40 and 200 g. The Ingredients tab showed 800/100/680 g and 100/200/20/100 g "for each of 2 bowls". At 375 px the page was 375 wide, with no console errors. The local plan was restored.
+
+Not verified: a real phone, and a real bake.
+
+Independent check (the verifier, on `05ff435`): PASS on all nine criteria, with no material defect.
+- Its own differential ran `schedule()` from `7dfe425` and `05ff435` on 40,000 random plans across both zones: one bowl is identical, and several bowls differ only in the leaven, autolyse, mix and start-of-bulk notes and tick-offs, with every time and every step from Turn 1 on identical. It decoded both records and confirmed the 46 plans and the rest of the record claim.
+- Five of its six breaks were caught. The sixth, the Ingredients tab not dividing by bowls, passed every test; the browser flow now checks the tab's per-bowl weights (800 g and 680 g at the autolyse, 20 g of salt).
+- Fixed from its nits: the leaven note's split now reads "Each of the 2 bowls gets 200 g." (it said "That is…", which read oddly after a short-build warning); HANDOFF says the field is under the loaf count and counts the 45 record files; the action count is 33, which was already one short before this change; and the Step notes bullet mentions the "to each bowl" wording.
+- Noted, not changed: a huge loaf count (2,000) makes 1,000 bowls of tick-offs and a slow page; a tick made with one bowl stays saved but hidden once there are several, so Clear checklist stays available with nothing visible ticked; uneven splits round to 0.1 g, so 5 loaves show 16.7 g of salt per bowl.

@@ -328,7 +328,15 @@ test('every Whole Wheat step is Original Tartine’s, 20 minutes later after the
             n < mixed
               ? s
               : n === mixed
-                ? { ...s, minutes: 50, note: NOTE }
+                ? {
+                    ...s,
+                    minutes: 50,
+                    // More than 2 loaves are mixed in bowls of up to 2 loaves each (Michael, November 22, 2026).
+                    note:
+                      count > 2
+                        ? `Split this mix between ${Math.ceil(count / 2)} bowls, with an equal share of everything in each. ${NOTE}`
+                        : NOTE,
+                  }
                 : { ...s, at: new Date(+s.at + 20 * 60000) },
           );
           assert.deepEqual(w, expected, name);

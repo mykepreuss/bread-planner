@@ -397,6 +397,18 @@ function bakeDays(): [string, PlanInput][] {
       'tartine: the salt ticked and the water not, at the second addition',
       { ...upTo(tartine(), 'autolyse'), added: ['mix:salt'], now: '2026-11-22 21:31' },
     ],
+    // Mixing in bowls, added November 22, 2026.
+    [
+      'four loaves in two bowls, the final mix up next, bowl 2 still missing its salt',
+      {
+        ...upTo(house({ params: { count: 4 } }), 'autolyse'),
+        added: ['mix:1:rye-flour', 'mix:1:leaven', 'mix:1:salt', 'mix:1:water', 'mix:2:rye-flour', 'mix:2:leaven'],
+        now: '2026-11-22 14:02',
+      },
+    ],
+    ['six loaves in three bowls, planned', house({ params: { count: 6 } })],
+    ['four loaves mixed in one bowl of four', house({ params: { count: 4 }, mixCapacity: 4 })],
+    ['tartine, four loaves in two bowls, planned', tartine({ params: { count: 4 } })],
   ];
 }
 
