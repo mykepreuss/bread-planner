@@ -9,7 +9,7 @@ Production branch: main
 Project: prj_oaBadxUrg76MQyvwFsY68FvfuM8r (bread-planner)
 Team: team_U2Fu7jNsQEgGylxpq9YR7M2f (mpmba)
 
-Each dated release section below ends with its delivery state, newest last. The last one marked "verified live" is what production runs. When this header was last edited, that was Up next moving past unchecked steps: `main` at `2bd709e9131ce946cd3c56dde565aee43484a182`, production deployment `dpl_BnWDPJYE6SGaDTB1v5D6YBYG4Mjx` (READY). Michael is the planner's only user.
+Each dated release section below ends with its delivery state, newest last. The last one marked "verified live" is what production runs. When this header was last edited, that was a big skip asking first: `main` at `0b92450b7a1b9d7f4470227adeca93ccf58addcc`, production deployment `dpl_5tUND9ZQHFkgCn4v4mnExZRGZLQD` (READY). Michael is the planner's only user.
 
 ## Scope and decisions
 
@@ -759,7 +759,7 @@ Release: merged as pull request #30 at `2bd709e`, with Michael's approval. Produ
   - Michael's example: Start leaven through Turn 3 checked showed "7 of 23 steps checked", Up next "Turn 4" and only Feed starter Skipped, the same after a reload. Checking Feed starter then gave 8 of 23, nothing Skipped, and Up next still Turn 4.
   - Every step through the cold proof, then Preheat: 18 of 23, Up next "Take both loaves out of the fridge" and nothing Skipped, the same after a reload. Checking "Bake covered" then skipped the fridge step, and Up next became "Remove lid".
 
-## A big skip asks first, November 22, 2026: committed, pull request open
+## A big skip asks first, November 22, 2026: merged and verified live
 
 Michael's request: fix the mis-tap on the last step. Checking the last step on a fresh plan marked the 22 steps before it Skipped and showed "All batches done". Branch `confirm-big-skip`, from `main` at `2bd709e`.
 
@@ -844,6 +844,15 @@ Second check (the verifier, on `022d29d`): FAIL on two small items.
   - Whether a tap asks depends on the clock while the start of bulk is unchecked.
   - A two-batch bake with the 30-minute reheat and only its bake steps checked asks "Skip 5" at Batch 2.
 
+Third check (the verifier, on `217e136`): PASS. Every time source other than the tap that it tried fails a browser flow (seven variants). It noted that a check that doesn't ask could be recorded at the screen's clock without any test noticing, as already on `main` before this PR: a proposal for later is to move the clock between drawing the page and a plain check, and assert the Done at time.
+
+Release: merged as pull request #31 at `0b92450`, with Michael's approval once the verifier passed. Production deployment `dpl_5tUND9ZQHFkgCn4v4mnExZRGZLQD` is READY for that commit and holds the `bread.assemblydigital.com` alias. On November 22 after the merge, with no console errors:
+- `verify-deployment.mjs` passed 9 checks and 7 assets; the live smoke, upgrade, impossible-date and Up next checks passed as for the last release.
+- At 390 px wide on a fresh plan, a tap on "15-minute cooling mark" asked "Skip 22 earlier steps?":
+  - "Don't check it" left 0 of 23 checked, Up next on Feed starter, and focus on the check box.
+  - "Check and skip" gave 1 of 23 checked, 22 Skipped and "All batches done", the same after a reload.
+  - Michael's example, Start leaven through Turn 3 checked with Feed starter left, asked nothing and showed Up next Turn 4.
+
 ## Only Preuss House and Original Tartine, November 22, 2026: committed, pull request open
 
 Michael's request: remove the four-flour, five-flour, Red Spring & Rye and White & Whole Wheat recipes, so only Preuss House and Tartine are available. Branch `remove-four-recipes`, from `confirm-big-skip`.
@@ -884,3 +893,8 @@ Record changes:
     - "an odd recipe order", whose menu held only Four-Flour, now opens on Preuss House with House alone on the menu. That is the loader's existing rule for such a save.
   - A second `npm run baseline:update` left the record unchanged.
 - The browser record: the eight screens of the removed recipes, with their 32 snapshot files, are deleted.
+
+Evidence (this session, on `remove-four-recipes`, rebased onto `main` at `0b92450`):
+- `npm test` passed 130 of 130 with the host zone and with `BASELINE_ZONE=rule`, and `npm run baseline:update` left the record unchanged.
+- `npm run test:browser` passed 44 of 44: 14 screens and 30 flows. One earlier full run failed once on "The method guide for house"; it passed alone, 30 of 30 times for both method-guide flows under load, and in the next full run. The verifier saw the same one-off on the Tartine method guide earlier today. It is a flaky flow, not a change.
+- After the rebase, HANDOFF.md needed a hand merge: both sections are kept.
