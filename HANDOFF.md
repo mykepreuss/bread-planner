@@ -914,4 +914,5 @@ Independent check (the verifier, on `2267301`): FAIL on criterion 6 only, three 
   - the "Skip 5" sentence in the previous section, which this check couldn't reproduce at the 30-minute reheat.
 - It noted for Michael:
   - Rolling back to `0b92450` after the new build has saved won't bring the four recipes back, except at their defaults after clearing storage.
-  - A hand-made saved order can leave a recipe off the menu. The loader adds missing recipes back from the next change, the Tartine recipes.
+  - A hand-made saved order can leave a recipe off the menu.
+- Not part of this pull request: the Tartine recipes change, branch `tartine-recipes` at `66d29e8` and not yet merged, makes `src/state/load.ts` add every recipe a saved order doesn't name, which also closes that gap.
