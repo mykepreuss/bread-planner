@@ -423,10 +423,17 @@ test.describe('flows', () => {
   test('A later reading of 37.7°C, the top of the °C range, can be added', async ({ page }) => {
     await open(page, 'turn-one-78');
     await choose(page, 'Temperature unit', '°C', upNext(page));
-    const now = upNext(page).getByLabel('Dough temperature now');
+    const now = upNext(page).getByLabel('Dough temperature now'),
+      update = upNext(page).getByRole('button', { name: 'Update' });
     await now.click();
+    // Past the range, the planner itself refuses it, since the browser's own check is off.
+    await now.fill('38');
+    await expect(upNext(page).getByText('Use 10 to 37.7°C')).toBeVisible();
+    await expect(update).toBeDisabled();
+    await now.press('Enter');
+    await expect(page.getByRole('list', { name: 'Later dough temperatures' })).toHaveCount(0);
     await now.fill('37.7');
-    await upNext(page).getByRole('button', { name: 'Update' }).click();
+    await update.click();
     await expect(page.getByRole('list', { name: 'Later dough temperatures' })).toContainText('37.7°C at 3:20 PM');
     await expectSameAfterReload(page);
   });
@@ -441,8 +448,13 @@ test.describe('flows', () => {
     await expect(page.getByText('Use 10 to 37.7°C')).toHaveCount(0);
     await page.reload();
     await ready(page);
-    await expect(upNext(page).getByLabel('Dough temperature after mixing')).toHaveValue('37.8');
+    const after = upNext(page).getByLabel('Dough temperature after mixing');
+    await expect(after).toHaveValue('37.8');
     await expect(page.getByText('Use 10 to 37.7°C')).toHaveCount(0);
+    // Typing a value past the range is still flagged.
+    await after.click();
+    await after.fill('37.9');
+    await expect(upNext(page).getByText('Use 10 to 37.7°C')).toBeVisible();
   });
 
   test('Total hydration refuses less than the leaven brings, and its slider stops there', async ({ page }) => {

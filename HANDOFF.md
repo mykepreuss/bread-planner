@@ -594,7 +594,7 @@ Michael chose all of the recommendations for decisions 1 to 5 in docs/BEHAVIOUR.
 - Years before 1000: `dateString` writes the year in four digits, so a date such as 0202-11-22 gives a schedule.
 
 Record changes, each checked case by case against the committed record:
-- `baseline.json`, regenerated: 29 Red Spring & Rye plans differ only in the cold-proof step's title and note, now the wording House plans already had (no new text). The "an invalid date and time" saved-data case differs only in its date, now tomorrow, and the times that follow. The helper `inTempRange(38, "C")` is now false. Otherwise only the `recordedFrom` line changed, and two texts no case uses any more left the text table: the old cold-proof title and note.
+- `baseline.json`, regenerated: 29 Red Spring & Rye plans differ only in the cold-proof step's title and note, now the wording House plans already had (no new text). The "an invalid date and time" saved-data case differs only in its date, now tomorrow, and the times that follow. The helper `inTempRange(38, "C")` is now false. Otherwise only the `recordedFrom` line changed, and two texts no case uses any more left the text table: the old cold-proof note, in its one-batch and multi-batch forms. The old title stays, because Tartine uses it.
 - The browser record: only the Red Spring & Rye schedule's text snapshot changed, in the cold-proof step's three lines. The flow for a fully checked plan was rewritten: after "Plan the next bake" it must now match the ended plan's recorded result exactly, and its old snapshot is deleted.
 
 Evidence (this session, on `rebuild-decisions`):
@@ -625,4 +625,6 @@ Fixed on the same branch:
 - The decision 4 state test now damages the time of a save that holds a creation time, and expects 9:00 AM.
 - The docs above.
 - After the fixes: `npm test` passed 122 of 122 in both zones and `npm run test:browser` 45 of 45. Undoing either temperature fix fails its new flow, and the creation-time fallback fails the state test.
+
+Second check (the verifier, on `e8e590f`): every behaviour check passed in the built app, including what `noValidate` and the shown-value rule let through and still refuse. FAIL on one HANDOFF sentence about the text table, now corrected. It also found two breaks no test caught: an after-mixing field that never shows its error, and a later-reading field without the planner's own range check. The two °C flows now type 37.9°C and 38°C, expect the error, and expect 38°C not to be added even with Enter.
 
