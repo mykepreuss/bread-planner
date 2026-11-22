@@ -197,6 +197,9 @@ function savedAs(input: PlanInput) {
 
 /** Recorded plans that saved data can't hold, so the screen never shows them as recorded. Loading corrects each one. */
 const NOT_REACHABLE = [
+  // Since step 4, loading also turns an impossible date or time into the plan's creation date or time.
+  'an impossible date',
+  'an impossible time',
   'a time without a leading zero',
   'a fractional loaf count',
   'zero loaves',

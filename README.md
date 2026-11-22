@@ -24,7 +24,7 @@ Astro statically builds the page shell, metadata and 404 page. The calculator is
 
 Each part of the screen has its own file in `src/components/`, which shows the view and turns each control into an action. `src/lib/` holds only shadcn's `cn` helper, where shadcn's configuration (`components.json`) expects it.
 
-The code is formatted with Prettier (`npm run format`; `npm run format:check` reports any file that is not). Generated records, the vendored shadcn source, Markdown and the `.astro` pages are left as written.
+The code is formatted with Prettier (`npm run format`; `npm run format:check` reports any file that is not, and `npm run build` fails on one; the build leaves out `vercel.json`, which Vercel rewrites as one line on its build machine). Generated records, the vendored shadcn source, Markdown and the `.astro` pages are left as written.
 
 ## Recipes and persistence
 

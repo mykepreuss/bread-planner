@@ -148,11 +148,24 @@ test('version 6 saves are checked as version 5 ones were', () => {
   assert.equal(recipeById('manual-rye'), undefined);
 });
 
-test('every setting a version 5 or version 6 save holds loads as saved, for every recipe', () => {
+test('every setting a version 5 or version 6 save holds loads as saved, for every recipe, zeros included', () => {
+  const v5 = (recipe: (typeof RECIPES)[number], s: Settings) => ({
+    count: s.count,
+    weight: s.weight,
+    hydration: s.hydration,
+    leaven: s.leaven,
+    salt: s.salt,
+    reserve: s.reserve,
+    ...Object.fromEntries(recipe.flours.map((k) => [`flour_${k}`, s.flours[k]])),
+    buildSeed: s.build.starter,
+    buildBread: s.build.flour,
+    buildWheat: s.build.wheat,
+    buildWater: s.build.water,
+  });
   for (const recipe of RECIPES) {
     const d = defaultSettings(recipe);
     // A distinct valid value for every setting, none of them its default.
-    const want: Settings = {
+    const distinct: Settings = {
       count: d.count + 1,
       weight: d.weight + 7,
       hydration: d.hydration + 1.5,
@@ -167,24 +180,78 @@ test('every setting a version 5 or version 6 save holds loads as saved, for ever
         water: d.build.water + 9,
       },
     };
-    const params = {
-      count: want.count,
-      weight: want.weight,
-      hydration: want.hydration,
-      leaven: want.leaven,
-      salt: want.salt,
-      reserve: want.reserve,
-      ...Object.fromEntries(recipe.flours.map((k) => [`flour_${k}`, want.flours[k]])),
-      buildSeed: want.build.starter,
-      buildBread: want.build.flour,
-      buildWheat: want.build.wheat,
-      buildWater: want.build.water,
+    // 0 wherever 0 is allowed: everything but the loaf count and weight.
+    const zeros: Settings = {
+      ...distinct,
+      hydration: 0,
+      leaven: 0,
+      salt: 0,
+      reserve: 0,
+      flours: Object.fromEntries(recipe.flours.map((k) => [k, 0])),
+      build: { starter: 0, flour: 0, wheat: 0, water: 0 },
     };
-    const five = fromV5({ version: 5, plan: { recipe: recipe.id, recipes: { [recipe.id]: { params } } } }, NOW);
-    assert.deepEqual(five.recipes[recipe.id].settings, want, `${recipe.id} from version 5`);
-    const six = fromV6({ version: 6, plan: { recipe: recipe.id, recipes: { [recipe.id]: { settings: want } } } }, NOW)!;
-    assert.deepEqual(six.recipes[recipe.id].settings, want, `${recipe.id} from version 6`);
+    for (const [name, want] of [
+      ['distinct values', distinct],
+      ['zeros', zeros],
+    ] as const) {
+      const params = v5(recipe, want);
+      const five = fromV5({ version: 5, plan: { recipe: recipe.id, recipes: { [recipe.id]: { params } } } }, NOW);
+      assert.deepEqual(five.recipes[recipe.id].settings, want, `${recipe.id}, ${name}, from version 5`);
+      const six = fromV6(
+        { version: 6, plan: { recipe: recipe.id, recipes: { [recipe.id]: { settings: want } } } },
+        NOW,
+      )!;
+      assert.deepEqual(six.recipes[recipe.id].settings, want, `${recipe.id}, ${name}, from version 6`);
+    }
   }
+});
+
+test('a saved date must be a real calendar date and a time must be from 00:00 to 23:59, or they fall back', () => {
+  const load = (date: unknown, time: unknown) => {
+    const s = fromV6({ version: 6, plan: { date, time, created: { date: '2026-10-20', time: '07:30' } } }, NOW)!;
+    return `${s.date} ${s.time}`;
+  };
+  for (const [date, time] of [
+    ['2026-11-22', '00:00'],
+    ['2026-11-22', '23:59'],
+    ['2028-02-29', '09:15'],
+    ['2000-02-29', '12:00'],
+    ['2026-12-31', '06:00'],
+  ])
+    assert.equal(load(date, time), `${date} ${time}`, `${date} ${time} is kept`);
+  for (const date of ['2026-02-29', '1900-02-29', '2026-02-30', '2026-04-31', '2026-13-01', '2026-00-10', '2026-11-00'])
+    assert.equal(load(date, '09:00'), '2026-10-20 09:00', `${date} falls back`);
+  for (const time of ['24:00', '25:00', '23:60', '99:99'])
+    assert.equal(load('2026-11-22', time), '2026-11-22 07:30', `${time} falls back`);
+  // The last day of every month is kept and the day after falls back, in a common year and a leap year.
+  const days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  for (const [year, leap] of [
+    [2026, false],
+    [2028, true],
+  ] as const)
+    days.forEach((n, i) => {
+      const month = String(i + 1).padStart(2, '0'),
+        last = n + (leap && i === 1 ? 1 : 0);
+      assert.equal(
+        load(`${year}-${month}-${last}`, '09:00'),
+        `${year}-${month}-${last} 09:00`,
+        `${year}-${month}-${last}`,
+      );
+      assert.equal(load(`${year}-${month}-${last + 1}`, '09:00'), '2026-10-20 09:00', `${year}-${month}-${last + 1}`);
+    });
+  // Only the whole value counts: nothing may come before or after it.
+  for (const date of ['x2026-11-22', '2026-11-22x', ' 2026-11-22'])
+    assert.equal(load(date, '09:00'), '2026-10-20 09:00', `${JSON.stringify(date)} falls back`);
+  for (const time of ['09:00:00', 'x09:00', '09:00 '])
+    assert.equal(load('2026-11-22', time), '2026-11-22 07:30', `${JSON.stringify(time)} falls back`);
+  // The creation date and time are checked the same way, and then fall back to tomorrow at 9:00 AM.
+  const created = fromV6({ version: 6, plan: { created: { date: '2026-02-30', time: '24:00' } } }, NOW)!.created;
+  assert.deepEqual(created, { date: tomorrow(NOW), time: '09:00' });
+  const upgraded = fromV5(
+    { version: 5, plan: { date: '2026-11-31', legacy: { date: '2026-02-30', time: '25:00' } } },
+    NOW,
+  );
+  assert.deepEqual([upgraded.date, upgraded.time], [tomorrow(NOW), '09:00']);
 });
 
 test("a House blend saved before Anita's flour keeps its red spring parts, and one with neither gets the default", () => {
