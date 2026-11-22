@@ -327,7 +327,7 @@ Release: Michael asked to merge PR #21, which merged as `99f615e` with both Verc
 
 Not verified: a real phone.
 
-## Rebuild step 2: the new core beside the old one, November 21, 2026: committed, pull request open
+## Rebuild step 2: the new core beside the old one, November 21, 2026: released and verified live
 
 Michael asked to merge step 1 and start step 2: build the new core beside the old one and prove they agree. Branch `rebuild-new-core`, from `main` at `99f615e`. The app still uses `src/lib/`; nothing it runs changed.
 
@@ -350,6 +350,15 @@ Evidence (this session, on `rebuild-new-core`):
 - Three deliberate breaks in the new core were each caught by both the comparison and the record: a turn margin of 14 instead of 15 minutes (13 random plans and 2 recorded plans), one word of a note, and the bench rest made not hands-on. The new core was restored byte for byte.
 - `npm run build` had 0 errors, 0 warnings and the 4 existing hints. The browser record passed 38 of 38, and Prettier is clean.
 
+Release: Michael asked to merge PR #22 once the verifier reported clean. It merged as `df33449`, with both Vercel checks passing on `2b20edd`.
+- Production completed, and `node scripts/verify-deployment.mjs https://bread.assemblydigital.com` passed 9 checks and 7 assets.
+- A fresh visit to the live site at 375 px showed all 23 steps, the Up next card and 2,000 g, with no console errors.
+
+The `verifier` agent's check of `fd909cb` passed every criterion and found no difference between the cores.
+- It compared 49,404 risky cases and 20,000 more random plans from another seed.
+- Its measured coverage of the 4,000 random plans includes 1,920 temperature estimates, 479 plans with extra turns, 2,424 with skipped steps, 2,592 with several batches, 155 planned back from the finish on a daylight-saving date, and 298 dough checks.
+- It found one gap: no test fixed the order of a later batch's reheat and warm-up when they tie, which happens with a 60-minute reheat. Closed in step 3a.
+
 Code review fixes, same day (Michael asked for the six findings from a code review at extra-high effort):
 - Recipes are found with `recipeById`, a Map, so an id such as `constructor` from a corrupt save finds nothing instead of a built-in. The new core has no `manual-rye`.
 - The recipes and their defaults are frozen. `defaultSettings(recipe)` returns a fresh copy to start or restore a plan from, so no code can change the defaults in place.
@@ -360,4 +369,35 @@ Code review fixes, same day (Michael asked for the six findings from a code revi
 - Not done: the 38°C defect stays in both cores until Michael decides (decision 5).
 
 Not verified: nothing in the app runs the new core yet; step 3 switches it over.
+
+## Rebuild step 3a: saved data and actions, November 21, 2026: committed, pull request open
+
+Michael asked to merge step 2 and start step 3. Step 3 is split into three pull requests, each of which keeps the app working and must pass the full record:
+- 3a: saved data version 6 and the actions, as tested code, with nothing on screen changing;
+- 3b: the Schedule tab's rules in `src/view/`, the screen switched to the new core and state, and TanStack Form and Table removed;
+- 3c: `src/lib/` deleted, with its tests carried over or retired with a reason.
+
+3a, on branch `rebuild-state` from `main` at `df33449`. Nothing the app runs changed.
+- `src/state/schema.ts`: version 6 holds only what can be edited.
+  - Each recipe keeps its `settings` and its `bake` (checklist, check-off times, dough temperature, readings).
+  - Shared: the selected recipe, menu order, date, time, plan-around choice, Tartine proof, loaves at once, reheat and temperature unit.
+  - `freshState`, `planOf` and `selected` are helpers.
+- `src/state/load.ts`: `loadState` reads `bread-planner.v6`. When that is missing or unusable, it upgrades `bread-planner.v5`, which it never writes or removes, so a rollback finds the plan as it was. `serialize` writes version 6.
+  - Every value is checked as version 5's `restorePlanner` checked it, and the House red spring carry-over is kept.
+  - A corrupt date or time falls back to the save's creation date (decision 4, kept until Michael decides).
+  - Not carried: versions 1 to 4, `manual-rye` and the spreadsheet cells.
+- `src/state/actions.ts`: every change the screen makes, as a function from one state to the next.
+  - Settings, total hydration, restore defaults, recipe choice, oven, reheat, proof and unit.
+  - Date and time (clearing temperatures while nothing is checked), plan around, and plan the next bake (which keeps the checklist, decision 1).
+  - Checking, Done at, clear checklist, the dough temperature and readings.
+
+Evidence (this session, on `rebuild-state`):
+- `npm test` passed 146 of 146 with the host zone and with `BASELINE_ZONE=rule`. The build had 0 errors, 0 warnings and the 4 existing hints. The browser record passed 38 of 38, and no record file changed.
+- `tests/baseline/load.test.ts` compares the new loader with `restorePlanner`; `manual-rye` is left out, as not carried. It covers the 24 recorded kinds of saved data (including the selected plan's step times), the 21 saved plans the browser tests open, and 3,000 random corruptions of real saves.
+- Three deliberate breaks in the loader were each caught by both the record and the corruption test: dropping the 100% limit on water held back, the creation-date fallback, and the red spring carry-over.
+- `src/state/state.test.ts` (14 tests) checks every action against BEHAVIOUR.md, on states frozen so that changing one in place would throw. It also checks loading order and that a version 6 save loads back exactly, and it passes in three time zones.
+  - It caught a real bug before commit: version 6 kept each recipe's bake under `bake`, but loading read it where version 5 keeps it, so checks and readings would have been lost on reload.
+- The random plans in `agree.test.ts` now include a 60-minute reheat. Swapping a later batch's reheat and warm-up then fails 481 of them, closing the gap the step 2 verifier found.
+
+Not verified: nothing on screen uses this yet; step 3b switches the app to it.
 
