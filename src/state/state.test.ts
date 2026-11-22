@@ -431,7 +431,7 @@ test('every temperature the °C field accepts is kept on reload, from 10°C to 3
   }
 });
 
-test('a save with one of the four removed recipes selected opens on Preuss House and keeps House and Tartine as saved', () => {
+test('a save with one of the four removed recipes selected opens on Preuss House, keeps House and Tartine as saved, and gives Tartine Olive its defaults', () => {
   const six = ['house', 'tartine', 'white-wheat', 'red-rye', 'five-flour', 'four-flour'];
   const checked = { done: ['leaven'], doneAt: { leaven: NOW }, doughTemp: 78, bulkTemps: [] };
   const recipes = Object.fromEntries(
@@ -450,12 +450,22 @@ test('a save with one of the four removed recipes selected opens on Preuss House
     ],
   ] as const) {
     const s = loadState(storage(saved), NOW);
+    // The saved order names no Tartine Olive, and the order keeps only the known recipes it names, so the menu loaded
+    // from it does not list Tartine Olive.
     assert.deepEqual(
       [s.recipe, s.order, Object.keys(s.recipes)],
-      ['house', ['house', 'tartine'], ['house', 'tartine']],
+      ['house', ['house', 'tartine'], ['house', 'tartine', 'olive']],
       name,
     );
     assert.equal(s.recipes.tartine.settings.count, 3, `${name}: Tartine keeps its settings`);
     assert.deepEqual(s.recipes.tartine.bake.done, ['leaven'], `${name}: and its checklist`);
+    assert.deepEqual(
+      s.recipes.olive,
+      {
+        settings: defaultSettings(recipeById('olive')!),
+        bake: { done: [], doneAt: {}, doughTemp: null, bulkTemps: [] },
+      },
+      `${name}: Tartine Olive, which the save doesn't hold, starts at its defaults`,
+    );
   }
 });

@@ -1,10 +1,10 @@
 import type { AddIns } from './addins.ts';
 
 /**
- * The two recipes, Preuss House and Original Tartine, as data. Each default is written as the sum it came from in the
- * source spreadsheet or the book, so it equals the value the app has always started with. White & Whole Wheat, Red
- * Spring & Rye, Five-Flour and Four-Flour Sourdough were removed at Michael's request on November 22, 2026, with the
- * flours only they used; they are in git history.
+ * The recipes, Preuss House, Original Tartine and Tartine Olive, as data. Each default is written as the sum it came
+ * from in the source spreadsheet or the book, so it equals the value the app has always started with. White & Whole
+ * Wheat, Red Spring & Rye, Five-Flour and Four-Flour Sourdough were removed at Michael's request on November 22, 2026,
+ * with the flours only they used; they are in git history.
  */
 
 export type FlourKey = 'anita' | 'white' | 'wheat' | 'rye';
@@ -89,6 +89,40 @@ export const RECIPES: Recipe[] = [
     late: [],
     buildFlour: 'white',
     // 900 g white, 100 g whole wheat; 750 g water with 50 g held back; 200 g leaven; 20 g salt; 1 tbsp (15 g) starter.
+    defaults: {
+      count: 2,
+      weight: 985,
+      hydration: 75,
+      leaven: 20,
+      salt: 2,
+      reserve: share(50, 750),
+      flours: { white: 90, wheat: 10 },
+      build: { starter: 15, flour: 100, wheat: 100, water: 200 },
+    },
+  },
+  {
+    // Tartine Bread, page 88: the Basic Country Bread dough, method and defaults, with the olive mixture after the
+    // first turn. Added at Michael's request on November 22, 2026. The values are Original Tartine's, copied.
+    id: 'olive',
+    name: 'Tartine Olive',
+    description:
+      'Original Tartine dough with olives, herbes de Provence, lemon zest and, if you like, toasted nuts, worked in after the first turn. A mix of green and oil-cured black olives works well.',
+    method: 'tartine',
+    flours: ['white', 'wheat'],
+    late: [],
+    buildFlour: 'white',
+    addIns: {
+      title: 'Add the olive mixture',
+      note: 'In a bowl, stir together {list}. Scatter the mixture over the dough, add a splash of water, and work it in by hand, cutting through and folding the dough until it is evenly spread. Then carry on with bulk as planned.',
+      items: [
+        { amount: 3, unit: ['cup', 'cups'], what: 'pitted olives, coarsely chopped' },
+        { amount: 2, unit: ['cup', 'cups'], what: 'toasted walnuts or hazelnuts, coarsely chopped', optional: true },
+        { amount: 2, unit: ['teaspoon', 'teaspoons'], what: 'dried herbes de Provence' },
+        { before: 'Grated zest of', amount: 1, unit: ['lemon', 'lemons'] },
+      ],
+    },
+    // As Original Tartine: 900 g white, 100 g whole wheat; 750 g water with 50 g held back; 200 g leaven; 20 g salt;
+    // 1 tbsp (15 g) starter.
     defaults: {
       count: 2,
       weight: 985,
