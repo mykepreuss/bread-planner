@@ -1,0 +1,122 @@
+- banner:
+  - heading "Bread Planner" [level=1]
+- main:
+  - tablist:
+    - tab "Schedule"
+    - tab "Ingredients" [selected]
+  - text: Recipe
+  - combobox "Recipe": Preuss House
+  - paragraph: Anita's all-purpose flour with whole wheat and rye. Autolyse, then an overnight cold proof.
+  - tabpanel "Ingredients":
+    - text: Your batch Each recipe remembers its own settings. Number of loaves
+    - spinbutton "Number of loaves": "2"
+    - text: loaves Dough weight per loaf
+    - spinbutton "Dough weight per loaf": "1000"
+    - text: g Total hydration
+    - spinbutton "Total hydration": "80"
+    - text: "%"
+    - slider "Adjust total hydration"
+    - paragraph: Includes the flour and water in the leaven used.
+    - text: Flour blend Parts set the balance between flours. The gram weights scale to your batch.
+    - table:
+      - rowgroup:
+        - row "Flour Blend parts":
+          - columnheader "Flour"
+          - columnheader "Blend parts"
+      - rowgroup:
+        - row "Anita's all-purpose flour 800 g in this batch · 80% 80 parts":
+          - cell "Anita's all-purpose flour 800 g in this batch · 80%"
+          - cell "80 parts":
+            - spinbutton "Anita's all-purpose flour proportion": "80"
+            - text: parts
+        - row "Whole-wheat flour 100 g in this batch · 10% 10 parts":
+          - cell "Whole-wheat flour 100 g in this batch · 10%"
+          - cell "10 parts":
+            - spinbutton "Whole-wheat flour proportion": "10"
+            - text: parts
+        - row "Rye flour 100 g in this batch · 10% 10 parts":
+          - cell "Rye flour 100 g in this batch · 10%"
+          - cell "10 parts":
+            - spinbutton "Rye flour proportion": "10"
+            - text: parts
+    - heading "Leaven, salt & water split" [level=3]:
+      - button "Leaven, salt & water split" [expanded]
+    - region "Leaven, salt & water split":
+      - text: Leaven / added flour
+      - spinbutton "Leaven / added flour": "20"
+      - text: "%"
+      - slider "Adjust leaven / added flour"
+      - text: Salt / added flour
+      - spinbutton "Salt / added flour": "2"
+      - text: "%"
+      - slider "Adjust salt / added flour"
+      - text: Water reserved for final mix
+      - spinbutton "Water reserved for final mix": "12.821"
+      - text: "%"
+      - slider "Adjust water reserved for final mix"
+      - paragraph: The water split is a percentage of total added water.
+    - heading "Leaven build" [level=3]:
+      - button "Leaven build" [expanded]
+    - region "Leaven build":
+      - paragraph: Build quantities per 1,000 g added flour. The amounts made scale with your batch. Mature starter is equal weights flour and water. If the build is empty, the leaven is treated as 100% hydration.
+      - text: Mature starter
+      - spinbutton "Mature starter": "0"
+      - text: g Anita's all-purpose flour
+      - spinbutton "Anita's all-purpose flour": "0"
+      - text: g Whole-wheat flour
+      - spinbutton "Whole-wheat flour": "0"
+      - text: g Water
+      - spinbutton "Water": "0"
+      - text: g
+      - term: Mature starter
+      - definition: 0 g
+      - term: Anita's all-purpose flour
+      - definition: 0 g
+      - term: Whole-wheat flour
+      - definition: 0 g
+      - term: Water
+      - definition: 0 g
+      - term: Total
+      - definition: 0 g
+      - text: Made
+      - strong: 0 g
+      - text: Used in dough
+      - strong: 200 g
+      - text: Short by
+      - strong: 200 g
+    - heading "Recipe defaults" [level=3]:
+      - button "Recipe defaults" [expanded]
+    - region "Recipe defaults":
+      - button "Restore recipe defaults"
+    - text: 2,000g
+    - paragraph: Total dough for 2 loaves
+    - text: 80% total hydration 1,000 g per loaf
+    - alert: Make 200 g more leaven before mixing. Increase the leaven build.
+    - text: 01 / Autolyse Mix the flour and first water addition. Keep the final-mix ingredients separate.
+    - term: Anita's all-purpose flour
+    - definition: 800 g
+    - term: Whole-wheat flour
+    - definition: 100 g
+    - term: Water
+    - definition: 680 g
+    - text: 02 / Final mix Add after the autolyse, once the leaven is ready.
+    - term: Rye flour
+    - definition: 100 g
+    - term: Leaven used
+    - definition: 200 g
+    - term: Salt
+    - definition: 20 g
+    - term: Water
+    - definition: 100 g
+    - strong: 1,000 g
+    - text: added flour
+    - strong: 780 g
+    - text: added water
+    - strong: 200 g
+    - text: leaven used
+  - heading "Mature starter and readiness guide" [level=3]:
+    - button "Mature starter and readiness guide"
+  - heading "Establishing a starter from scratch" [level=3]:
+    - button "Establishing a starter from scratch"
+  - heading "Shaping, basket preparation and baking" [level=3]:
+    - button "Shaping, basket preparation and baking"

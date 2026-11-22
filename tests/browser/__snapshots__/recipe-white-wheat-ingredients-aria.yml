@@ -1,0 +1,113 @@
+- banner:
+  - heading "Bread Planner" [level=1]
+- main:
+  - tablist:
+    - tab "Schedule"
+    - tab "Ingredients" [selected]
+  - text: Recipe
+  - combobox "Recipe": White & Whole Wheat
+  - paragraph: An 80/20 white and whole-wheat loaf, with a separate autolyse and overnight cold proof.
+  - tabpanel "Ingredients":
+    - text: Your batch Each recipe remembers its own settings. Number of loaves
+    - spinbutton "Number of loaves": "2"
+    - text: loaves Dough weight per loaf
+    - spinbutton "Dough weight per loaf": "1010"
+    - text: g Total hydration
+    - spinbutton "Total hydration": "82"
+    - text: "%"
+    - slider "Adjust total hydration"
+    - paragraph: Includes the flour and water in the leaven used.
+    - text: Flour blend Parts set the balance between flours. The gram weights scale to your batch.
+    - table:
+      - rowgroup:
+        - row "Flour Blend parts":
+          - columnheader "Flour"
+          - columnheader "Blend parts"
+      - rowgroup:
+        - row "White-bread flour 800 g in this batch · 80% 80 parts":
+          - cell "White-bread flour 800 g in this batch · 80%"
+          - cell "80 parts":
+            - spinbutton "White-bread flour proportion": "80"
+            - text: parts
+        - row "Whole-wheat flour 200 g in this batch · 20% 20 parts":
+          - cell "Whole-wheat flour 200 g in this batch · 20%"
+          - cell "20 parts":
+            - spinbutton "Whole-wheat flour proportion": "20"
+            - text: parts
+    - heading "Leaven, salt & water split" [level=3]:
+      - button "Leaven, salt & water split" [expanded]
+    - region "Leaven, salt & water split":
+      - text: Leaven / added flour
+      - spinbutton "Leaven / added flour": "20"
+      - text: "%"
+      - slider "Adjust leaven / added flour"
+      - text: Salt / added flour
+      - spinbutton "Salt / added flour": "2"
+      - text: "%"
+      - slider "Adjust salt / added flour"
+      - text: Water reserved for final mix
+      - spinbutton "Water reserved for final mix": "6.25"
+      - text: "%"
+      - slider "Adjust water reserved for final mix"
+      - paragraph: The water split is a percentage of total added water.
+    - heading "Leaven build" [level=3]:
+      - button "Leaven build" [expanded]
+    - region "Leaven build":
+      - paragraph: Build quantities per 1,000 g added flour. The amounts made scale with your batch. Mature starter is equal weights flour and water. If the build is empty, the leaven is treated as 100% hydration.
+      - text: Mature starter
+      - spinbutton "Mature starter": "28"
+      - text: g White-bread flour
+      - spinbutton "White-bread flour": "71"
+      - text: g Whole-wheat flour
+      - spinbutton "Whole-wheat flour": "71"
+      - text: g Water
+      - spinbutton "Water": "142"
+      - text: g
+      - term: Mature starter
+      - definition: 28 g
+      - term: White-bread flour
+      - definition: 71 g
+      - term: Whole-wheat flour
+      - definition: 71 g
+      - term: Water
+      - definition: 142 g
+      - term: Total
+      - definition: 312 g
+      - text: Made
+      - strong: 312 g
+      - text: Used in dough
+      - strong: 200 g
+      - text: Reserved
+      - strong: 112 g
+    - heading "Recipe defaults" [level=3]:
+      - button "Recipe defaults" [expanded]
+    - region "Recipe defaults":
+      - button "Restore recipe defaults"
+    - text: 2,020g
+    - paragraph: Total dough for 2 loaves
+    - text: 82% total hydration 1,010 g per loaf 01 / Autolyse Mix the flour and first water addition. Keep the final-mix ingredients separate.
+    - term: White-bread flour
+    - definition: 800 g
+    - term: Whole-wheat flour
+    - definition: 200 g
+    - term: Water
+    - definition: 750 g
+    - text: 02 / Final mix Add after the autolyse, once the leaven is ready.
+    - term: Leaven used
+    - definition: 200 g
+    - term: Salt
+    - definition: 20 g
+    - term: Water
+    - definition: 50 g
+    - strong: 1,000 g
+    - text: added flour
+    - strong: 800 g
+    - text: added water
+    - strong: 200 g
+    - text: leaven used
+  - heading "Mature starter and readiness guide" [level=3]:
+    - button "Mature starter and readiness guide"
+  - heading "Establishing a starter from scratch" [level=3]:
+    - button "Establishing a starter from scratch"
+  - heading "Shaping, basket preparation and baking" [level=3]:
+    - button "Shaping, basket preparation and baking"

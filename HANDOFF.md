@@ -247,3 +247,49 @@ Michael's decision: Preuss House uses Anita's all-purpose flour instead of red s
 Evidence: 96 of 96 tests pass. The House name, leaven and dedup tests were updated, and a new test covers the saved-blend carry-over. The build had 0 errors, 0 warnings and the 4 existing hints. In the dev server, the saved local plan loaded with 80/10/10 Anita's, whole-wheat and rye parts, its checked leaven intact, and Anita's in the leaven step, autolyse step, flour table, weighing lists and leaven build, with no "red spring" left on the House page. A fresh plan listed the same six recipes. The console had no errors.
 
 Not verified: a saved plan carrying over on Michael's phone. Once a browser has loaded this version, an older version of the app would reset the House blend to its defaults (80/10/10) because it does not know `flour_anita`.
+
+## Rebuild step 0: today's behaviour recorded, November 21, 2026: committed, PR #20 open
+
+Michael asked for a review of the whole codebase and then approved step 0 of the five-step rebuild plan: record what the app does before changing how it is built. Branch `rebuild-baseline`, from `main` at `34699a7`. PR #20 (https://github.com/mykepreuss/bread-planner/pull/20) is open for review and not merged. No file under `src/` changed.
+
+- `docs/BEHAVIOUR.md`: the behaviour, written from the code and checked against the records, with five decisions for Michael at the end.
+- `tests/baseline`: `npm test`, and so every Vercel build, now runs two more checks.
+  - `baseline.test.ts` compares the code's output with `baseline.json`: 214 plans (the schedule matrix, 36 bake-day scenarios and 80 seeded random bakes), 45 recipe calculations, 24 kinds of saved data and 53 helper results, in America/Vancouver.
+  - `app.test.ts` renders the real `App.tsx` on the server, through vite, for every plan. Each plan is saved in browser storage as the app saves it, with the clock frozen, and the check confirms the Schedule tab shows what the record says. Four recorded plans are invalid entries that loading corrects, so they can't be shown and are listed in the test.
+  - `npm run baseline:update` rewrites the record and leaves it untouched when nothing but the source line would change.
+- `tests/browser`: `npm run test:browser` builds the site and compares 22 screens, all with the clock frozen.
+  - Each screen test opens the page at 375 px and 1280 px and checks that both widths give the same accessibility and layout snapshots. It then compares them with the record, along with first-screen screenshots at both widths; five screens also get whole-page screenshots.
+  - It also compares 16 actions, with reloads.
+  - `@playwright/test` 1.63.0 is a new dev dependency, matching the other mp-hq projects, and uses the Chromium already cached here. Its packages have no install scripts, so Vercel's `npm ci` downloads no browser. The browser tests stay in the Vercel upload because `astro check` type-checks `tests/baseline/update.ts`, which imports from them.
+- Not carried into the rebuild, because no saved data on this site can reach them: the hidden `manual-rye` recipe, upgrades from saved versions 1 to 4, and the spreadsheet cells inside each save. Every App.tsx revision in this repository saves version 5.
+- Astro 7 runs `astro preview` in the background when it detects an AI agent. The Playwright server command passes `--ignore-lock` to keep it in the foreground.
+
+Review fixes (the code review of PR #20 at extra-high effort found seven test and documentation issues; all fixed):
+- The Tartine method-guide record was really House's: the test opened two saved plans in one tab, and the second never loaded. Each recipe now has its own test, which also asserts the House paragraph is present or absent.
+- `npm test` checked only a copy of App.tsx's screen rules; `app.test.ts` now renders App.tsx itself. Writing it also showed the copy got one rule wrong: the timeline lists steps day by day, so a step moved onto another day shows under that day. The spec now says so.
+- Saved-data cases are loaded at a fixed moment (Jan 1, 2030, noon), so a plan without a valid date no longer depends on when the test runs.
+- `recordedFrom` names the last commit that changed `src/` (`1bc99cb`, the same `src/` as `34699a7`), flagged if `src/` has uncommitted changes.
+- The record writer no longer treats `$` in a step as a replacement pattern.
+- The two widths are compared in one test before anything is written, so re-recording can no longer hide a phone-only difference.
+- Random bakes now save their readings in time order, one per minute, as the app does. Eight inputs changed and no output did.
+
+Evidence (this session, at the commit after `e5f2fe0` on `rebuild-baseline`):
+- `git diff --stat HEAD -- src` is empty.
+- `npm test` passed 120 of 120 with the host zone and with the Vancouver rule: the 111 existing tests, 4 checks of the rule, the 4 baseline sections and the App.tsx check. `npm run build` had 0 errors, 0 warnings and the 4 existing hints.
+- A simulated Vercel upload (the committed files minus `.vercelignore`) passed `npm test` and the build.
+- The browser record passed 38 of 38 twice. `npm run baseline:update` leaves both JSON files byte for byte as they are.
+- Deliberate one-line breaks, each reverted:
+  - A shorter dough-check window and a reworded bench-rest note both failed the baseline. The note change failed only the baseline; the 111 existing tests passed.
+  - A changed plan-ended rule in App.tsx and a renamed Up next class both now fail `npm test`, through the App.tsx check.
+  - A paler skipped step and a disabled phone reorder failed the whole-page screenshots.
+  - A phone-only difference makes `--update-snapshots` fail with "phone and desktop show the same content", and no record file is written.
+- The `verifier` agent checked the first version independently. Its findings (a Vercel build break, three wrong spec claims, and gaps in the browser record) were fixed before the PR.
+
+Vercel: the preview builds of `e5f2fe0`, `3ba69b5` and `d9b456f` failed. Vercel's Linux build (Node 24.22.3) cannot apply America/Vancouver at all: the record tests stopped with "The baseline needs the America/Vancouver time zone" whether the zone was set while running or when Node started. The 111 existing tests passed, in UTC. The simulated upload above ran on macOS, where the zone works, so it could not show this.
+- The fix: `tests/baseline/vancouver.ts` follows Vancouver's rule in force since 2007 (UTC−8, and UTC−7 from 2:00 AM on the second Sunday in March to 2:00 AM on the first Sunday in November). It reads wall-clock times with the host's own parser, so invalid times behave as before. The record tests use it only where the host cannot apply the zone.
+- `vancouver.test.ts` compares it with the real zone wherever the host has it: over 300,000 readings at 15-minute steps through 2026, early 2027 and early 2030; every wall-clock time, including the skipped and repeated hours; invalid times; and day changes. It is skipped on Vercel.
+- `BASELINE_ZONE=rule npm test` runs here what Vercel runs, with the host left in UTC underneath: 120 of 120 pass, as with the host zone.
+
+Not verified: a passing Vercel build with that change, which the PR checks will show; the browser records on any machine but this Mac (the screenshots are Mac-specific).
+
+Decisions for Michael are listed at the end of `docs/BEHAVIOUR.md`, including one defect found here: 38°C is accepted, then lost on reload.

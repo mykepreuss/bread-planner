@@ -1,0 +1,120 @@
+- banner:
+  - heading "Bread Planner" [level=1]
+- main:
+  - tablist:
+    - tab "Schedule"
+    - tab "Ingredients" [selected]
+  - text: Recipe
+  - combobox "Recipe": Red Spring & Rye
+  - paragraph: Red spring, whole wheat and rye with extra leaven, a separate autolyse and an overnight cold proof.
+  - tabpanel "Ingredients":
+    - text: Your batch Each recipe remembers its own settings. Number of loaves
+    - spinbutton "Number of loaves": "2"
+    - text: loaves Dough weight per loaf
+    - spinbutton "Dough weight per loaf": "1001"
+    - text: g Total hydration
+    - spinbutton "Total hydration": "80"
+    - text: "%"
+    - slider "Adjust total hydration"
+    - paragraph: Includes the flour and water in the leaven used.
+    - text: Flour blend Parts set the balance between flours. The gram weights scale to your batch.
+    - table:
+      - rowgroup:
+        - row "Flour Blend parts":
+          - columnheader "Flour"
+          - columnheader "Blend parts"
+      - rowgroup:
+        - row "Red spring flour 758 g in this batch · 80.3% 80.297 parts":
+          - cell "Red spring flour 758 g in this batch · 80.3%"
+          - cell "80.297 parts":
+            - spinbutton "Red spring flour proportion": "80.297"
+            - text: parts
+        - row "Whole-wheat flour 83 g in this batch · 8.8% 8.792 parts":
+          - cell "Whole-wheat flour 83 g in this batch · 8.8%"
+          - cell "8.792 parts":
+            - spinbutton "Whole-wheat flour proportion": "8.792"
+            - text: parts
+        - row "Rye flour 103 g in this batch · 10.9% 10.911 parts":
+          - cell "Rye flour 103 g in this batch · 10.9%"
+          - cell "10.911 parts":
+            - spinbutton "Rye flour proportion": "10.911"
+            - text: parts
+    - heading "Leaven, salt & water split" [level=3]:
+      - button "Leaven, salt & water split" [expanded]
+    - region "Leaven, salt & water split":
+      - text: Leaven / added flour
+      - spinbutton "Leaven / added flour": "33.051"
+      - text: "%"
+      - slider "Adjust leaven / added flour"
+      - text: Salt / added flour
+      - spinbutton "Salt / added flour": "2.331"
+      - text: "%"
+      - slider "Adjust salt / added flour"
+      - text: Water reserved for final mix
+      - spinbutton "Water reserved for final mix": "9.945"
+      - text: "%"
+      - slider "Adjust water reserved for final mix"
+      - paragraph: The water split is a percentage of total added water.
+    - heading "Leaven build" [level=3]:
+      - button "Leaven build" [expanded]
+    - region "Leaven build":
+      - paragraph: Build quantities per 1,000 g added flour. The amounts made scale with your batch. Mature starter is equal weights flour and water. If the build is empty, the leaven is treated as 100% hydration.
+      - text: Mature starter
+      - spinbutton "Mature starter": "29.661"
+      - text: g Red spring flour
+      - spinbutton "Red spring flour": "75.212"
+      - text: g Whole-wheat flour
+      - spinbutton "Whole-wheat flour": "75.212"
+      - text: g Water
+      - spinbutton "Water": "150.424"
+      - text: g
+      - term: Mature starter
+      - definition: 28 g
+      - term: Red spring flour
+      - definition: 71 g
+      - term: Whole-wheat flour
+      - definition: 71 g
+      - term: Water
+      - definition: 142 g
+      - term: Total
+      - definition: 312 g
+      - text: Made
+      - strong: 312 g
+      - text: Used in dough
+      - strong: 312 g
+      - text: Reserved
+      - strong: 0 g
+    - heading "Recipe defaults" [level=3]:
+      - button "Recipe defaults" [expanded]
+    - region "Recipe defaults":
+      - button "Restore recipe defaults"
+    - text: 2,002g
+    - paragraph: Total dough for 2 loaves
+    - text: 80% total hydration 1,001 g per loaf 01 / Autolyse Mix the flour and first water addition. Keep the final-mix ingredients separate.
+    - term: Red spring flour
+    - definition: 758 g
+    - term: Whole-wheat flour
+    - definition: 83 g
+    - term: Water
+    - definition: 652 g
+    - text: 02 / Final mix Add after the autolyse, once the leaven is ready.
+    - term: Rye flour
+    - definition: 103 g
+    - term: Leaven used
+    - definition: 312 g
+    - term: Salt
+    - definition: 22 g
+    - term: Water
+    - definition: 72 g
+    - strong: 944 g
+    - text: added flour
+    - strong: 724 g
+    - text: added water
+    - strong: 312 g
+    - text: leaven used
+  - heading "Mature starter and readiness guide" [level=3]:
+    - button "Mature starter and readiness guide"
+  - heading "Establishing a starter from scratch" [level=3]:
+    - button "Establishing a starter from scratch"
+  - heading "Shaping, basket preparation and baking" [level=3]:
+    - button "Shaping, basket preparation and baking"
