@@ -340,6 +340,32 @@ test.describe('flows', () => {
     await expect(page.getByText('Skipped', { exact: true })).toHaveCount(11);
   });
 
+  test("A check that asks counts at the tap, not at the screen's last refresh", async ({ page }) => {
+    // The screen was drawn at 5:45:20 PM and is tapped at 5:45:50, which rounds to 5:46, when Turn 7 has come due.
+    await page.clock.setFixedTime(new Date('2026-11-22T17:45:20-08:00'));
+    await page.addInitScript(
+      (save) => {
+        if (sessionStorage.getItem('seeded')) return;
+        localStorage.clear();
+        localStorage.setItem('bread-planner.v6', save);
+        sessionStorage.setItem('seeded', '1');
+      },
+      JSON.stringify({
+        version: 6,
+        plan: { date: '2026-11-22', time: '09:00', recipes: { house: { bake: { doughTemp: 60 } } } },
+      }),
+    );
+    await page.goto('/');
+    await ready(page);
+    await page.clock.setFixedTime(new Date('2026-11-22T17:45:50-08:00'));
+    await page.getByRole('checkbox', { name: 'Complete Cut and preshape' }).click();
+    const dialog = page.getByRole('alertdialog');
+    await expect(dialog.getByRole('heading')).toHaveText('Skip 12 earlier steps?');
+    await dialog.getByRole('button', { name: 'Check and skip' }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(page.getByText('Skipped', { exact: true })).toHaveCount(12);
+  });
+
   test('Clear checklist clears the checks and the dough temperatures', async ({ page }) => {
     await open(page, 'mid-bulk');
     await page.getByRole('button', { name: 'Clear checklist' }).click();

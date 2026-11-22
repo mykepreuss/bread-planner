@@ -786,8 +786,8 @@ Tests, each failing before its change:
     - Preheat skips nothing while its partner stays open.
   - These ask:
     - The first check at Turn 1, before bulk is due, skips five steps.
-    - The evening before, preshape would skip twelve steps.
-  - With the feed checked, Turn 1 would skip the leaven, the autolyse, the mix and the start of bulk. It asks the evening before and at 2:14 PM on bake day, but not from 2:15 PM, the start of bulk.
+    - The day before, at 3:20 PM, preshape would skip twelve steps.
+  - With the feed checked, Turn 1 would skip the leaven, the autolyse, the mix and the start of bulk. It asks the day before, at 3:20 PM, and at 2:14 PM on bake day, but not from 2:15 PM, the start of bulk.
 - Browser flows:
   - A tap on the last step of a fresh plan opens the dialog.
     - "Don't check it" leaves 0 of 23 checked, with Up next on Feed starter.
@@ -795,11 +795,12 @@ Tests, each failing before its change:
     - Focus is back on the check box after either.
     - It failed before the change, finding no dialog. Its first run after the change failed at the reload check, because it read the page while the dialog was still closing; it now waits for the dialog to close.
   - Cool dough at 60°F, preshape tapped at 5:45 PM on bake day and confirmed a minute later: the dialog says 11, and 11 steps are skipped. Recorded at the confirm, 12 were, because Turn 7 had come due.
+  - The same bake drawn at 5:45:20 PM and tapped at 5:45:50, which rounds to 5:46: the dialog says 12, and 12 are skipped. Recorded at the screen's 30-second clock, 11 were; counted there too, the dialog said 11.
 
 Evidence (this session, on `confirm-big-skip`, final code):
 - `npm test` passed 133 of 133 with the host zone and with `BASELINE_ZONE=rule`.
 - `npm run build` had 0 errors, 0 warnings and 0 hints with a clean format check.
-- `npm run test:browser` passed 50 of 50, with no recorded screen changed.
+- `npm run test:browser` passed 51 of 51 after the second check's fix, with no recorded screen changed.
 - `npm run baseline:update` left the record unchanged.
 - At 390 px wide, the dialog fits the screen (320 px, from 35 px) with focus on "Don't check it" and no console errors.
 - Deliberate breaks at `3bc6ca2`, each caught and then restored, in a separate copy against the full unit and browser suites. Each browser failure is one of the two new flows:
@@ -819,7 +820,7 @@ Evidence (this session, on `confirm-big-skip`, final code):
 | The check is recorded at the confirm | 0 | 1 |
 | Focus isn't returned to the check box | 0 | 1 |
 
-Independent check (the verifier, on `879f679`): FAIL on four of nine criteria, each small.
+Independent check (the verifier, on `879f679`): FAIL on five of nine criteria (1, 3, 5, 7 and 9), from four small defects.
 - Passed:
   - The mis-tap fix in the built app, with the dialog, its cancel paths and the check box.
   - Normal use never asking, across 68,940 checks in 147 setups and in the browser.
@@ -828,5 +829,17 @@ Independent check (the verifier, on `879f679`): FAIL on four of nine criteria, e
   - Closing the dialog left focus on the page body, so the next Tab jumped to the top. Focus now goes back to the step's check box.
   - The count was worked out at the tap but the check recorded at the confirm, so with cool dough a turn could come due in between: 11 asked, 12 skipped. The check is now recorded at the tap.
   - One break survived: counting the start of bulk towards asking. With the new rule, the bulk-time test catches it.
-  - Two HANDOFF claims were wrong. "Checking preshape with turns left never asks" was untrue on a fresh plan. The first break table's "2" browser failures for "Three steps are enough to ask" were from a flaky run; rerun with the failing tests named, it is 0.
+  - Two HANDOFF claims were wrong. "Checking preshape with turns left never asks" was untrue on a fresh plan. The first break table's "2" browser failures for "Three steps are enough to ask" couldn't be reproduced: rerun with the failing tests named, it is 0, and the verifier also gets 0.
 - It also found that turns never counting let a tap on "Cut and preshape" the evening before skip 11 steps without asking, and suggested excusing them only once bulk has started. They now count until the start of bulk is due.
+
+Second check (the verifier, on `022d29d`): FAIL on two small items.
+- Passed:
+  - its four findings are fixed in the built app;
+  - the bulk-time rule never asked in 81,522 realistic checks across 105 setups, and caught every big tap the day before;
+  - the test commands, the record, the scope and the break table all reproduce.
+- Not met: recording the check at the screen's 30-second clock instead of the tap passed every test, because the 60°F flow draws and taps in the same minute. A new flow draws at 5:45:20 and taps at 5:45:50; it fails under that break (11 skipped against 12 asked) and under counting at the screen's clock (11 asked against 12 expected).
+- Not met: this section said the first check failed four of nine criteria; it was five, from four defects. Corrected, with two looser wordings it noted: the "flaky run" and "the evening before" for a 3:20 PM test.
+- What Michael should know, from its notes:
+  - Once bulk is due, a tap past preshape still skips quietly: "Basket rest" at the start of bulk skips 10 steps, all turns and shaping, without asking.
+  - Whether a tap asks depends on the clock while the start of bulk is unchecked.
+  - A two-batch bake with only its bake steps checked asks "Skip 5" at Batch 2.
