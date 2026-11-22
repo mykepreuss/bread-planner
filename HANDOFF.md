@@ -946,4 +946,23 @@ Record changes:
 - `tests/browser/saved-plans.json` gains four saves, copies of Original Tartine's with each recipe selected, added in the file's one-line format.
 - `tests/baseline/load.test.ts` counts the saved plans it loads; the count goes from 21 to 25.
 
+Evidence (this session, on `tartine-recipes` after the rebase onto `main`):
+- `npm test` passed 163 of 163 with the host zone and with `BASELINE_ZONE=rule`. The build had 0 errors, 0 warnings and 0 hints with a clean format check.
+- `npm run test:browser` passed 52 of 52: 22 screens and 30 flows. Its first run wrote the eight new screens' 32 snapshot files, and the second passed with no existing snapshot changed.
+- At 390 px wide, Olive's add-ins panel fits the screen with no console errors.
+- The new tests failed before their recipes and rules existed, as the agents and I checked.
+- Deliberate breaks at `fa36704`, each caught and then restored, in a separate copy against the full unit and browser suites:
+
+| Break | Unit tests failing | Browser tests failing |
+|---|---|---|
+| A saved menu keeps only the recipes it names (the old rule) | 5 | 8 |
+| The add-in step comes after Turn 2 | 11 | 2 |
+| Add-ins are not scaled to the batch | 8 | 0 |
+| Add-ins round to the nearest half, not quarter | 2 | 0 |
+| The toast step starts at Turn 1 | 8 | 1 |
+| The longer initial rest is ignored | 7 | 2 |
+| The add-in card offers no dough temperature | 4 | 0 |
+| Country Rye's flours swapped | 4 | 1 |
+| The add-ins panel isn't shown | 0 | 2 |
+
 Not verified: how the add-ins and toast step read on Michael's iPhone, and whether the book's whole-wheat and rye pages intend 50 g of water to wait for the salt.
