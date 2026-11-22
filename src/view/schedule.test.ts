@@ -25,3 +25,76 @@ test('the checked count leaves out checks for steps no longer on the schedule, b
   const after = scheduleView(s, NOW, String);
   assert.deepEqual([after.completed, after.underway], [0, true]);
 });
+
+test('Up next passes over an unchecked starter feed once the bake is through turn 3, and the feed can still be checked', () => {
+  let s = freshState(NOW);
+  for (const id of ['leaven', 'autolyse', 'mix', 'rest', 'turn1', 'turn2', 'turn3'])
+    s = act.setChecked(s, id, true, NOW);
+  const v = scheduleView(s, NOW, String);
+  assert.deepEqual(v.skipped, ['feed']);
+  assert.deepEqual([v.next?.id, v.then?.id], ['turn4', 'turn5']);
+  assert.ok(!v.remaining.some((step) => step.id === 'feed'));
+  s = act.setChecked(s, 'feed', true, NOW);
+  const checked = scheduleView(s, NOW, String);
+  assert.deepEqual([checked.skipped, checked.next?.id, checked.completed], [[], 'turn4', 8]);
+});
+
+test('with the feed and the autolyse both forgotten, checking the feed late leaves the autolyse skipped and Up next on turn 4', () => {
+  let s = freshState(NOW);
+  for (const id of ['leaven', 'mix', 'rest', 'turn1', 'turn2', 'turn3']) s = act.setChecked(s, id, true, NOW);
+  assert.deepEqual(scheduleView(s, NOW, String).skipped, ['feed', 'autolyse']);
+  s = act.setChecked(s, 'feed', true, NOW);
+  const v = scheduleView(s, NOW, String);
+  assert.deepEqual([v.skipped, v.next?.id], [['autolyse'], 'turn4']);
+});
+
+test('Preheat checked before the fridge step it starts with leaves Up next on the fridge step', () => {
+  let s = freshState(NOW);
+  const ids = schedule(planOf(s)).map((step) => step.id);
+  for (const id of ids.slice(0, ids.indexOf('warmup'))) s = act.setChecked(s, id, true, NOW);
+  s = act.setChecked(s, 'preheat', true, NOW);
+  const v = scheduleView(s, NOW, String);
+  assert.deepEqual([v.skipped, v.next?.id, v.then?.id], [[], 'warmup', 'covered']);
+  s = act.setChecked(s, 'covered', true, NOW);
+  assert.deepEqual(scheduleView(s, NOW, String).skipped, ['warmup']);
+});
+
+test('Basket rest checked late, after Preheat, still leaves Up next on the fridge step', () => {
+  let s = freshState(NOW);
+  const ids = schedule(planOf(s)).map((step) => step.id);
+  for (const id of ids.slice(0, ids.indexOf('warmup')).filter((id) => id !== 'basket'))
+    s = act.setChecked(s, id, true, NOW);
+  s = act.setChecked(act.setChecked(s, 'preheat', true, NOW), 'basket', true, NOW);
+  const v = scheduleView(s, NOW, String);
+  assert.deepEqual([v.skipped, v.next?.id], [[], 'warmup']);
+});
+
+test('in Tartine, warm bulk checked before the salt step it starts with leaves Up next on the salt step', () => {
+  let s = act.selectRecipe(freshState(NOW), 'tartine');
+  for (const id of ['leaven', 'autolyse', 'rest']) s = act.setChecked(s, id, true, NOW);
+  const v = scheduleView(s, NOW, String);
+  assert.deepEqual([v.skipped, v.next?.id], [[], 'mix']);
+});
+
+test('an extra turn for cool dough, due at the planned preshape time, is skipped once preshape is done', () => {
+  let s = act.setDoughTemp(freshState(NOW), 65);
+  for (const id of ['feed', 'leaven', 'autolyse', 'mix', 'rest']) s = act.setChecked(s, id, true, NOW);
+  s = act.setChecked(s, 'shape', true, NOW + 270 * 60000);
+  const v = scheduleView(s, NOW + 270 * 60000, String),
+    planned = schedule(planOf(s));
+  const turn8 = v.steps.find((step) => step.id === 'turn8');
+  assert.ok(turn8, 'bulk ran long enough to keep an eighth turn');
+  assert.equal(turn8.planned.getTime(), planned.find((step) => step.id === 'shape')!.at.getTime());
+  assert.deepEqual(v.skipped, ['turn1', 'turn2', 'turn3', 'turn4', 'turn5', 'turn6', 'turn7', 'turn8']);
+  assert.equal(v.next?.id, 'bench1');
+});
+
+test('a plan whose last loaf is out has ended once every step but a forgotten starter feed is checked', () => {
+  let s = freshState(NOW);
+  const ids = schedule(planOf(s)).map((step) => step.id);
+  for (const id of ids.slice(1)) s = act.setChecked(s, id, true, NOW);
+  const later = NOW + 3 * 24 * 60 * 60000,
+    v = scheduleView(s, later, String);
+  assert.equal(ids[0], 'feed');
+  assert.deepEqual([v.skipped, v.next, v.allDone, v.stale], [['feed'], undefined, true, true]);
+});

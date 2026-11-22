@@ -444,26 +444,115 @@ test('a dough temperature is kept from 50°F to 100°F, so 140°F is out of rang
   assert.equal(inTempRange(140, 'F'), false);
 });
 
-test('bulk steps left unchecked before a later checked step count as skipped; nothing else does', () => {
+test('any step left unchecked before a later checked step counts as skipped', () => {
+  // Michael's rule since November 22, 2026. Before it only the start of bulk and the turns could be skipped, so an
+  // unchecked starter feed held Up next back however far the bake had gone.
   const steps = plan();
-  assert.deepEqual(skippedSteps(steps, []), []);
-  assert.deepEqual(skippedSteps(steps, ['leaven', 'rest', 'turn1', 'turn2', 'turn3', 'turn4', 'shape']), [
+  const turns = ['turn1', 'turn2', 'turn3', 'turn4', 'turn5', 'turn6', 'turn7'];
+  const skip = (done: string[]) => skippedSteps(steps, done, steps);
+  assert.deepEqual(skip([]), []);
+  assert.deepEqual(
+    skip(['leaven', 'autolyse', 'mix', 'rest', 'turn1', 'turn2', 'turn3']),
+    ['feed'],
+    'an unchecked starter feed is passed over once later steps are checked',
+  );
+  assert.deepEqual(skip(['leaven', 'rest', 'turn1', 'turn2', 'turn3', 'turn4', 'shape']), [
+    'feed',
+    'autolyse',
+    'mix',
     'turn5',
     'turn6',
     'turn7',
   ]);
   assert.deepEqual(
-    skippedSteps(steps, ['mix', 'shape']),
-    ['rest', 'turn1', 'turn2', 'turn3', 'turn4', 'turn5', 'turn6', 'turn7'],
-    'jumping to preshape passes the whole bulk',
+    skip(['mix', 'shape']),
+    ['feed', 'leaven', 'autolyse', 'rest', ...turns],
+    'jumping to preshape passes everything before it',
   );
-  assert.deepEqual(skippedSteps(steps, ['mix']), [], 'feed, leaven and autolyse are never skipped');
+  assert.deepEqual(skip(['mix']), ['feed', 'leaven', 'autolyse']);
   assert.deepEqual(
-    skippedSteps(steps, ['fridge']),
-    ['rest', 'turn1', 'turn2', 'turn3', 'turn4', 'turn5', 'turn6', 'turn7'],
-    'only bulk steps, even when much later steps are checked',
+    skip(['fridge']),
+    ['feed', 'leaven', 'autolyse', 'mix', 'rest', ...turns, 'shape', 'bench1', 'fold', 'basket'],
+    'every step before the latest checked one',
   );
-  assert.deepEqual(skippedSteps(steps, ['turn1', 'turn2']), ['rest']);
+  assert.deepEqual(skip(['turn1', 'turn2']), ['feed', 'leaven', 'autolyse', 'mix', 'rest']);
+  assert.deepEqual(skip(['feed']), [], 'nothing after the latest checked step is skipped');
+  assert.deepEqual(
+    skip(['leaven', 'mix', 'rest', 'turn1', 'turn2', 'turn3', 'feed']),
+    ['autolyse'],
+    'the step furthest along decides, not the one checked last',
+  );
+  assert.deepEqual(skip(['feed', 'no-such-step']), [], 'a check for a step not listed passes nothing');
+});
+
+test('a step the plan starts at the same time as the furthest checked one stays open', () => {
+  const steps = plan(),
+    tartine = plan('tartine');
+  const turns = ['turn1', 'turn2', 'turn3', 'turn4', 'turn5', 'turn6', 'turn7'],
+    toFridge = ['feed', 'leaven', 'autolyse', 'mix', 'rest', ...turns, 'shape', 'bench1', 'fold', 'basket', 'fridge'];
+  const at = (list: Step[], id: string) => list.find((s) => s.id === id)!.at.getTime();
+  assert.equal(at(steps, 'warmup'), at(steps, 'preheat'), 'the loaves come out of the fridge as the oven preheats');
+  assert.deepEqual(
+    skippedSteps(steps, ['preheat'], steps),
+    toFridge,
+    'Preheat checked first leaves the fridge step open',
+  );
+  assert.deepEqual(
+    skippedSteps(steps, ['covered'], steps),
+    [...toFridge, 'warmup', 'preheat'],
+    'a later check passes both',
+  );
+  assert.equal(at(tartine, 'mix'), at(tartine, 'rest'));
+  assert.deepEqual(
+    skippedSteps(tartine, ['rest'], tartine),
+    ['leaven', 'autolyse'],
+    'warm bulk checked first leaves the salt step open',
+  );
+  // The plan's times decide, not the live ones: Preheat checked late, at 8:05, still starts with the fridge step.
+  const live = steps.map((s) => (s.id === 'preheat' ? { ...s, at: new Date(s.at.getTime() + 15 * 60000) } : s));
+  assert.deepEqual(skippedSteps(live, ['preheat'], steps), toFridge);
+  // A step that isn't in the plan, such as an extra turn for cool dough, starts with nothing.
+  const shape = steps.findIndex((s) => s.id === 'shape'),
+    extra = { ...steps[shape - 1], id: 'turn8', title: 'Turn 8', turn: 8, at: steps[shape].at },
+    withExtra = [...steps.slice(0, shape), extra, ...steps.slice(shape)];
+  assert.deepEqual(
+    skippedSteps(withExtra, ['shape'], steps),
+    ['feed', 'leaven', 'autolyse', 'mix', 'rest', ...turns, 'turn8'],
+    'an extra turn at the planned preshape time is still skipped once preshape is done',
+  );
+  // Two extra turns, neither in the plan: checking the second passes over the first, even though both are missing.
+  const extra9 = { ...extra, id: 'turn9', title: 'Turn 9', turn: 9, at: new Date(extra.at.getTime() + 30 * 60000) },
+    withTwo = [...steps.slice(0, shape), extra, extra9, ...steps.slice(shape)];
+  assert.deepEqual(
+    skippedSteps(withTwo, [...turns, 'turn9'], steps),
+    ['feed', 'leaven', 'autolyse', 'mix', 'rest', 'turn8'],
+    'turn 9 checked before turn 8 skips turn 8',
+  );
+  // The step furthest along sets the shared time, not the one checked last: Basket rest checked late, after Preheat.
+  assert.deepEqual(
+    skippedSteps(steps, ['preheat', 'basket'], steps),
+    toFridge.filter((id) => id !== 'basket'),
+    'a late check of an earlier step leaves the fridge step open',
+  );
+});
+
+test('a group of three steps the plan starts together stays open when the last of them is checked first', () => {
+  // Four loaves, two at once, with no reheat: batch 1 comes out, the oven reheats and batch 2 goes in at 9:33.
+  const house = recipeById('house')!,
+    steps = plan('house', { settings: { ...defaultSettings(house), count: 4 }, ovenCapacity: 2, reheat: 0 });
+  const at = (id: string) => steps.find((s) => s.id === id)!.at.getTime();
+  assert.deepEqual([at('reheat-2'), at('covered-2')], [at('out-1'), at('out-1')]);
+  const ids = steps.map((s) => s.id),
+    before = ids.slice(0, ids.indexOf('out-1'));
+  assert.equal(before.at(-1), 'uncovered');
+  assert.deepEqual(skippedSteps(steps, ['covered-2'], steps), before, 'batch 1 out and the reheat stay open');
+  assert.deepEqual(skippedSteps(steps, ['uncovered-2'], steps), [
+    ...before,
+    'out-1',
+    'reheat-2',
+    'covered-2',
+    'cooled-1',
+  ]);
 });
 
 test('each step is coloured by its temperature: only the cold proof is cold, and preheat through the last loaf out is oven', () => {

@@ -254,6 +254,43 @@ test.describe('flows', () => {
     }
   });
 
+  test('Up next moves past an unchecked Feed starter to Turn 4 once Turn 3 is checked', async ({ page }) => {
+    await open(page, 'fresh');
+    for (const title of [
+      'Start leaven',
+      'Start autolyse',
+      'Mix final dough',
+      'Start bulk fermentation',
+      'Turn 1',
+      'Turn 2',
+      'Turn 3',
+    ])
+      await page.getByRole('checkbox', { name: `Complete ${title}` }).click();
+    await expect(page.getByText('7 of 23 steps checked')).toBeVisible();
+    await expect(upNext(page).getByRole('heading', { level: 2 })).toHaveText('Turn 4');
+    const feed = page.locator('.timeline-step', { has: page.getByRole('checkbox', { name: 'Complete Feed starter' }) });
+    await expect(feed.getByText('Skipped', { exact: true })).toBeVisible();
+    await expectSameAfterReload(page);
+    // Checked late, the feed is no longer skipped, and Up next stays on Turn 4.
+    await page.getByRole('checkbox', { name: 'Complete Feed starter' }).click();
+    await expect(feed.getByText('Skipped', { exact: true })).toHaveCount(0);
+    await expect(upNext(page).getByRole('heading', { level: 2 })).toHaveText('Turn 4');
+  });
+
+  test('Preheat checked before the fridge step it starts with leaves Up next on the fridge step', async ({ page }) => {
+    await open(page, 'fresh');
+    const boxes = page.getByRole('checkbox', { name: /^Complete / });
+    const names = await boxes.evaluateAll((els) => els.map((el) => el.getAttribute('aria-label') ?? ''));
+    const fridge = names.indexOf('Complete Take both loaves out of the fridge');
+    expect(names[fridge + 1]).toBe('Complete Preheat oven and Dutch oven');
+    for (const name of names.slice(0, fridge)) await page.getByRole('checkbox', { name, exact: true }).click();
+    await page.getByRole('checkbox', { name: 'Complete Preheat oven and Dutch oven' }).click();
+    await expect(page.getByText(`${fridge + 1} of 23 steps checked`)).toBeVisible();
+    await expect(upNext(page).getByRole('heading', { level: 2 })).toHaveText('Take both loaves out of the fridge');
+    await expect(page.getByText('Skipped', { exact: true })).toHaveCount(0);
+    await expectSameAfterReload(page);
+  });
+
   test('Clear checklist clears the checks and the dough temperatures', async ({ page }) => {
     await open(page, 'mid-bulk');
     await page.getByRole('button', { name: 'Clear checklist' }).click();

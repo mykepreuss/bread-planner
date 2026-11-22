@@ -32,7 +32,7 @@ export function scheduleView(state: PlannerState, now: number, when: (d: Date) =
   );
   const doneStep = steps.find((s) => s.id === 'done'),
     firstStep = steps[0];
-  const skipped = skippedSteps(steps, bake.done),
+  const skipped = skippedSteps(steps, bake.done, planned),
     settled = [...bake.done, ...skipped];
   const remaining = steps.filter((s) => !settled.includes(s.id)),
     completed = steps.filter((s) => bake.done.includes(s.id)).length,

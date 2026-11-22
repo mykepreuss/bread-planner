@@ -9,7 +9,7 @@ Production branch: main
 Project: prj_oaBadxUrg76MQyvwFsY68FvfuM8r (bread-planner)
 Team: team_U2Fu7jNsQEgGylxpq9YR7M2f (mpmba)
 
-Each dated release section below ends with its delivery state, newest last. The last one marked "verified live" is what production runs. When this header was last edited, that was Michael's decisions: `main` at `40fd02b6dd313f3c83ec7bfff36a0a2dd614c11f`, production deployment `dpl_ADz3fHU5bkKXqaxoUXx7fLqvQ6Po` (READY). Michael is the planner's only user.
+Each dated release section below ends with its delivery state, newest last. The last one marked "verified live" is what production runs. When this header was last edited, that was the Done at fix for iPhone: `main` at `523fa8990964d8ff3623deaa553392f47cb57727`, production deployment `dpl_6hbbhCDnXNU3wVRinWg3obih18sq` (READY). Michael is the planner's only user.
 
 ## Scope and decisions
 
@@ -643,7 +643,7 @@ Release: merged as pull request #27 at `40fd02b`, with Michael's approval. Produ
 - A plan dated 0202-11-22 kept that date and showed 23 steps.
 
 
-## Done at fits an iPhone screen, November 22, 2026: committed, pull request open
+## Done at fits an iPhone screen, November 22, 2026: merged and verified live, except on an iPhone
 
 Observed in Michael's iPhone screenshot of production, November 22: in each checked step, the Done at date field ran into its time field, and the time field ran off the right edge of the screen.
 
@@ -655,3 +655,98 @@ Evidence (this session):
 - A new browser flow opens a bake in progress at phone width. It checks that all 14 date and time fields have their appearance reset, and that each of the 6 Done at pairs keeps its date before its time and its time inside the screen. It failed before the change (appearance "auto", not "none") and passes after; taking Done at out of the reset again fails it.
 - `npm run test:browser` passed 46 of 46 with no recorded screenshot changed, so Chromium draws both widths as before. `npm test` passed 122 of 122. The build had 0 errors, 0 warnings and 0 hints, with a clean format check.
 - Not verified: how an iPhone draws the fields. Chromium can't draw iPhone's control, this Mac has no Xcode for the iOS Simulator, and the test checks the reset rather than the iPhone layout. Not sent to the verifier, as a one-rule style change.
+
+Release: merged as pull request #29 at `523fa89`, with Michael's approval, right after pull request #28 (this file's record of his decisions) at `eaa04d2`. Production deployment `dpl_6hbbhCDnXNU3wVRinWg3obih18sq` is READY for `523fa89` and holds the `bread.assemblydigital.com` alias. On November 22 after the merge, with no console errors:
+- `verify-deployment.mjs` passed 9 checks and 7 assets; the live smoke, upgrade and impossible-date checks passed as for the decisions release, and so did the live check of each decision.
+- At phone width in Chromium, the first Done at date field's appearance is "none" (it was "auto" before this release), and the pair sits where it did, inside the screen.
+- Not confirmed: the fields on Michael's iPhone. He hasn't reported back yet.
+
+## Up next moves past an unchecked step, November 22, 2026: committed, pull request open
+
+Michael's request: with Feed starter unchecked and every step through Turn 3 checked, Up next should show Turn 4, not stay on Feed starter. Only the start of bulk and the turns could be skipped, so any other unchecked step held Up next back. Branch `up-next-after-checked`, from `main` at `523fa89`.
+
+Change: `skippedSteps` in `src/domain/bakeday.ts` marks any step left unchecked before the latest checked step as Skipped, not only bulk steps. The rest follows from the existing view:
+- Up next is the first step after the latest checked one.
+- A skipped step leaves the quiet-hours list and can still be checked.
+- A forgotten early step no longer keeps a finished plan from ending.
+- A step the plan starts at the same time as the latest checked one stays open (added at Michael's choice; see below).
+
+docs/BEHAVIOUR.md records it as decision 7, and the `bulk` flag's comment in `src/domain/schedule.ts` now says what the flag still does: bulk never ends before the latest checked bulk step.
+
+Tests, each failing before the change:
+- `bakeday.test.ts`: the skip test is rewritten for the new rule. Its old assertions, "feed, leaven and autolyse are never skipped" and "only bulk steps", described the rule Michael changed. It also checks that a step checked out of order, such as a late feed, does not decide what is skipped: the step furthest along the schedule does. A made-up id passes nothing over. (A checked "turn 9" would, because the planner adds a checked extra turn to the schedule.)
+- `view/schedule.test.ts`:
+  - Michael's example: the feed skipped, Up next Turn 4 then Turn 5, and checking the feed late leaves Up next on Turn 4.
+  - With the feed and the autolyse both forgotten, checking the feed late leaves the autolyse skipped and Up next on Turn 4.
+  - A plan with only the feed unchecked has ended once its last loaf is out.
+- A browser flow checks Michael's example in the built app. It failed before with "Feed starter" where "Turn 4" was expected, and it now also checks the Skipped badge, a reload, and checking the feed late.
+
+Record changes: `baseline.json` was regenerated. 32 of its 214 plans changed, all as the new rule implies:
+- Every step that was neither checked nor skipped and comes before the latest checked step is now skipped.
+- Up next and the step after it are the first steps left.
+- Whether the plan has ended and whether everything is done follow from that. One plan, "random bake 71", now counts as ended, so it is no longer underway; that is the one change to `underway`.
+- Only the newly skipped steps lost their quiet-hours mark, and the quiet-hours count matches the marks in every plan.
+
+My script checked each changed plan against the old record and the rule, and the verifier separately rebuilt every plan's new output from the old record and the rule, with no mismatch in 214 plans. Otherwise only the `recordedFrom` line changed. No browser screen changed: no saved browser plan leaves an early step unchecked.
+
+Evidence (this session, on `up-next-after-checked`):
+- `npm test` passed 131 of 131 with the host zone and with `BASELINE_ZONE=rule`, and `npm run build` had 0 errors, 0 warnings and 0 hints with a clean format check, on the final code (`bcedabb` and this file).
+- `npm run test:browser` passed 48 of 48.
+- Deliberate breaks: I reran the verifier's own break script (its reading of my breaks, then its five breaks of the same-time rule) at `bcedabb`, in a separate copy, against the full unit and browser suites. Every break is caught and was restored:
+
+| Break | Unit tests failing (of 131) | Browser tests failing (of 48) |
+|---|---|---|
+| Only bulk steps skip (the old rule) | 9 | 1 |
+| The step just before the latest checked one is not skipped | 6 | 1 |
+| Steps after the latest checked one are skipped too | 12 | 13 |
+| The first checked step decides, not the latest | 7 | 2 |
+| Up next ignores skipped steps | 6 | 3 |
+| Skipped steps stay on the quiet-hours list | 2 | 0 |
+| The step checked last decides, not the one furthest along | 3 | 0 |
+| Same-time steps are skipped too (no exception) | 5 | 1 |
+| Live times decide which steps start together | 4 | 1 |
+| The same, made in the view by passing the live steps as the plan | 3 | 1 |
+| The live steps' planned times decide, so an extra turn gets a partner | 4 | 0 |
+| Steps within 30 minutes of the latest checked one stay open | 6 | 0 |
+| Steps less than 30 minutes from it stay open | 4 | 0 |
+| A step sharing a planned time with any checked step stays open | 3 | 0 |
+| Only the step just before the latest checked one can stay open | 1 | 0 |
+| Steps missing from the plan pair with each other | 1 | 0 |
+| The plan is read by position, not by id | 2 | 0 |
+| The step checked last sets the shared time | 2 | 0 |
+
+Independent check (the verifier, on `c08319a`): FAIL on one of seven criteria.
+- It drove the built app with its own script. In Michael's example, Up next showed Turn 4, then Turn 5, with Feed starter marked Skipped, through two reloads. Checking the feed late kept Up next on Turn 4.
+- The rule held for several batches, steps at the same time, extra turns, "Ready: preshape now", Original Tartine and a warm proof. The test commands passed, the docs matched, and nothing else changed.
+- Not met: one of its seven breaks survived. When the step checked last decided, rather than the one furthest along, a late check of one forgotten step brought back another. The seventh row of the table above is that break; the two tests added for it now catch it.
+- It also found two inexact claims in this section, now corrected:
+  - The record's `underway` change was left out.
+  - The browser column of an earlier version of the break table counted only five chosen flows, so its "5" for the third break couldn't be reproduced.
+
+What the rule did that Michael should know, found by the verifier and each confirmed in the built app:
+- Of two steps the plan starts at the same time, checking the second first skipped the first. Checking Preheat before "Take both loaves out of the fridge" (both 7:50 AM) marked the fridge step Skipped, and Up next jumped to "Bake covered", an hour later. The same happened to Tartine's "Add salt and final water" beside "Begin warm bulk fermentation". Fixed below, at Michael's choice. A step only a few minutes earlier is still skipped: with 5 loaves, 2 at once, checking "Batch 1: remove lid" (9:10) skips "Warm batch 2" (9:03). An earlier version of this list put that case with the same-time ones; it isn't one.
+- One mis-tap on the last step ends the bake: checking the cooling mark on a fresh plan skips the 22 steps before it, hides Up next and shows "All batches done". Unchecking it puts everything back.
+- A skipped step records no time. If it is one that moves the plan, such as Mix final dough, the times keep following the last checked step that moves it.
+
+Same-time steps stay open, Michael's choice on November 22 ("Proceed", to my recommendation):
+- Change: `skippedSteps` takes the plan as well. A step that the plan starts at the same minute as the latest checked step is not skipped. The plan's times decide, not the live ones, for two reasons:
+  - A check-off a minute late moves its own live time away from its partner's.
+  - A cool-dough extra turn isn't in the plan, so it has no partner, though it can fall due at the planned preshape: Turn 8 is at 6:15 PM in the default plan, like preshape. It is still skipped once preshape is done.
+- Tests, each failing before except the extra-turn ones, which guard against comparing the wrong times:
+  - `bakeday.test.ts`: Preheat checked first leaves the fridge step open, even when checked late; a later check passes both; Tartine's warm bulk leaves the salt step open; an extra turn at the planned preshape time is still skipped.
+  - `view/schedule.test.ts`: the same for the fridge step, with Up next and the step after it, and for Tartine; and a cool-dough bake whose preshape is checked 4½ hours into bulk skips Turns 1 to 8, with Up next on the bench rest.
+  - A browser flow checks every step through the cold proof, then Preheat. It failed before with "Bake covered (both loaves)" where "Take both loaves out of the fridge" was expected, and now also checks that nothing shows Skipped, through a reload.
+- The record didn't change. 206 of its 214 plans have steps at the same time, but in the 7 where the latest checked step has a partner listed before it, that partner is checked too (the verifier's count).
+
+Second independent check (the verifier, on `cff488d`): FAIL on one of eight criteria.
+- Passed: its earlier surviving break now fails 2 unit tests. In the built app, it checked the fridge and Tartine pairs, Michael's example, a partner checked late, cool dough with a late preshape, and four loaves with four reheat times; all behaved as intended, with no console errors. The record is unchanged, and the test commands, docs, break table and scope held.
+- Not met: three of its five breaks of the same-time rule passed every test, though each gave a wrong Up next in a reachable bake:
+  - only the step just before the checked one could stay open, which cuts a group of three;
+  - with the guard for steps missing from the plan dropped, a checked Turn 9 left Turn 8 open;
+  - the step checked last set the shared time, so Basket rest checked late after Preheat skipped the fridge step.
+- `bcedabb` adds tests for all three: a group of three steps at 9:33 with four loaves and no reheat, Turn 9 checked before Turn 8, and Basket rest checked late after Preheat, in the domain and in the view. The tests pass on the real code, and the last three rows of the table above show them catching the three breaks.
+
+What the same-time rule does that Michael should know (the verifier's findings):
+- Some pairs are accidents of the reheat time. With 15 minutes, "Batch 1: 15-minute cooling mark" shares a time with "Batch 2: bake covered", so checking the bake keeps the cooling mark as Up next instead of "Batch 2: remove lid". With 17 minutes, "Warm batch 2" pairs with batch 1's bake. Changing the reheat time mid-bake changes which steps pair.
+- Tartine's "Warm both loaves to room temperature" (1:10 PM) is 30 minutes before Preheat (1:40 PM), not at the same time, so checking Preheat first still skips it. Only the House-method recipes have the fridge-out and Preheat pair.
+- The pairing lasts only until the next check: checking anything later skips the open partner.
