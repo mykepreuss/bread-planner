@@ -32,6 +32,7 @@ function fromOld(p: Planner) {
     ovenCapacity: p.ovenCapacity,
     reheat: p.reheat,
     tempUnit: p.tempUnit,
+    created: { date: p.legacy.date, time: p.legacy.time },
     recipes: Object.fromEntries(
       Object.entries(p.recipes)
         .filter(([id]) => id !== RETIRED)
@@ -59,6 +60,7 @@ function fromNew(s: PlannerState) {
     ovenCapacity: s.ovenCapacity,
     reheat: s.reheat,
     tempUnit: s.tempUnit,
+    created: s.created,
     recipes: Object.fromEntries(
       Object.entries(s.recipes).map(([id, { settings: q, bake }]) => [
         id,
@@ -104,9 +106,10 @@ test('the recorded saved data loads as the record says, with the selected plan a
     const state = fromV5(input, now),
       expected = json(output) as { recipes: Record<string, unknown> };
     delete expected.recipes[RETIRED];
+    // The record has no creation date; the other two tests compare it with the old loader's.
     const shown = {
       ...fromNew(state),
-      recipes: fromNew(state).recipes,
+      created: undefined,
       schedule: schedule(planOf(state)).map((s) => `${s.id} ${stamp(s.at)}`),
     };
     const d = difference(expected, json(shown), 'loaded');

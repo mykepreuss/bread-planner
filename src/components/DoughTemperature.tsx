@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { inTempRange, toF, fromF, tempLimits } from '@/lib/bakeday';
+import { inTempRange, toF, fromF, tempLimits } from '@/domain/bakeday';
 
 export type TempUnit = 'F' | 'C';
 /** The number field and °F/°C switch shared by both dough temperature forms, with an optional action beside them. */

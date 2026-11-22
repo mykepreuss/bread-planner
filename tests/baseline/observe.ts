@@ -9,7 +9,7 @@
  * UTC offset, such as `2026-11-22 09:00 -08`, so a daylight-saving change shows.
  */
 import { createPlanner, restorePlanner, recipeSchedule, addedHydration, type Planner } from '../../src/lib/recipes.ts';
-import { dateString, round } from '../../src/lib/model.ts';
+import { dateString } from '../../src/lib/model.ts';
 import { clockText, type BulkReading } from '../../src/lib/bakeday.ts';
 import { useVancouverRule } from './vancouver.ts';
 import { oldCore, type Core } from './cores.ts';
@@ -132,39 +132,17 @@ export function planner(i: PlanInput | (FormulaInput & { date?: string; time?: s
 
 /**
  * The Schedule tab for one plan: every step as the timeline shows it, and what the Up next card, the notices and the
- * bake summary show. The view block mirrors the start of ScheduleTab (src/components/ScheduleTab.tsx), and
- * app.test.ts checks the real one against the record; step 3 of the rebuild moves those rules into tested code and
- * this adapter then calls it.
+ * bake summary show. The core works out the view (`Core.view`: the new one is src/view/schedule.ts, which the app's
+ * ScheduleTab shows), and app.test.ts checks the real screen against the record.
  */
 export function observePlan(i: PlanInput, core: Core = oldCore) {
   const plan = planner(i),
-    now = local(i.now),
-    profile = plan.recipes[plan.recipe],
-    checks = profile.done;
-  const { steps, shift, estimate, turns, bulkMinutes, checkFrom } = core.follow(plan);
-  const doneStep = steps.find((s) => s.id === 'done'),
-    first = steps[0];
-  const skipped = core.skipped(steps, checks),
-    settled = [...checks, ...skipped];
-  const remaining = steps.filter((s) => !settled.includes(s.id)),
-    completed = steps.filter((s) => checks.includes(s.id)).length,
-    next = remaining[0];
-  const stale = doneStep !== undefined && +doneStep.at < now && (completed === 0 || remaining.length === 0);
-  const tempText = (f: number) =>
-    `${round(core.helpers.fromF(f, plan.tempUnit), plan.tempUnit === 'C' ? 1 : 0)}°${plan.tempUnit}`;
-  const advice =
-    bulkMinutes !== null
-      ? core.bulkDone(bulkMinutes, estimate)
-      : estimate
-        ? core.advice(estimate, stamp, { turns, hold: core.hold(estimate, now), temp: tempText })
-        : null;
-  const shape = steps.find((s) => s.id === 'shape');
-  const during = next !== undefined && (next.id === 'shape' || core.turnNumber(next.id) > 0);
-  const night = core.quiet(steps, settled),
-    quiet = new Map(night.map((a) => [a.step.id, a.continues ? 'continues' : 'starts']));
-  const gaps = core.gaps(steps),
-    proof = core.coldProof(steps),
-    count = plan.recipes[plan.recipe].params.count;
+    now = local(i.now);
+  const v = core.view(plan, now, stamp),
+    { steps, checks, skipped, stale, next, doneStep, estimate, checkFrom } = v;
+  const quiet = new Map(v.night.map((a) => [a.step.id, a.continues ? 'continues' : 'starts']));
+  const gaps = v.gaps,
+    proof = v.proofWindow;
   return {
     steps: steps.map((s) => ({
       id: s.id,
@@ -186,28 +164,26 @@ export function observePlan(i: PlanInput, core: Core = oldCore) {
       ...(quiet.has(s.id) && { quiet: quiet.get(s.id) }),
     })),
     view: {
-      batches: Math.ceil(count / plan.ovenCapacity),
+      batches: v.batches,
       finish: doneStep ? stamp(doneStep.at) : null,
-      totalTime: first && doneStep ? core.text.duration((+doneStep.at - +first.at) / 60000) : null,
-      checked: completed,
+      totalTime: v.totalMinutes !== null ? core.text.duration(v.totalMinutes) : null,
+      checked: v.completed,
       stale,
-      underway: checks.length > 0 && !stale,
-      allDone: remaining.length === 0 && steps.length > 0,
-      days: [...new Set(steps.map((s) => dateString(s.at)))],
+      underway: v.underway,
+      allDone: v.allDone,
+      days: v.days,
       upNext:
         next && !stale
           ? {
               id: next.id,
               countdown: core.text.until(+next.at - now),
-              then: remaining[1]?.id ?? null,
-              doughCheck:
-                core.turnNumber(next.id) > 0 && shape !== undefined && checkFrom !== null && now >= +checkFrom,
-              temperatureField:
-                during && profile.doughTemp !== null ? 'now' : during || next.id === 'rest' ? 'after mixing' : null,
+              then: v.then?.id ?? null,
+              doughCheck: v.doughCheck,
+              temperatureField: v.temperatureField,
             }
           : null,
-      shift,
-      shiftText: core.text.shift(shift),
+      shift: v.shift,
+      shiftText: core.text.shift(v.shift),
       estimate: estimate && {
         planned: estimate.planned,
         minutes: estimate.minutes,
@@ -216,11 +192,11 @@ export function observePlan(i: PlanInput, core: Core = oldCore) {
         checkFrom: stamp(estimate.checkFrom),
         plannedEnd: stamp(estimate.plannedEnd),
       },
-      turns,
-      bulkMinutes,
+      turns: v.turns,
+      bulkMinutes: v.bulkMinutes,
       checkFrom: checkFrom ? stamp(checkFrom) : null,
-      advice,
-      quietHours: night.length,
+      advice: v.advice ?? null,
+      quietHours: v.night.length,
       coldProof: proof && {
         start: stamp(proof.start),
         end: stamp(proof.end),

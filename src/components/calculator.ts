@@ -1,25 +1,13 @@
 import { createContext, useContext } from 'react';
-import { useForm } from '@tanstack/react-form';
-import { createPlanner, restorePlanner, type Planner } from '@/lib/recipes';
+import type { PlannerState } from '@/state/schema';
 
-/** Where the planner is saved in the browser. */
-export const STORAGE = 'bread-planner.v5';
-/** The saved plan, or a fresh one when nothing usable is saved. */
-export function loadPlan(): Planner {
-  try {
-    return restorePlanner(JSON.parse(localStorage.getItem(STORAGE) || 'null'));
-  } catch {
-    return createPlanner();
-  }
-}
-export function useCalculator(initial: Planner) {
-  return useForm({ defaultValues: initial });
-}
-export type Calculator = ReturnType<typeof useCalculator>;
-/** The planner's form, shared with every part of the screen that edits it. */
-export const FormContext = createContext<Calculator | null>(null);
-export function useCalc() {
-  const form = useContext(FormContext);
-  if (!form) throw new Error('Calculator unavailable');
-  return form;
+/** Applies a change: a function from the planner's state to the next one, such as those in src/state/actions.ts. */
+export type Update = (change: (state: PlannerState) => PlannerState) => void;
+
+/** The planner's state and how to change it, shared with every part of the screen. */
+export const PlannerContext = createContext<{ state: PlannerState; update: Update } | null>(null);
+export function usePlanner() {
+  const planner = useContext(PlannerContext);
+  if (!planner) throw new Error('Planner unavailable');
+  return planner;
 }

@@ -3,23 +3,27 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { calendarText, timeText } from '@/lib/model';
-import type { LiveStep } from '@/lib/bakeday';
-import { useCalc } from './calculator';
+import type { LiveStep } from '@/domain/bakeday';
+import { calendarText, timeText } from './text';
 
 /** "When are we baking?": plan around the leaven or the finish, the date and time, and when baking is complete. */
 export function PlanCard({
   anchor,
+  date,
+  time,
   onAnchor,
-  onWhen,
+  onDate,
+  onTime,
   doneStep,
 }: {
   anchor: 'leaven' | 'done';
+  date: string;
+  time: string;
   onAnchor: (anchor: 'leaven' | 'done') => void;
-  onWhen: (field: { handleChange: (v: string) => void }, value: string) => void;
+  onDate: (date: string) => void;
+  onTime: (time: string) => void;
   doneStep?: LiveStep;
 }) {
-  const form = useCalc();
   return (
     <Card className="plan-card">
       <CardHeader>
@@ -37,34 +41,14 @@ export function PlanCard({
           </SelectContent>
         </Select>
         <div className="date-time-fields">
-          <form.Field name="date">
-            {(f) => (
-              <div>
-                <Label htmlFor="plan-date">{anchor === 'leaven' ? 'Leaven date' : 'Last batch date'}</Label>
-                <Input
-                  id="plan-date"
-                  type="date"
-                  value={f.state.value}
-                  onChange={(e) => onWhen(f, e.target.value)}
-                  onBlur={f.handleBlur}
-                />
-              </div>
-            )}
-          </form.Field>
-          <form.Field name="time">
-            {(f) => (
-              <div>
-                <Label htmlFor="plan-time">Time</Label>
-                <Input
-                  id="plan-time"
-                  type="time"
-                  value={f.state.value}
-                  onChange={(e) => onWhen(f, e.target.value)}
-                  onBlur={f.handleBlur}
-                />
-              </div>
-            )}
-          </form.Field>
+          <div>
+            <Label htmlFor="plan-date">{anchor === 'leaven' ? 'Leaven date' : 'Last batch date'}</Label>
+            <Input id="plan-date" type="date" value={date} onChange={(e) => onDate(e.target.value)} />
+          </div>
+          <div>
+            <Label htmlFor="plan-time">Time</Label>
+            <Input id="plan-time" type="time" value={time} onChange={(e) => onTime(e.target.value)} />
+          </div>
         </div>
         {doneStep && (
           <div className="finish-summary">

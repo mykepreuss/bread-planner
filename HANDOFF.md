@@ -17,7 +17,7 @@ This checkpoint is documentation following the functional release. Subsequent do
 
 User requested an Astro rebuild, Vercel release and Cloudflare setup for bread.assemblydigital.com. The app has never been used in production. User explicitly excluded any transfer/migration features; temporary backup/import controls and transfer page were removed. The release starts fresh with the established recipes and browser-local editing.
 
-Astro7.4.1 statically builds the page shell, metadata and404 page. One React island retains shadcn/Radix, TanStack Form/Table and the existing calculator behavior. No backend, database, authentication or analytics were added. Preuss House remains the default, with six distinct editable recipes, exact staged quantities, leaven made/used/reserved, independent saved settings/checklists, multi-loaf forward/backward schedules, overnight proof, readiness cues, quiet-hour alerts and synchronized percentage sliders/exact inputs. Existing decisions and source math are archived in docs/SITES_HISTORY.md.
+Astro7.4.1 statically builds the page shell, metadata and404 page. One React island retains shadcn/Radix and the existing calculator behavior (TanStack Form and Table were removed in rebuild step 3b). No backend, database, authentication or analytics were added. Preuss House remains the default, with six distinct editable recipes, exact staged quantities, leaven made/used/reserved, independent saved settings/checklists, multi-loaf forward/backward schedules, overnight proof, readiness cues, quiet-hour alerts and synchronized percentage sliders/exact inputs. Existing decisions and source math are archived in docs/SITES_HISTORY.md.
 
 Vercel framework is Astro, Node24, install npm ci, build npm test && npm run build, output dist. Git integration is connected. Local .env.local and .vercel files are ignored and excluded from source uploads. The source repository is PRIVATE. Vercel's immutable/team/branch preview aliases retain their default authentication; the production domain is public.
 
@@ -370,7 +370,7 @@ Code review fixes, same day (Michael asked for the six findings from a code revi
 
 Not verified: nothing in the app runs the new core yet; step 3 switches it over.
 
-## Rebuild step 3a: saved data and actions, November 21, 2026: committed, pull request open
+## Rebuild step 3a: saved data and actions, November 21, 2026: merged and verified live
 
 Michael asked to merge step 2 and start step 3. Step 3 is split into three pull requests, each of which keeps the app working and must pass the full record:
 - 3a: saved data version 6 and the actions, as tested code, with nothing on screen changing;
@@ -384,8 +384,8 @@ Michael asked to merge step 2 and start step 3. Step 3 is split into three pull 
   - `freshState`, `planOf` and `selected` are helpers.
 - `src/state/load.ts`: `loadState` reads `bread-planner.v6`. When that is missing or unusable, it upgrades `bread-planner.v5`, which it never writes or removes, so a rollback finds the plan as it was. `serialize` writes version 6.
   - Every value is checked as version 5's `restorePlanner` checked it, and the House red spring carry-over is kept.
-  - A corrupt date or time falls back to the save's creation date (decision 4, kept until Michael decides).
-  - Not carried: versions 1 to 4, `manual-rye` and the spreadsheet cells.
+  - A corrupt date or time falls back to the save's creation date (decision 4, kept until Michael decides). As merged this held only for a version 5 save: a version 6 save fell back to tomorrow. Step 3b fixes that.
+  - Not carried: versions 1 to 4, `manual-rye`, the spreadsheet cells, and the checklists in the old part of a save, which are always empty.
 - `src/state/actions.ts`: every change the screen makes, as a function from one state to the next.
   - Settings, total hydration, restore defaults, recipe choice, oven, reheat, proof and unit.
   - Date and time (clearing temperatures while nothing is checked), plan around, and plan the next bake (which keeps the checklist, decision 1).
@@ -399,5 +399,62 @@ Evidence (this session, on `rebuild-state`):
   - It caught a real bug before commit: version 6 kept each recipe's bake under `bake`, but loading read it where version 5 keeps it, so checks and readings would have been lost on reload.
 - The random plans in `agree.test.ts` now include a 60-minute reheat. Swapping a later batch's reheat and warm-up then fails 481 of them, closing the gap the step 2 verifier found.
 
-Not verified: nothing on screen uses this yet; step 3b switches the app to it.
+Release: merged as pull request #23 at `c427c2e`. Production deployment `dpl_Q13AZwpkgDRQefxq5853yWiGDJdH` is READY for that commit. `node scripts/verify-deployment.mjs https://bread.assemblydigital.com` passed 9 checks and 7 assets, and a live smoke at phone width (23 steps, an Up next card, 2,000 g in the Ingredients tab, no console errors) passed, both on November 21 after the merge.
 
+Independent check (the verifier, on `e99250c`, the same tree as `c427c2e`): it failed two criteria, both narrow. Everything else reproduced: 146 of 146 in both zones, 38 of 38 browser tests, 100 hand-built and 30,000 random saves loading as the old loader does, 3,000 save-and-reload round trips, and 42,114 random screen changes matching the old handlers with frozen state.
+- Decision 4 held only for version 5 saves (above). Once 3b saves version 6, every save would lose its creation date. Fixed in 3b.
+- The HANDOFF still said the pull request was open, and its "not carried" list left out the old checklists. Corrected here.
+- Also noted: a storage read that throws escaped `loadState` (the old app caught it), and one of its 7 deliberate breaks survived: dropping the floor of 0 in `setTotalHydration`. Both handled in 3b.
+
+
+## Rebuild step 3b: the app switched to the new core and state, November 21, 2026: committed, pull request open
+
+Michael asked to merge step 3a and start step 3b. Branch `rebuild-switch`, from `main` at `c427c2e`. The screen and the browser record are unchanged; the save is now version 6.
+- `src/view/schedule.ts`: `scheduleView(state, now, when)` works out what the Schedule tab shows. That covers the live schedule, what is up next, whether the plan has ended, the bulk advice and which temperature field to offer, quiet-hour work, the cold proof and the batch summary. These rules were inline in `ScheduleTab.tsx`.
+- The screen runs on `src/domain`, `src/state` and `src/view`.
+  - `App.tsx` loads with `loadState`, holds the state in React and saves version 6 on every change.
+  - `PlannerContext` gives each part of the screen the state and an `update` that applies an action. Fields and menus call actions instead of a form.
+  - Nothing in the app imports `src/lib/` any more, apart from the shadcn `cn` helper in `src/lib/utils.ts`.
+- TanStack Form and TanStack Table are removed from `package.json` and the lockfile. The flour table is a plain shadcn table with the same markup.
+- From the 3a verifier:
+  - Version 6 keeps `created`: the date and time the plan was first made, taken from a version 5 save's old part. A corrupt date still falls back to it after the switch, so decision 4 stays Michael's.
+  - A storage read that throws starts the planner fresh, as before.
+  - A test now covers a total hydration below what the leaven brings: it stops at no added water.
+- The record's tests compute the Schedule tab through each core (`Core.view` in `tests/baseline/cores.ts`). For the old core that is the rules as `ScheduleTab.tsx` held them; for the new one it is `scheduleView`. The 214 recorded plans and the 4,000 random plans therefore check the new view module itself.
+- `docs/BEHAVIOUR.md` (saved data) and the README describe version 6.
+
+Evidence (this session, on `rebuild-switch`):
+- `npm test` passed 147 of 147 with the host zone and with `BASELINE_ZONE=rule`. The build had 0 errors, 0 warnings and the 4 existing hints. The Prettier check passed.
+- `npm run test:browser` passed 38 of 38, and no record file changed. The first reload flow now also checks that the version 5 save is still exactly as seeded and that the check is in the version 6 save.
+- Deliberate breaks, each caught and then restored:
+
+| Break | Failing tests |
+|---|---|
+| The after-mixing field offered on the wrong step | 3 |
+| The dough check ignoring the time | 3 |
+| Up next naming the wrong following step | 1 (`app.test.ts`) |
+| Version 6 forgetting the creation date | 1 |
+| Underway ignoring an ended plan | 3 |
+| Saving under another key | 8 or more browser flows |
+
+- Production for 3a was checked before this work (above).
+
+Independent check (the verifier, on `fda25ac`): criteria 1 to 7 met, criterion 8 (docs) not met.
+- It built the old and new apps side by side and drove both with the same scripts: 21 saved plans on both tabs, 14 scenarios and 165 step snapshots, all identical. After each scenario, the new app's version 6 save held the same planner as the old app's version 5 save.
+- Storage failures, decision 4 across reloads, a clean `npm ci` without TanStack, and every claim above reproduced.
+- Not met: the README said the bulk estimate "does not change the planned steps"; it moves preshape and every later step. That sentence predates step 3b.
+- It also found deliberate breaks that no test caught (the behaviour was right in each): eight in its first report and two more in its re-check, which a flaky screenshot had hidden. It also found Timeline still working out the total time and "All batches done" itself, the TanStack mention in this file's scope section, and an unwritten consequence of a rollback.
+
+Fixed on the same branch:
+- The README sentence, and the scope section above.
+- `Timeline.tsx` shows the view's `totalMinutes` and `allDone`, so the record tests what the screen shows. Breaking either in the view now fails 3 tests.
+- New checks for each surviving break, all of which now fail the build or the browser record:
+  - four browser flows: the plan time, each leaven build field and Restore defaults on a recipe other than House, the hydration minimum and its slider, and storage that cannot be read or written;
+  - `src/view/schedule.test.ts`: the checked count leaves out checks for steps no longer on the schedule, while the bake still counts as underway;
+  - after the re-check, a fifth flow: the reheat time between batches is saved as typed.
+- `docs/BEHAVIOUR.md` notes that edits made after a rollback stay in version 5, as decision 6.
+- Two nits: an unused blur handler in `NumberField.tsx`, and a repeated import in `src/view/schedule.ts`.
+- After the fixes and the re-check: `npm test` passed 148 of 148 in both zones, the browser record 43 of 43 with no record file changed, and the build and format check passed. The ten breaks each fail a named test.
+- Proposal from the re-check, not done: the phone screenshots of the Ingredients screens sometimes fail with the page scrolled about 370 px further, because the scroll position after opening the three sections depends on timing. Waiting for the sections to finish opening before the screenshot would steady it. It failed 1 in 3 and 2 in 5 runs in the verifier's copies, and in none of this session's runs in the worktree.
+
+Not done here: step 3c deletes `src/lib/`. The old core still runs in the tests, and `app.test.ts` still uses the old loader to decide which recorded plans saved data can hold.

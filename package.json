@@ -8,7 +8,7 @@
     "check": "astro check",
     "build": "astro check && astro build",
     "preview": "astro preview --host 127.0.0.1",
-    "test": "TZ=America/Vancouver node --experimental-strip-types --test src/lib/model.test.ts src/lib/recipes.test.ts src/lib/bakeday.test.ts tests/baseline/vancouver.test.ts tests/baseline/baseline.test.ts tests/baseline/agree.test.ts tests/baseline/load.test.ts src/state/state.test.ts tests/baseline/app.test.ts",
+    "test": "TZ=America/Vancouver node --experimental-strip-types --test src/lib/model.test.ts src/lib/recipes.test.ts src/lib/bakeday.test.ts tests/baseline/vancouver.test.ts tests/baseline/baseline.test.ts tests/baseline/agree.test.ts tests/baseline/load.test.ts src/state/state.test.ts src/view/schedule.test.ts tests/baseline/app.test.ts",
     "baseline:update": "TZ=America/Vancouver node --experimental-strip-types tests/baseline/update.ts",
     "test:browser": "playwright test",
     "format": "prettier --write .",
@@ -16,8 +16,6 @@
   },
   "dependencies": {
     "@fontsource-variable/atkinson-hyperlegible-next": "^5.3.0",
-    "@tanstack/react-form": "1.33.5",
-    "@tanstack/react-table": "9.3.1",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.5.0",
     "lucide-react": "^0.577.0",

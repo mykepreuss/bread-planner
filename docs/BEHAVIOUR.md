@@ -67,23 +67,27 @@ Times below are for a 9:00 AM leaven start with two loaves baked together. Durat
 
 ## Saved data
 
-- Everything is saved in the browser under `bread-planner.v5` on every change, as `{version: 5, plan}`. Each recipe keeps its own settings, checklist, check-off times, dough temperature and readings. The selected recipe, date, time, plan-around choice, Tartine proof, loaves at once, reheat time and temperature unit are shared.
+- Everything is saved in the browser under `bread-planner.v6` on every change, as `{version: 6, plan}`. Each recipe keeps its own settings, checklist, check-off times, dough temperature and readings. The selected recipe, date, time, plan-around choice, Tartine proof, loaves at once, reheat time and temperature unit are shared. The save also keeps the date and time the plan was first made, which nothing on screen changes.
+- Changed in step 3b of the rebuild: until then the planner saved version 5 under `bread-planner.v5`. When there is no usable version 6 save, the planner upgrades the version 5 one. It never writes or removes `bread-planner.v5`, so a rollback to an earlier release finds the plan as it was when it was upgraded. Edits made on that earlier release go only to version 5, so moving forward again opens the version 6 save without them (decision 6).
 - Not saved: the open tab and the open sections. A reload opens the Schedule tab with every section closed.
-- On loading, a value that is missing or invalid falls back to its default:
+- When browser storage can't be read, the planner starts fresh. When it can't be written, the planner keeps working without saving.
+- On loading either version, a value that is missing or invalid falls back to its default:
   - Settings must be finite numbers of 0 or more. Loaf count and weight must be at least 1, the loaf count whole, and the water held back at most 100%. Unknown settings are dropped.
   - Check-off times are kept only for checked steps. Readings outside 50–100°F are dropped, and readings sort by time.
   - The recipe order keeps known recipes once each, or becomes just Preuss House if empty. The selected recipe must be in the order; otherwise the first recipe is selected.
   - Loaves at once is capped at 2.
-  - A House blend saved with red spring flour carries its parts over to Anita's. A preshape saved as 5 minutes, the default before November 12, becomes 10.
-  - A save of any other version starts fresh, except versions 1 to 4, which are upgraded today; that upgrade is not carried into the rebuild (see below).
+  - A missing or invalid date or time falls back to the one the plan was first made with (decision 4), or else to tomorrow at 9:00 AM.
+  - A House blend saved with red spring flour carries its parts over to Anita's.
+  - A save of any other version starts fresh. Before step 3b, versions 1 to 4 were upgraded; that upgrade is not carried into the rebuild (see below).
 
 ## Not carried into the rebuild
 
-No saved data on this site can reach these, because every version of the app here has saved version 5:
+No saved data on this site can reach these, because every version of the app here before step 3b saved version 5:
 
 - the hidden "Red Spring & Rye Variation" recipe, which is listed only once old spreadsheet cells are edited;
 - upgrades from saved versions 1 to 4;
-- the spreadsheet cells and durations stored inside each save, which never change from their defaults.
+- the spreadsheet cells and durations stored inside each save, which never change from their defaults (so a preshape saved as 5 minutes, the default before November 12, no longer needs turning into 10);
+- the checklists kept in the old part of a save, used only for a recipe with no entry of its own. Every version 5 save holds all seven recipes, and those lists are always empty.
 
 ## Decisions for Michael
 
@@ -94,3 +98,4 @@ The rebuild keeps each of these as it is unless you choose otherwise.
 3. **Checklists per recipe.** Each recipe keeps its own checklist and temperatures, while the date and time are shared.
 4. **A corrupt saved date** falls back to the date the save was first created. The rebuild would use tomorrow instead, as for a new plan.
 5. **38°C is accepted, then lost.** The °C field accepts 10–38°C, but saved temperatures must be 50–100°F, and 38°C is 100.4°F. A 38°C reading works until the page reloads, then disappears. The fix would be to accept up to 37.7°C. This is a defect in the current app, so the rebuild keeps it until you decide.
+6. **Moving forward after a rollback.** If the site is rolled back to a release before step 3b and then moved forward again, edits made in between are in version 5 only, and the planner opens its version 6 save without them. The alternative is to keep a fingerprint of the version 5 save in version 6, and upgrade version 5 again whenever it has changed. This only matters if a release is rolled back.

@@ -6,8 +6,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { calendarText, dateString, durationText, timeText, type coldProofWindow } from '@/lib/model';
-import { stepPhase, clockText, type BulkReading, type LiveStep } from '@/lib/bakeday';
+import { clockText, dateString, durationText } from '@/domain/text';
+import type { coldProofWindow } from '@/domain/schedule';
+import type { BulkReading, LiveStep } from '@/domain/bakeday';
+import { calendarText, timeText } from './text';
 
 /** What a step row needs: its state, and the actions it can take. */
 type StepActions = {
@@ -43,7 +45,7 @@ function TimelineStep({
 }) {
   return (
     <div
-      className={`timeline-step phase-${stepPhase(step.id)} ${done ? 'is-done' : ''} ${skip ? 'is-skipped' : ''} ${isNext ? 'is-next' : ''}`}
+      className={`timeline-step phase-${step.phase} ${done ? 'is-done' : ''} ${skip ? 'is-skipped' : ''} ${isNext ? 'is-next' : ''}`}
     >
       <div className="step-check">
         <Checkbox
@@ -145,9 +147,9 @@ export function Timeline({
   nightIds,
   gaps,
   completed,
-  firstStep,
+  totalMinutes,
+  allDone,
   doneStep,
-  remaining,
   book,
   proofWindow,
   onClear,
@@ -163,9 +165,9 @@ export function Timeline({
   nightIds: Set<string>;
   gaps: Map<string, number>;
   completed: number;
-  firstStep?: LiveStep;
+  totalMinutes: number | null;
+  allDone: boolean;
   doneStep?: LiveStep;
-  remaining: LiveStep[];
   book: boolean;
   proofWindow: ReturnType<typeof coldProofWindow>;
   onClear: () => void;
@@ -181,7 +183,7 @@ export function Timeline({
       <div className="timeline-meta">
         <span>
           <Clock3 size={14} />
-          {firstStep && doneStep ? durationText((+doneStep.at - +firstStep.at) / 60000) : 'Set a date and time'} total
+          {totalMinutes !== null ? durationText(totalMinutes) : 'Set a date and time'} total
         </span>
         <span>
           {completed} of {steps.length} steps checked
@@ -243,7 +245,7 @@ export function Timeline({
           </div>
         </div>
       ))}
-      {remaining.length === 0 && steps.length > 0 && (
+      {allDone && (
         <div className="bake-complete">
           <Wheat /> All batches done. Enjoy your bread.
         </div>

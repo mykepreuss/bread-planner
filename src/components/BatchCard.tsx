@@ -1,7 +1,7 @@
 import { Wheat } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Panel } from './Panel';
-import { NumberField, spec } from './NumberField';
+import { SettingField, spec } from './NumberField';
 import { g } from './text';
 
 /** "Your batch" on the Schedule tab: the loaf count, and the dough it makes. */
@@ -18,7 +18,7 @@ export function BatchCard({
 }) {
   return (
     <Panel title="Your batch" icon={<Wheat size={18} />} className="setup-card">
-      <NumberField spec={spec('count', 'Number of loaves', 'loaves', 1, 1)} />
+      <SettingField spec={spec('count', 'Number of loaves', 'loaves', 1, 1)} />
       <div className="batch-facts">
         <span>
           <strong>{g(weight)} g</strong> per loaf

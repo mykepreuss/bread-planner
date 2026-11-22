@@ -175,6 +175,15 @@ test.describe('flows', () => {
     await expect(upNext(page)).toContainText('Running 40 min behind plan');
     expect(await aria(page)).toMatchSnapshot('flow-done.aria.yml');
     await expectSameAfterReload(page);
+    // The planner saves version 6 and leaves the version 5 save as it was, for a rollback (docs/BEHAVIOUR.md).
+    const [five, six] = await page.evaluate(() => [
+      localStorage.getItem('bread-planner.v5'),
+      localStorage.getItem('bread-planner.v6'),
+    ]);
+    expect(five, 'the version 5 save is untouched').toBe(JSON.stringify(plans.get('leaven-late')!.saved));
+    expect(JSON.parse(six ?? 'null')?.plan.recipes.house.bake.done, 'the check is saved as version 6').toContain(
+      'leaven',
+    );
   });
 
   test('The dough temperature after mixing re-times bulk, and °C shows the same reading', async ({ page }) => {
@@ -349,5 +358,96 @@ test.describe('flows', () => {
     expect(await page.getByRole('region', { name: 'Quiet hours warning' }).ariaSnapshot()).toMatchSnapshot(
       'flow-quiet-hours.aria.yml',
     );
+  });
+
+  // Checks added in step 3b, for controls whose wiring no recorded flow exercised. They assert values, not snapshots.
+  test('The plan time moves the schedule and leaves the date', async ({ page }) => {
+    await open(page, 'fresh');
+    await page.locator('#plan-time').fill('10:30');
+    await expect(page.locator('#plan-date')).toHaveValue('2026-11-22');
+    const leaven = page
+      .getByRole('region', { name: 'Bake schedule' })
+      .locator('.timeline-step')
+      .filter({ has: page.getByRole('checkbox', { name: 'Complete Start leaven' }) });
+    await expect(leaven.locator('time').first()).toHaveText('10:30 AM');
+    await expectSameAfterReload(page);
+  });
+
+  test('Each leaven build field sets its own part of the build, and Restore defaults resets only the selected recipe', async ({
+    page,
+  }) => {
+    await open(page, 'fresh');
+    await openIngredients(page);
+    const build = page.getByRole('region', { name: 'Leaven build' }),
+      made = (part: string) => build.locator(`dt:text-is("${part}") + dd`);
+    for (const [field, grams] of [
+      ['Mature starter', '30'],
+      ["Anita's all-purpose flour", '100'],
+      ['Whole-wheat flour', '50'],
+      ['Water', '150'],
+    ])
+      await build.getByRole('spinbutton', { name: field, exact: true }).fill(grams);
+    await expect(made('Mature starter')).toHaveText('30 g');
+    await expect(made("Anita's all-purpose flour")).toHaveText('100 g');
+    await expect(made('Whole-wheat flour')).toHaveText('50 g');
+    await expect(made('Water')).toHaveText('150 g');
+    await choose(page, 'Recipe', 'Original Tartine');
+    const weight = page.getByLabel('Dough weight per loaf'),
+      tartineWeight = await weight.inputValue();
+    await weight.fill('900');
+    await page.getByRole('button', { name: 'Restore recipe defaults' }).click();
+    await page.getByRole('button', { name: 'Restore defaults' }).click();
+    await expect(weight).toHaveValue(tartineWeight);
+    await choose(page, 'Recipe', 'Preuss House');
+    await expect(build.getByRole('spinbutton', { name: 'Water', exact: true })).toHaveValue('150');
+  });
+
+  test('The reheat time between batches is saved as typed', async ({ page }) => {
+    await open(page, 'fresh');
+    await page.getByLabel('Number of loaves').fill('3');
+    await choose(page, 'Loaves baked at once', '1 loaf');
+    const reheat = page.getByLabel('Reheat between batches'),
+      total = page.getByText(/^\d+h \d+m total/);
+    const before = await total.textContent();
+    await reheat.fill('45');
+    await expect(total).not.toHaveText(before!);
+    await expectSameAfterReload(page);
+    await expect(reheat).toHaveValue('45');
+  });
+
+  test('Total hydration refuses less than the leaven brings, and its slider stops there', async ({ page }) => {
+    await open(page, 'fresh');
+    await openIngredients(page);
+    const hydration = page.getByLabel('Total hydration', { exact: true }),
+      slider = page.getByRole('slider', { name: 'Adjust total hydration' });
+    // House's leaven brings 9.1% at the defaults, so the field takes 10 or more.
+    await hydration.fill('9');
+    await expect(page.getByText('Use a whole number ≥ 10')).toBeVisible();
+    await hydration.blur();
+    await expect(hydration).toHaveValue('80');
+    // With 300% leaven it brings 60%, above the slider's usual 50, so the slider starts at 60.
+    await page.getByLabel('Leaven / added flour', { exact: true }).fill('300');
+    await expect(slider).toHaveAttribute('aria-valuemin', '60');
+    await slider.press('Home');
+    await expect(hydration).toHaveValue('60');
+  });
+
+  test('The planner opens fresh when storage cannot be read, and keeps working when it cannot be written', async ({
+    page,
+  }) => {
+    await page.clock.setFixedTime(plans.get('fresh')!.now);
+    await page.addInitScript(() => {
+      Storage.prototype.getItem = () => {
+        throw new DOMException('Storage is blocked', 'SecurityError');
+      };
+      Storage.prototype.setItem = () => {
+        throw new DOMException('Storage is full', 'QuotaExceededError');
+      };
+    });
+    await page.goto('/');
+    await ready(page);
+    await expect(page.getByText('0 of 23 steps checked')).toBeVisible();
+    await page.getByRole('checkbox', { name: 'Complete Feed starter' }).click();
+    await expect(page.getByText('1 of 23 steps checked')).toBeVisible();
   });
 });
