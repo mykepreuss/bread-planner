@@ -285,6 +285,8 @@ Evidence (this session, at the commit after `e5f2fe0` on `rebuild-baseline`):
   - A phone-only difference makes `--update-snapshots` fail with "phone and desktop show the same content", and no record file is written.
 - The `verifier` agent checked the first version independently. Its findings (a Vercel build break, three wrong spec claims, and gaps in the browser record) were fixed before the PR.
 
-Not verified: the Vercel preview build of the latest commit, which the PR checks show; the browser records on any machine but this Mac (the screenshots are Mac-specific).
+Vercel: the preview builds of `e5f2fe0` and `3ba69b5` failed. On Vercel's Linux build (Node 24.22.3), the record tests could not switch the process to America/Vancouver while running ("The baseline needs the America/Vancouver time zone"), while the 111 existing tests passed. The simulated upload above ran on macOS, where that switch works, so it could not show this. The `npm test` and `baseline:update` scripts now start Node with `TZ=America/Vancouver`.
+
+Not verified: a passing Vercel build with that change, which the PR checks will show; the browser records on any machine but this Mac (the screenshots are Mac-specific).
 
 Decisions for Michael are listed at the end of `docs/BEHAVIOUR.md`, including one defect found here: 38°C is accepted, then lost on reload.

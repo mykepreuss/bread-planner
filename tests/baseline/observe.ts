@@ -11,10 +11,14 @@ import {coldProofWindow,dateString,durationText,round} from '../../src/lib/model
 import {followDough,skippedSteps,stepPhase,stepGaps,holdTemperature,bulkAdvice,bulkDoneText,turnNumber,untilText,shiftText,fromF,toF,withReading,retime,stampNow,inTempRange,clockText,type BulkReading} from '../../src/lib/bakeday.ts';
 
 export const TIME_ZONE='America/Vancouver';
+/**
+ * The npm scripts start Node with `TZ=America/Vancouver`: on Vercel's Linux build, Node did not apply a time zone
+ * set while running. Setting it here as well covers a direct `node --test` run on a Mac, where it does apply. Either
+ * way, check it took, so a baseline is never compared in the wrong zone.
+ */
 export function useBaselineTimeZone(){
-  process.env.TZ=TIME_ZONE;
-  // Node applies a runtime TZ change; check it did, so a baseline is never compared in the wrong zone.
-  if(new Date('2026-07-01T12:00:00').getTimezoneOffset()!==420||new Date('2026-12-01T12:00:00').getTimezoneOffset()!==480)throw new Error(`The baseline needs the ${TIME_ZONE} time zone.`);
+  if(process.env.TZ!==TIME_ZONE)process.env.TZ=TIME_ZONE;
+  if(new Date('2026-07-01T12:00:00').getTimezoneOffset()!==420||new Date('2026-12-01T12:00:00').getTimezoneOffset()!==480)throw new Error(`The baseline needs the ${TIME_ZONE} time zone: start Node with TZ=${TIME_ZONE}, as \`npm test\` does.`);
 }
 
 /** Local wall-clock time and UTC offset, such as `2026-11-22 09:00 -08`. */

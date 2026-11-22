@@ -8,8 +8,8 @@
     "check": "astro check",
     "build": "astro check && astro build",
     "preview": "astro preview --host 127.0.0.1",
-    "test": "node --experimental-strip-types --test src/lib/model.test.ts src/lib/recipes.test.ts src/lib/bakeday.test.ts tests/baseline/baseline.test.ts tests/baseline/app.test.ts",
-    "baseline:update": "node --experimental-strip-types tests/baseline/update.ts",
+    "test": "TZ=America/Vancouver node --experimental-strip-types --test src/lib/model.test.ts src/lib/recipes.test.ts src/lib/bakeday.test.ts tests/baseline/baseline.test.ts tests/baseline/app.test.ts",
+    "baseline:update": "TZ=America/Vancouver node --experimental-strip-types tests/baseline/update.ts",
     "test:browser": "playwright test"
   },
   "dependencies": {
