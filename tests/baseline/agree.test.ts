@@ -107,7 +107,7 @@ function randomPlan(): PlanInput {
     anchor: chance(0.25) ? 'done' : 'leaven',
     proof: chance(0.3) ? 'warm' : 'cold',
     ovenCapacity: chance(0.02) ? pick([0, 3]) : pick([1, 2]),
-    reheat: pick([0, 10, 30, 45]),
+    reheat: pick([0, 10, 30, 45, 60]),
     tempUnit: chance(0.2) ? 'C' : 'F',
     params: params(recipe),
     totalHydration: chance(0.1) ? 60 + r() * 40 : undefined,
