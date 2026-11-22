@@ -690,28 +690,35 @@ Record changes: `baseline.json` was regenerated. 32 of its 214 plans changed, al
 My script checked each changed plan against the old record and the rule, and the verifier separately rebuilt every plan's new output from the old record and the rule, with no mismatch in 214 plans. Otherwise only the `recordedFrom` line changed. No browser screen changed: no saved browser plan leaves an early step unchecked.
 
 Evidence (this session, on `up-next-after-checked`):
-- `npm test` passed 129 of 129 with the host zone and with `BASELINE_ZONE=rule`, and `npm run build` had 0 errors, 0 warnings and 0 hints with a clean format check, on the final code with same-time steps kept open.
+- `npm test` passed 131 of 131 with the host zone and with `BASELINE_ZONE=rule`, and `npm run build` had 0 errors, 0 warnings and 0 hints with a clean format check, on the final code (`bcedabb` and this file).
 - `npm run test:browser` passed 48 of 48.
-- Deliberate breaks, each caught and then restored, counted on the final tests against the full unit and browser suites:
+- Deliberate breaks: I reran the verifier's own break script (its reading of my breaks, then its five breaks of the same-time rule) at `bcedabb`, in a separate copy, against the full unit and browser suites. Every break is caught and was restored:
 
-| Break | Unit tests failing | Browser tests failing |
+| Break | Unit tests failing (of 131) | Browser tests failing (of 48) |
 |---|---|---|
-| Only bulk steps skip (the old rule) | 8 | 1 |
-| The step just before the latest checked one is not skipped | 5 | 1 |
-| Steps after the latest checked one are skipped too | 10 | 13 |
-| The first checked step decides, not the latest | 6 | 2 |
+| Only bulk steps skip (the old rule) | 9 | 1 |
+| The step just before the latest checked one is not skipped | 6 | 1 |
+| Steps after the latest checked one are skipped too | 12 | 13 |
+| The first checked step decides, not the latest | 7 | 2 |
 | Up next ignores skipped steps | 6 | 3 |
 | Skipped steps stay on the quiet-hours list | 2 | 0 |
-| The step checked last decides, not the one furthest along | 2 | 0 |
-| Same-time steps are skipped too (no exception) | 3 | 1 |
-| Live times decide which steps start together | 2 | 1 |
+| The step checked last decides, not the one furthest along | 3 | 0 |
+| Same-time steps are skipped too (no exception) | 5 | 1 |
+| Live times decide which steps start together | 4 | 1 |
+| The same, made in the view by passing the live steps as the plan | 3 | 1 |
 | The live steps' planned times decide, so an extra turn gets a partner | 4 | 0 |
-| Steps within 30 minutes of the latest checked one stay open | 5 | 0 |
+| Steps within 30 minutes of the latest checked one stay open | 6 | 0 |
+| Steps less than 30 minutes from it stay open | 4 | 0 |
+| A step sharing a planned time with any checked step stays open | 3 | 0 |
+| Only the step just before the latest checked one can stay open | 1 | 0 |
+| Steps missing from the plan pair with each other | 1 | 0 |
+| The plan is read by position, not by id | 2 | 0 |
+| The step checked last sets the shared time | 2 | 0 |
 
 Independent check (the verifier, on `c08319a`): FAIL on one of seven criteria.
 - It drove the built app with its own script. In Michael's example, Up next showed Turn 4, then Turn 5, with Feed starter marked Skipped, through two reloads. Checking the feed late kept Up next on Turn 4.
 - The rule held for several batches, steps at the same time, extra turns, "Ready: preshape now", Original Tartine and a warm proof. The test commands passed, the docs matched, and nothing else changed.
-- Not met: one of its seven breaks survived. When the step checked last decided, rather than the one furthest along, a late check of one forgotten step brought back another. The seventh row above is that break; the two tests added for it now catch it.
+- Not met: one of its seven breaks survived. When the step checked last decided, rather than the one furthest along, a late check of one forgotten step brought back another. The seventh row of the table above is that break; the two tests added for it now catch it.
 - It also found two inexact claims in this section, now corrected:
   - The record's `underway` change was left out.
   - The browser column of an earlier version of the break table counted only five chosen flows, so its "5" for the third break couldn't be reproduced.
@@ -729,4 +736,17 @@ Same-time steps stay open, Michael's choice on November 22 ("Proceed", to my rec
   - `bakeday.test.ts`: Preheat checked first leaves the fridge step open, even when checked late; a later check passes both; Tartine's warm bulk leaves the salt step open; an extra turn at the planned preshape time is still skipped.
   - `view/schedule.test.ts`: the same for the fridge step, with Up next and the step after it, and for Tartine; and a cool-dough bake whose preshape is checked 4½ hours into bulk skips Turns 1 to 8, with Up next on the bench rest.
   - A browser flow checks every step through the cold proof, then Preheat. It failed before with "Bake covered (both loaves)" where "Take both loaves out of the fridge" was expected, and now also checks that nothing shows Skipped, through a reload.
-- The record didn't change: none of its 214 plans checks one of two same-time steps with the other open.
+- The record didn't change. 206 of its 214 plans have steps at the same time, but in the 7 where the latest checked step has a partner listed before it, that partner is checked too (the verifier's count).
+
+Second independent check (the verifier, on `cff488d`): FAIL on one of eight criteria.
+- Passed: its earlier surviving break now fails 2 unit tests. In the built app, it checked the fridge and Tartine pairs, Michael's example, a partner checked late, cool dough with a late preshape, and four loaves with four reheat times; all behaved as intended, with no console errors. The record is unchanged, and the test commands, docs, break table and scope held.
+- Not met: three of its five breaks of the same-time rule passed every test, though each gave a wrong Up next in a reachable bake:
+  - only the step just before the checked one could stay open, which cuts a group of three;
+  - with the guard for steps missing from the plan dropped, a checked Turn 9 left Turn 8 open;
+  - the step checked last set the shared time, so Basket rest checked late after Preheat skipped the fridge step.
+- `bcedabb` adds tests for all three: a group of three steps at 9:33 with four loaves and no reheat, Turn 9 checked before Turn 8, and Basket rest checked late after Preheat, in the domain and in the view. The tests pass on the real code, and the last three rows of the table above show them catching the three breaks.
+
+What the same-time rule does that Michael should know (the verifier's findings):
+- Some pairs are accidents of the reheat time. With 15 minutes, "Batch 1: 15-minute cooling mark" shares a time with "Batch 2: bake covered", so checking the bake keeps the cooling mark as Up next instead of "Batch 2: remove lid". With 17 minutes, "Warm batch 2" pairs with batch 1's bake. Changing the reheat time mid-bake changes which steps pair.
+- Tartine's "Warm both loaves to room temperature" (1:10 PM) is 30 minutes before Preheat (1:40 PM), not at the same time, so checking Preheat first still skips it. Only the House-method recipes have the fridge-out and Preheat pair.
+- The pairing lasts only until the next check: checking anything later skips the open partner.
