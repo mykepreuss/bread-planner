@@ -6,14 +6,15 @@ import { isDeepStrictEqual } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { createServer } from 'vite';
 import { decode, difference } from './format.ts';
-import { planner, local, atMoment, useBaselineTimeZone, type PlanInput } from './observe.ts';
-import { restorePlanner } from '../../src/lib/recipes.ts';
-import { dateString, durationText } from '../../src/lib/model.ts';
+import { plannerState, local, atMoment, useBaselineTimeZone, type PlanInput } from './observe.ts';
+import { dateString, durationText } from '../../src/domain/text.ts';
+import { fromV6, serialize, STORAGE_V6 } from '../../src/state/load.ts';
 
 /**
- * App.tsx itself against the record. `observePlan` copies the Schedule tab's rules from App.tsx, so the baseline test
- * alone would pass even if App.tsx changed them. This renders the real App.tsx on the server for every recorded plan,
- * saved in browser storage as the app saves it and with the clock at the plan's moment, and checks the Schedule tab
+ * App.tsx itself against the record. `observePlan` reads the same view module the Schedule tab shows, so the baseline
+ * test alone would pass even if a component showed it wrongly. This renders the real App.tsx on the server for every
+ * recorded plan, saved in browser storage as the app saves it (version 6) and with the clock at the plan's moment, and
+ * checks the Schedule tab
  * shows what the record says: each step's time, title, note, cue, gap, state and colour, the Up next card, the notices
  * and the bake summary. Times render as `HH:MM` and `YYYY-MM-DD` (see `atMoment`), so the check is the same on any machine.
  */
@@ -189,11 +190,9 @@ function expected(input: PlanInput, out: Recorded) {
 
 /** A plan reaches the screen only through saved data, which loading may correct. Cases whose saved form loads differently can't be shown as recorded. */
 function savedAs(input: PlanInput) {
-  const plan = planner(input),
-    saved = JSON.parse(JSON.stringify({ version: 5, plan }));
-  const loaded = atMoment(local(input.now), () => restorePlanner(saved));
-  const comparable = (p: object) => JSON.parse(JSON.stringify({ ...p, legacy: null }));
-  return { saved: JSON.stringify(saved), reachable: isDeepStrictEqual(comparable(plan), comparable(loaded)) };
+  const state = plannerState(input),
+    saved = serialize(state);
+  return { saved, reachable: isDeepStrictEqual(state, fromV6(JSON.parse(saved), local(input.now))) };
 }
 
 /** Recorded plans that saved data can't hold, so the screen never shows them as recorded. Loading corrects each one. */
@@ -235,7 +234,7 @@ test(`App.tsx shows every reachable recorded plan as the record says (${baseline
         unreachable.push(name);
         continue;
       }
-      storage.set('bread-planner.v5', saved);
+      storage.set(STORAGE_V6, saved);
       const html = atMoment(local(input.now), () => renderToString(createElement(App as never)), true);
       const d = difference(expected(input, output), shown(html), 'screen');
       if (d) changed.push(`${name}: ${d}`);

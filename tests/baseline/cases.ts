@@ -4,10 +4,15 @@
  * deliberately rewritten.
  *
  * Not covered, because no saved data on the live site can reach them: the hidden "Red Spring & Rye Variation"
- * (`manual-rye`) and saved data from versions 1 to 4. Every version of the app on this site has saved version 5.
+ * (`manual-rye`) and saved data from versions 1 to 4. Every version of the app on this site saved version 5 until
+ * step 3b of the rebuild.
  */
-import { createPlanner, recipeSchedule } from '../../src/lib/recipes.ts';
-import { planner, stamp, local, type PlanInput, type FormulaInput, type HelperCall } from './observe.ts';
+import { readFileSync } from 'node:fs';
+import { defaultSettings, recipeById } from '../../src/domain/recipes.ts';
+import { schedule } from '../../src/domain/schedule.ts';
+import { planOf } from '../../src/state/schema.ts';
+import { decode } from './format.ts';
+import { plannerState, stamp, local, type PlanInput, type FormulaInput, type HelperCall } from './observe.ts';
 
 export const RECIPES = ['house', 'tartine', 'white-wheat', 'red-rye', 'five-flour', 'four-flour'];
 const DAY = '2026-11-22',
@@ -16,7 +21,7 @@ const minutes = (t: string, n: number) => stamp(local(t) + n * 60000).slice(0, 1
 
 /** The plan's step times, to place check-offs on them. */
 export function plannedTimes(i: PlanInput) {
-  return new Map(recipeSchedule(planner(i)).map((s) => [s.id, stamp(s.at).slice(0, 16)]));
+  return new Map(schedule(planOf(plannerState(i))).map((s) => [s.id, stamp(s.at).slice(0, 16)]));
 }
 /** Checks every step up to and including `last` at its planned time, with `late` minutes added to the named steps. */
 export function upTo(i: PlanInput, last: string, late: Record<string, number> = {}): PlanInput {
@@ -403,7 +408,7 @@ function randomBakes(n: number): [string, PlanInput][] {
       tempUnit: r() < 0.2 ? 'C' : 'F',
       now: BEFORE,
     };
-    const steps = recipeSchedule(planner(base)),
+    const steps = schedule(planOf(plannerState(base))),
       upto = int(0, steps.length),
       done: string[] = [],
       doneAt: Record<string, string> = {};
@@ -473,203 +478,21 @@ function formulas(): [string, FormulaInput][] {
     'tartine with an empty leaven build',
     { recipe: 'tartine', params: { buildSeed: 0, buildBread: 0, buildWheat: 0, buildWater: 0 } },
   ]);
-  const redRye = createPlanner().recipes['red-rye'].params;
-  out.push(['red-rye 1 g short of leaven', { recipe: 'red-rye', params: { buildWater: redRye.buildWater - 1 } }]);
-  out.push(['red-rye 1 g over', { recipe: 'red-rye', params: { buildWater: redRye.buildWater + 1 } }]);
+  const redRye = defaultSettings(recipeById('red-rye')!).build;
+  out.push(['red-rye 1 g short of leaven', { recipe: 'red-rye', params: { buildWater: redRye.water - 1 } }]);
+  out.push(['red-rye 1 g over', { recipe: 'red-rye', params: { buildWater: redRye.water + 1 } }]);
   out.push(['four-flour with some Red Fife', { recipe: 'four-flour', params: { flour_fife: 10 } }]);
   return out;
 }
 
-/** Saved browser data, as JSON.parse returns it. `observeRestore` loads it at a fixed moment, `LOADED_AT`. */
+/**
+ * Saved browser data: version 5 saves as the live site wrote them until step 3b, and some damaged or foreign ones.
+ * The code that built them was deleted in step 3c, so they are kept exactly as baseline.json stores them. Step 0
+ * built them in this file; see git history before step 3c. `observeRestore` loads each at a fixed moment, `LOADED_AT`.
+ */
 function restores(): [string, unknown][] {
-  const SAVED = '2026-11-13',
-    p = createPlanner();
-  p.date = SAVED;
-  p.time = '09:00';
-  p.legacy.date = SAVED;
-  const fresh = JSON.parse(JSON.stringify({ version: 5, plan: p }));
-  const saved = (edit: (plan: Record<string, any>) => void) => {
-    const s = structuredClone(fresh);
-    edit(s.plan);
-    return s;
-  };
-  return [
-    ['a fresh plan', fresh],
-    [
-      'an edited plan',
-      saved((p) => {
-        Object.assign(p.recipes['five-flour'].params, { hydration: 73, count: 4 });
-        p.recipes['five-flour'].done = ['feed'];
-        p.recipes.house.params.buildWater = 200;
-        p.recipes.house.done = ['autolyse'];
-        Object.assign(p, {
-          recipe: 'five-flour',
-          ovenCapacity: 1,
-          tempUnit: 'C',
-          anchor: 'done',
-          proof: 'warm',
-          reheat: 45,
-        });
-      }),
-    ],
-    [
-      'a bake in progress',
-      saved((p) => {
-        Object.assign(p.recipes.house, {
-          done: ['leaven', 'autolyse', 'mix', 'rest'],
-          doneAt: {
-            leaven: local(`${SAVED} 09:05`),
-            autolyse: local(`${SAVED} 09:30`),
-            mix: local(`${SAVED} 14:05`),
-            rest: local(`${SAVED} 14:20`),
-          },
-          doughTemp: 81,
-          bulkTemps: [{ at: local(`${SAVED} 15:30`), f: 83 }],
-        });
-      }),
-    ],
-    [
-      'saved before check-off times and temperatures',
-      saved((p) => {
-        for (const r of Object.values<any>(p.recipes)) {
-          delete r.doneAt;
-          delete r.doughTemp;
-          delete r.bulkTemps;
-        }
-        delete p.tempUnit;
-        p.recipes.house.done = ['leaven'];
-      }),
-    ],
-    [
-      'saved when preshaping took 5 minutes',
-      saved((p) => {
-        p.legacy.cells.C19 = 5;
-        p.legacy.cells.houseShape = 5;
-      }),
-    ],
-    [
-      "a House blend saved before Anita's flour",
-      saved((p) => {
-        const q = p.recipes.house.params;
-        delete q.flour_anita;
-        Object.assign(q, { flour_red: 60, flour_wheat: 25, flour_rye: 15 });
-      }),
-    ],
-    [
-      'invalid recipe settings',
-      saved((p) => {
-        Object.assign(p.recipes.house.params, {
-          count: 1.5,
-          reserve: 200,
-          hydration: null,
-          leaven: -3,
-          weight: 0,
-          flour_wheat: 'x',
-        });
-        p.recipes.house.params.unknown = 5;
-      }),
-    ],
-    [
-      'an odd recipe order',
-      saved((p) => {
-        p.order = ['four-flour', 'bogus', 'four-flour'];
-        p.recipe = 'house';
-      }),
-    ],
-    [
-      'an empty recipe order',
-      saved((p) => {
-        p.order = [];
-      }),
-    ],
-    [
-      'a recipe order that is not a list',
-      saved((p) => {
-        p.order = 'house';
-        p.recipe = 'bogus';
-      }),
-    ],
-    [
-      'three loaves baked at once',
-      saved((p) => {
-        p.ovenCapacity = 3;
-      }),
-    ],
-    [
-      'zero loaves baked at once',
-      saved((p) => {
-        p.ovenCapacity = 0;
-        p.reheat = -5;
-      }),
-    ],
-    [
-      'a fractional oven capacity and a text reheat time',
-      saved((p) => {
-        p.ovenCapacity = 1.5;
-        p.reheat = 'x';
-      }),
-    ],
-    [
-      'unknown units and temperatures out of range',
-      saved((p) => {
-        p.tempUnit = 'K';
-        p.recipes.house.doughTemp = 140;
-        p.recipes.tartine.doughTemp = 49;
-        p.recipes['white-wheat'].doughTemp = '80';
-      }),
-    ],
-    [
-      'stray check-off times',
-      saved((p) => {
-        Object.assign(p.recipes.house, {
-          done: ['leaven', 3, 'mix'],
-          doneAt: { leaven: 'soon', mix: local(`${SAVED} 14:25`), turn1: local(`${SAVED} 15:00`) },
-        });
-      }),
-    ],
-    [
-      'messy readings',
-      saved((p) => {
-        Object.assign(p.recipes.house, {
-          doughTemp: 80,
-          bulkTemps: [
-            { at: local(`${SAVED} 15:00`), f: 83.5 },
-            { at: 'x', f: 80 },
-            { at: 1, f: 140 },
-            null,
-            { at: local(`${SAVED} 14:00`), f: 84 },
-            { at: local(`${SAVED} 14:00`), f: 80 },
-          ],
-        });
-      }),
-    ],
-    [
-      'an invalid date and time',
-      saved((p) => {
-        p.date = '2026-2-1';
-        p.time = '9:00';
-      }),
-    ],
-    [
-      'an unknown anchor and proof',
-      saved((p) => {
-        p.anchor = 'x';
-        p.proof = 'hot';
-      }),
-    ],
-    [
-      'a recipe missing from the save',
-      saved((p) => {
-        delete p.recipes.tartine;
-        p.recipe = 'tartine';
-      }),
-    ],
-    ['nothing saved', null],
-    ['not an object', 'garbage'],
-    ['an unknown version', { version: 6, plan: p }],
-    ['version 5 without a plan', { version: 5 }],
-    ['version 5 with a plan that is not an object', { version: 5, plan: 'x' }],
-  ];
+  const recorded = decode(readFileSync(new URL('./baseline.json', import.meta.url), 'utf8'));
+  return recorded.restores.map(({ name, input }) => [name, input]);
 }
 
 function helpers(): HelperCall[] {

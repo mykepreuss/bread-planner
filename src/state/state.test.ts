@@ -148,6 +148,19 @@ test('version 6 saves are checked as version 5 ones were', () => {
   assert.equal(recipeById('manual-rye'), undefined);
 });
 
+test("a House blend saved before Anita's flour keeps its red spring parts, and one with neither gets the default", () => {
+  const house = (params: Record<string, number>) =>
+    fromV5({ version: 5, plan: { recipes: { house: { params } } } }, NOW).recipes.house.settings.flours;
+  assert.deepEqual(house({ flour_red: 60, flour_wheat: 25, flour_rye: 15 }), { anita: 60, wheat: 25, rye: 15 });
+  assert.deepEqual(house({ flour_anita: 70, flour_red: 60 }), { anita: 70, wheat: 10, rye: 10 });
+  assert.deepEqual(house({}), { anita: 80, wheat: 10, rye: 10 });
+  // Only House had red spring flour before Anita's; another recipe's red spring parts stay its own.
+  const redRye = fromV5({ version: 5, plan: { recipes: { 'red-rye': { params: { flour_red: 50 } } } } }, NOW).recipes[
+    'red-rye'
+  ].settings.flours;
+  assert.equal(redRye.red, 50);
+});
+
 test('checking a step records the minute, and unchecking forgets it', () => {
   const checked = act.setChecked(plan(), 'leaven', true, at(2026, 11, 21, 9, 40, 31));
   assert.deepEqual(selected(checked).bake.done, ['leaven']);
