@@ -49,7 +49,7 @@ export const BULK_REFERENCE_F = 78,
 export type TempUnit = 'F' | 'C';
 export const toF = (n: number, unit: TempUnit) => (unit === 'F' ? n : (n * 9) / 5 + 32);
 export const fromF = (n: number, unit: TempUnit) => (unit === 'F' ? n : ((n - 32) * 5) / 9);
-export const tempLimits = { F: { min: 50, max: 100 }, C: { min: 10, max: 38 } } as const;
+export const tempLimits = { F: { min: 50, max: 100 }, C: { min: 10, max: 37.7 } } as const;
 export const inTempRange = (n: number, unit: TempUnit) =>
   Number.isFinite(n) && n >= tempLimits[unit].min && n <= tempLimits[unit].max;
 /** A dough temperature taken during bulk, after the one taken after mixing: when, in epoch milliseconds, and °F. */

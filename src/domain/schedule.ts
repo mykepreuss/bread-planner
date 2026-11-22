@@ -135,8 +135,8 @@ function houseTurnNote(n: number) {
 
 /**
  * The plan for one bake, from the feed or leaven to the last loaf cooled, at local dates and times. Empty when the
- * recipe has no flour, the loaf count or oven capacity is not a whole number of 1 or more, or the date and time are
- * not a real local time.
+ * recipe has no flour, the loaf count or oven capacity is not a whole number of 1 or more, the loaves need more than
+ * 1,000 batches, or the date and time are not a real local time.
  */
 export function schedule(input: PlanInput): Step[] {
   const { recipe, settings } = input,
@@ -262,8 +262,7 @@ export function schedule(input: PlanInput): Step[] {
     covered = t.covered;
     uncovered = t.uncovered;
   } else {
-    const h = HOUSE,
-      overnight = recipe.overnightProof;
+    const h = HOUSE;
     push(
       'feed',
       'feed',
@@ -337,10 +336,10 @@ export function schedule(input: PlanInput): Step[] {
     push(
       'fridge',
       'fridge',
-      overnight ? 'Overnight cold proof' : 'Refrigerated final proof',
+      'Overnight cold proof',
       at,
       h.fridge,
-      `Cover the shaped loaves in their baskets and refrigerate${overnight ? ' overnight' : ''}.${later}`,
+      `Cover the shaped loaves in their baskets and refrigerate overnight.${later}`,
     );
     at += h.fridge;
     preheat = h.preheat;
@@ -459,7 +458,7 @@ export function schedule(input: PlanInput): Step[] {
     .map(({ offset, ...step }): Step => ({ ...step, at: new Date(start + offset * 60000) }))
     .sort((a, b) => a.at.getTime() - b.at.getTime());
   // An overnight proof that falls within one day is named for what it is.
-  if (!tartine && recipe.overnightProof && !coldProofWindow(steps)?.overnight) {
+  if (!tartine && !coldProofWindow(steps)?.overnight) {
     const fridge = steps.find((s) => s.kind === 'fridge');
     if (fridge) fridge.title = 'Cold proof (daytime)';
   }

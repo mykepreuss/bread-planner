@@ -46,7 +46,6 @@ function problems(s: PlannerState): string[] {
   check(new Set(s.order).size === s.order.length, 'order repeats a recipe');
   check(s.order.includes(s.recipe), `recipe ${s.recipe} not on the menu`);
   check(realDate(s.date) && realTime(s.time), `when ${s.date} ${s.time}`);
-  check(realDate(s.created.date) && realTime(s.created.time), `created ${JSON.stringify(s.created)}`);
   check(s.anchor === 'leaven' || s.anchor === 'done', `anchor ${s.anchor}`);
   check(s.proof === 'cold' || s.proof === 'warm', `proof ${s.proof}`);
   check(s.ovenCapacity === 1 || s.ovenCapacity === 2, `ovenCapacity ${s.ovenCapacity}`);
@@ -82,12 +81,14 @@ function problems(s: PlannerState): string[] {
   }
   if (out.length) return out;
   const selected = recipeById(s.recipe)!;
-  // Every plan loaded here has steps, all at real times, unless its recipe has no flour, which the screen shows as
-  // such. Two kinds of plan could still have none, though no save here holds one: a time skipped by daylight saving, which the
-  // screen itself allows, and a year before 1000 (see the proposal in HANDOFF.md, step 4).
+  // Every plan loaded here has steps, all at real times, unless its recipe has no flour or it needs more than 1,000
+  // batches, which the schedule refuses. A time skipped by daylight saving, which the screen itself allows, would still
+  // have none; no save here holds one.
   const steps = schedule(planOf(s)),
-    flourless = Object.values(s.recipes[s.recipe].settings.flours).every((v) => v === 0);
-  check(steps.length > 0 || flourless, 'a plan with flour but no steps');
+    q = s.recipes[s.recipe].settings,
+    flourless = Object.values(q.flours).every((v) => v === 0),
+    tooMany = Math.ceil(q.count / s.ovenCapacity) > 1000;
+  check(steps.length > 0 || flourless || tooMany, 'a plan with flour but no steps');
   check(
     steps.every((step) => Number.isFinite(+step.at)),
     'a step with an invalid time',
@@ -205,8 +206,7 @@ test('3,000 random corruptions of real saves load into a valid planner, as versi
     () => ['recipes', pick(recipes), 'params', pick(['buildSeed', 'buildBread', 'buildWheat', 'buildWater'])],
   ];
   const v6Paths: (() => string[])[] = [
-    () => [pick([...shared, 'created'])],
-    () => ['created', pick(['date', 'time'])],
+    () => [pick(shared)],
     () => ['recipes', pick(recipes), pick(['settings', 'bake'])],
     () => ['recipes', pick(recipes), 'bake', pick(bakeKeys)],
     () => ['recipes', pick(recipes), 'settings', pick([...scalars, 'flours', 'build'])],

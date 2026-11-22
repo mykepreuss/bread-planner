@@ -8,7 +8,7 @@ export function round(n: number, places = 0) {
 
 /** A local date as `YYYY-MM-DD`. */
 export function dateString(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return `${String(d.getFullYear()).padStart(4, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 /** A local clock time as `HH:MM`. */

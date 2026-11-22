@@ -106,19 +106,13 @@ function bakeFrom(source: Raw): Bake {
   };
 }
 
-/** A saved date and time, each checked, or `now`'s fallback: tomorrow at 9:00 AM. */
-function createdFrom(saved: unknown, now: number) {
-  const c = isObject(saved) ? saved : {};
-  return {
-    date: isDate(c.date) ? c.date : tomorrow(now),
-    time: isTime(c.time) ? c.time : '09:00',
-  };
-}
-
-/** The shared fields and every recipe, from either version. A missing or invalid date or time falls back to `created`. */
+/**
+ * The shared fields and every recipe, from either version. A missing or invalid date falls back to the day after
+ * `now`, and a time to 9:00 AM, as for a new plan (decision 4 in docs/BEHAVIOUR.md).
+ */
 function assemble(
   p: Raw,
-  created: { date: string; time: string },
+  now: number,
   settingsReader: (recipe: Recipe, source: Raw) => (field: string) => unknown,
   bakeSource: (source: Raw) => Raw,
 ): PlannerState {
@@ -139,8 +133,8 @@ function assemble(
   return {
     recipe: typeof p.recipe === 'string' && order.includes(p.recipe) ? p.recipe : order[0],
     order,
-    date: isDate(p.date) ? p.date : created.date,
-    time: isTime(p.time) ? p.time : created.time,
+    date: isDate(p.date) ? p.date : tomorrow(now),
+    time: isTime(p.time) ? p.time : '09:00',
     anchor: p.anchor === 'done' ? 'done' : 'leaven',
     proof: p.proof === 'warm' ? 'warm' : 'cold',
     ovenCapacity:
@@ -148,20 +142,16 @@ function assemble(
     reheat: isFinite(p.reheat) && p.reheat >= 0 ? p.reheat : 30,
     tempUnit: p.tempUnit === 'C' ? 'C' : 'F',
     recipes,
-    created,
   };
 }
 
-/**
- * A version 5 save, upgraded. The date and time it was first created with, kept in its `legacy` block, become
- * `created`. Anything that is not a version 5 save starts fresh.
- */
+/** A version 5 save, upgraded. Anything that is not a version 5 save starts fresh. */
 export function fromV5(saved: unknown, now: number): PlannerState {
   if (!isObject(saved) || saved.version !== 5 || !isObject(saved.plan)) return freshState(now);
   const p = saved.plan;
   return assemble(
     p,
-    createdFrom(p.legacy, now),
+    now,
     (recipe, source) => fromV5Params(recipe, source.params),
     // Version 5 kept the bake beside the settings.
     (source) => source,
@@ -173,7 +163,7 @@ export function fromV6(saved: unknown, now: number): PlannerState | null {
   if (!isObject(saved) || saved.version !== 6 || !isObject(saved.plan)) return null;
   return assemble(
     saved.plan,
-    createdFrom(saved.plan.created, now),
+    now,
     (_, source) => fromV6Settings(source.settings),
     (source) => (isObject(source.bake) ? source.bake : {}),
   );

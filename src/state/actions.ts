@@ -91,9 +91,12 @@ export function setAnchor(state: PlannerState, anchor: 'leaven' | 'done'): Plann
   return step ? { ...state, date: dateString(step.at), time: clockText(step.at), anchor } : { ...state, anchor };
 }
 
-/** Moves the plan to tomorrow and clears the dough temperatures. The checklist stays (decision 1 in docs/BEHAVIOUR.md). */
+/**
+ * Moves the plan to tomorrow and starts the next bake: the checklist, its times and the dough temperatures clear
+ * (decision 1 in docs/BEHAVIOUR.md). It is offered only once a plan has ended, when nothing is checked or every step is checked or skipped.
+ */
 export function planNextBake(state: PlannerState, now: number): PlannerState {
-  return clearTemperatures({ ...state, date: tomorrow(now) });
+  return clearChecklist({ ...state, date: tomorrow(now) });
 }
 
 /** Checks a step at `now`, rounded to the minute, or unchecks it and forgets its time. */

@@ -6,6 +6,7 @@ import { schedule } from '../domain/schedule.ts';
 import { freshState, planOf, selected, tomorrow, type PlannerState } from './schema.ts';
 import { loadState, serialize, fromV5, fromV6, STORAGE_V5, STORAGE_V6 } from './load.ts';
 import * as act from './actions.ts';
+import { inTempRange, toF } from '../domain/bakeday.ts';
 
 // Times here are built and read in the same local zone, so these tests hold in any time zone.
 const at = (y: number, m: number, d: number, h: number, min: number, s = 0) =>
@@ -38,7 +39,6 @@ test('a fresh planner opens Preuss House tomorrow at 9:00 AM, with every recipe 
   );
   assert.equal(s.date, '2026-11-22');
   assert.equal(s.time, '09:00');
-  assert.deepEqual(s.created, { date: '2026-11-22', time: '09:00' });
   assert.deepEqual([s.anchor, s.proof, s.ovenCapacity, s.reheat, s.tempUnit], ['leaven', 'cold', 2, 30, 'F']);
   for (const r of RECIPES) {
     assert.deepEqual(s.recipes[r.id].settings, r.defaults, r.id);
@@ -207,51 +207,45 @@ test('every setting a version 5 or version 6 save holds loads as saved, for ever
 });
 
 test('a saved date must be a real calendar date and a time must be from 00:00 to 23:59, or they fall back', () => {
+  // A date falls back to tomorrow (2026-11-22) and a time to 9:00 AM. Kept values use other dates and times.
   const load = (date: unknown, time: unknown) => {
-    const s = fromV6({ version: 6, plan: { date, time, created: { date: '2026-10-20', time: '07:30' } } }, NOW)!;
+    const s = fromV6({ version: 6, plan: { date, time } }, NOW)!;
     return `${s.date} ${s.time}`;
   };
   for (const [date, time] of [
-    ['2026-11-22', '00:00'],
-    ['2026-11-22', '23:59'],
+    ['2026-12-05', '00:00'],
+    ['2026-12-05', '23:59'],
     ['2028-02-29', '09:15'],
     ['2000-02-29', '12:00'],
     ['2026-12-31', '06:00'],
+    ['0202-11-22', '07:30'],
   ])
     assert.equal(load(date, time), `${date} ${time}`, `${date} ${time} is kept`);
   for (const date of ['2026-02-29', '1900-02-29', '2026-02-30', '2026-04-31', '2026-13-01', '2026-00-10', '2026-11-00'])
-    assert.equal(load(date, '09:00'), '2026-10-20 09:00', `${date} falls back`);
+    assert.equal(load(date, '07:30'), '2026-11-22 07:30', `${date} falls back`);
   for (const time of ['24:00', '25:00', '23:60', '99:99'])
-    assert.equal(load('2026-11-22', time), '2026-11-22 07:30', `${time} falls back`);
+    assert.equal(load('2026-12-05', time), '2026-12-05 09:00', `${time} falls back`);
   // The last day of every month is kept and the day after falls back, in a common year and a leap year.
   const days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
   for (const [year, leap] of [
-    [2026, false],
+    [2027, false],
     [2028, true],
   ] as const)
     days.forEach((n, i) => {
       const month = String(i + 1).padStart(2, '0'),
         last = n + (leap && i === 1 ? 1 : 0);
       assert.equal(
-        load(`${year}-${month}-${last}`, '09:00'),
-        `${year}-${month}-${last} 09:00`,
+        load(`${year}-${month}-${last}`, '07:30'),
+        `${year}-${month}-${last} 07:30`,
         `${year}-${month}-${last}`,
       );
-      assert.equal(load(`${year}-${month}-${last + 1}`, '09:00'), '2026-10-20 09:00', `${year}-${month}-${last + 1}`);
+      assert.equal(load(`${year}-${month}-${last + 1}`, '07:30'), '2026-11-22 07:30', `${year}-${month}-${last + 1}`);
     });
   // Only the whole value counts: nothing may come before or after it.
-  for (const date of ['x2026-11-22', '2026-11-22x', ' 2026-11-22'])
-    assert.equal(load(date, '09:00'), '2026-10-20 09:00', `${JSON.stringify(date)} falls back`);
-  for (const time of ['09:00:00', 'x09:00', '09:00 '])
-    assert.equal(load('2026-11-22', time), '2026-11-22 07:30', `${JSON.stringify(time)} falls back`);
-  // The creation date and time are checked the same way, and then fall back to tomorrow at 9:00 AM.
-  const created = fromV6({ version: 6, plan: { created: { date: '2026-02-30', time: '24:00' } } }, NOW)!.created;
-  assert.deepEqual(created, { date: tomorrow(NOW), time: '09:00' });
-  const upgraded = fromV5(
-    { version: 5, plan: { date: '2026-11-31', legacy: { date: '2026-02-30', time: '25:00' } } },
-    NOW,
-  );
-  assert.deepEqual([upgraded.date, upgraded.time], [tomorrow(NOW), '09:00']);
+  for (const date of ['x2026-12-05', '2026-12-05x', ' 2026-12-05'])
+    assert.equal(load(date, '07:30'), '2026-11-22 07:30', `${JSON.stringify(date)} falls back`);
+  for (const time of ['07:30:00', 'x07:30', '07:30 '])
+    assert.equal(load('2026-12-05', time), '2026-12-05 09:00', `${JSON.stringify(time)} falls back`);
 });
 
 test("a House blend saved before Anita's flour keeps its red spring parts, and one with neither gets the default", () => {
@@ -306,12 +300,18 @@ test('a new date or time clears the dough temperatures only while nothing is che
   assert.equal(act.setTime(temps, '10:00').time, '10:00');
 });
 
-test('Plan the next bake moves the date to tomorrow and clears the temperatures, but keeps the checklist', () => {
-  const s = act.setDoughTemp(act.setChecked(plan(), 'feed', true, NOW), 80),
+test('Plan the next bake moves the date to tomorrow and starts afresh: no checks, times or temperatures (decision 1)', () => {
+  const s = act.addReading(
+      act.setDoughTemp(act.setChecked(act.setChecked(plan(), 'feed', true, NOW), 'leaven', true, NOW), 80),
+      82,
+      NOW,
+    ),
     next = act.planNextBake(s, NOW);
   assert.equal(next.date, '2026-11-22');
-  assert.equal(selected(next).bake.doughTemp, null);
-  assert.deepEqual(selected(next).bake.done, ['feed']);
+  assert.deepEqual(selected(next).bake, { done: [], doneAt: {}, doughTemp: null, bulkTemps: [] });
+  // Other recipes' bakes are their own.
+  const other = act.setChecked(act.selectRecipe(s, 'tartine'), 'leaven', true, NOW);
+  assert.deepEqual(act.planNextBake(other, NOW).recipes.house.bake, s.recipes.house.bake);
 });
 
 test('Clear checklist clears the checks, their times and the temperatures of the selected recipe only', () => {
@@ -339,25 +339,22 @@ test('readings in the same minute replace each other, stay in time order, and ca
   ]);
 });
 
-test('an invalid saved date or time falls back to the one the plan was first made with (decision 4)', () => {
+test('a missing or invalid saved date or time falls back to tomorrow at 9:00 AM, as for a new plan (decision 4)', () => {
+  // A version 5 save's creation date is no longer used.
   const upgraded = fromV5(
     { version: 5, plan: { date: '', time: '9:00', legacy: { date: '2026-10-20', time: '07:30' } } },
     NOW,
   );
-  assert.deepEqual(
-    [upgraded.date, upgraded.time, upgraded.created],
-    ['2026-10-20', '07:30', { date: '2026-10-20', time: '07:30' }],
-  );
-  // Saved as version 6 with the date field cleared, it reloads on the creation date, as version 5 did.
-  const six = JSON.parse(serialize(act.setDate(act.planNextBake(upgraded, NOW), '')));
+  assert.deepEqual([upgraded.date, upgraded.time], ['2026-11-22', '09:00']);
+  // Saved as version 6 with the date field cleared, it reloads on tomorrow's date.
+  const six = JSON.parse(serialize(act.setDate(act.setTime(plan(), '06:45'), '')));
   const reloaded = fromV6(six, NOW)!;
-  assert.deepEqual([reloaded.date, reloaded.time, reloaded.created], ['2026-10-20', '07:30', upgraded.created]);
-  // Without a usable creation date or time, each falls back to tomorrow at 9:00 AM.
-  six.plan.created = { date: '2026-2-1', time: null };
-  assert.deepEqual(fromV6(six, NOW)!.created, { date: tomorrow(NOW), time: '09:00' });
-  delete six.plan.created;
-  assert.deepEqual(fromV6(six, NOW)!.created, { date: tomorrow(NOW), time: '09:00' });
-  assert.deepEqual(fromV5({ version: 5, plan: { legacy: 'x' } }, NOW).created, { date: tomorrow(NOW), time: '09:00' });
+  assert.deepEqual([reloaded.date, reloaded.time], ['2026-11-22', '06:45']);
+  // A creation date and time saved by an earlier release are ignored, and no longer saved.
+  six.plan.created = { date: '2026-10-20', time: '07:30' };
+  six.plan.time = '25:00';
+  assert.deepEqual([fromV6(six, NOW)!.date, fromV6(six, NOW)!.time], ['2026-11-22', '09:00']);
+  assert.equal('created' in JSON.parse(serialize(fromV6(six, NOW)!)).plan, false);
 });
 
 test('typing a total hydration keeps the dough weight and shows the total typed', () => {
@@ -419,4 +416,21 @@ test('the shared settings and recipe choice change as asked, and only to a recip
     ],
     [1, 0, 'warm', 'C'],
   );
+});
+
+test('every temperature the °C field accepts is kept on reload, from 10°C to 37.7°C (decision 5)', () => {
+  assert.deepEqual(
+    [9.9, 10, 37.7, 37.8, 38].map((c) => inTempRange(c, 'C')),
+    [false, true, true, false, false],
+  );
+  for (const c of [10, 26, 37.7]) {
+    const s = act.addReading(act.setDoughTemp(plan(), toF(c, 'C')), toF(c, 'C'), NOW),
+      back = fromV6(JSON.parse(serialize(s)), NOW)!.recipes.house.bake;
+    assert.equal(back.doughTemp, toF(c, 'C'), `${c}°C after mixing`);
+    assert.deepEqual(
+      back.bulkTemps.map((r) => r.f),
+      [toF(c, 'C')],
+      `${c}°C later`,
+    );
+  }
 });

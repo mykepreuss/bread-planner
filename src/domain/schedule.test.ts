@@ -264,3 +264,12 @@ test('preshaping takes 10 minutes and starts by turning the dough out', () => {
     assert.match(step.note, /^Turn the dough out of its container onto your work surface\./, id);
   }
 });
+
+test('a year before 1000 gives a schedule, with its dates written in four digits', () => {
+  for (const date of ['0202-11-22', '0999-12-31', '1000-01-01']) {
+    const steps = schedule(plan('house', { date }));
+    assert.ok(steps.length > 0, `${date} has steps`);
+    assert.equal(dateString(steps.find((s) => s.id === 'leaven')!.at), date);
+  }
+  assert.equal(dateString(new Date(2026, 10, 22)), '2026-11-22');
+});
