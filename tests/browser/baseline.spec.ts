@@ -1,7 +1,7 @@
-import {test as base,expect,type Page} from '@playwright/test';
-import {readFileSync} from 'node:fs';
-import type {SavedPlan} from './saved-plans.ts';
-import {pageSettings,widths} from './context.ts';
+import { test as base, expect, type Page } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+import type { SavedPlan } from './saved-plans.ts';
+import { pageSettings, widths } from './context.ts';
 
 /**
  * Screens: each saved plan opened at a frozen moment and recorded three ways, at phone and desktop width:
@@ -13,148 +13,203 @@ import {pageSettings,widths} from './context.ts';
  * record. Flows: the main actions, recorded as accessibility snapshots at desktop width, with a reload where the
  * result must persist.
  */
-const plans=new Map((JSON.parse(readFileSync(new URL('./saved-plans.json',import.meta.url),'utf8')) as SavedPlan[]).map(p=>[p.name,p]));
-const KEY='bread-planner.v5';
+const plans = new Map(
+  (JSON.parse(readFileSync(new URL('./saved-plans.json', import.meta.url), 'utf8')) as SavedPlan[]).map((p) => [
+    p.name,
+    p,
+  ]),
+);
+const KEY = 'bread-planner.v5';
 
 /** Collects a page's console errors and warnings, and uncaught errors. */
-function watch(page:Page){
-  const problems:string[]=[];
-  page.on('console',m=>{if(m.type()==='error'||m.type()==='warning')problems.push(`${m.type()}: ${m.text()}`);});
-  page.on('pageerror',e=>problems.push(`page error: ${e.message}`));
+function watch(page: Page) {
+  const problems: string[] = [];
+  page.on('console', (m) => {
+    if (m.type() === 'error' || m.type() === 'warning') problems.push(`${m.type()}: ${m.text()}`);
+  });
+  page.on('pageerror', (e) => problems.push(`page error: ${e.message}`));
   return problems;
 }
 /** Every flow fails on a console error or warning. Screen tests open their own pages and check them the same way. */
-const test=base.extend<{consoleProblems:string[]}>({
-  consoleProblems:[async({page},use)=>{
-    const problems=watch(page);
-    await use(problems);
-    expect(problems,'console errors or warnings').toEqual([]);
-  },{auto:true}],
+const test = base.extend<{ consoleProblems: string[] }>({
+  consoleProblems: [
+    async ({ page }, use) => {
+      const problems = watch(page);
+      await use(problems);
+      expect(problems, 'console errors or warnings').toEqual([]);
+    },
+    { auto: true },
+  ],
 });
 
 /**
  * Opens the planner on a saved plan with the clock frozen. The save is written once per tab, so a reload shows what the
  * app saved itself; for the same reason, call it once per page.
  */
-async function open(page:Page,name:string){
-  const plan=plans.get(name);if(!plan)throw new Error(`No saved plan ${name}`);
+async function open(page: Page, name: string) {
+  const plan = plans.get(name);
+  if (!plan) throw new Error(`No saved plan ${name}`);
   await page.clock.setFixedTime(plan.now);
-  await page.addInitScript(([key,value])=>{
-    if(sessionStorage.getItem('seeded'))return;
-    if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,value);
-    sessionStorage.setItem('seeded','1');
-  },[KEY,plan.saved===null?null:JSON.stringify(plan.saved)] as const);
+  await page.addInitScript(
+    ([key, value]) => {
+      if (sessionStorage.getItem('seeded')) return;
+      if (value === null) localStorage.removeItem(key);
+      else localStorage.setItem(key, value);
+      sessionStorage.setItem('seeded', '1');
+    },
+    [KEY, plan.saved === null ? null : JSON.stringify(plan.saved)] as const,
+  );
   await page.goto('/');
   await ready(page);
 }
-async function ready(page:Page){
-  await expect(page.getByRole('tab',{name:'Schedule'})).toBeVisible();
-  await page.evaluate(()=>document.fonts.ready);
+async function ready(page: Page) {
+  await expect(page.getByRole('tab', { name: 'Schedule' })).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
 }
-const aria=(page:Page)=>page.locator('body').ariaSnapshot();
+const aria = (page: Page) => page.locator('body').ariaSnapshot();
 /** Tag, kept id, classes and data attributes of every element, indented by depth. Ids React generates are left out: they change when components move. */
-const layout=(page:Page)=>page.locator('body').evaluate(body=>{
-  const lines:string[]=[],generated=/^radix-|«|_r_|^:r/;
-  const walk=(el:Element,depth:number)=>{
-    const tag=el.tagName.toLowerCase(),parts=[...el.attributes].flatMap(a=>
-      a.name==='class'?[`.${a.value.trim().split(/\s+/).join('.')}`]:a.name.startsWith('data-')||a.name==='type'||(a.name==='id'&&!generated.test(a.value))?[`[${a.name}${a.value?`=${a.value}`:''}]`]:[]);
-    lines.push(`${'  '.repeat(depth)}${tag}${parts.join('')}`);
-    if(tag!=='svg')for(const child of el.children)walk(child,depth+1);
-  };
-  for(const child of body.children)walk(child,0);
-  return lines.join('\n')+'\n';
-});
-const upNext=(page:Page)=>page.getByRole('region',{name:'Up next'});
-async function choose(page:Page,combobox:string,option:string,within=page.locator('body')){
-  await within.getByRole('combobox',{name:combobox}).click();
-  await page.getByRole('option',{name:option,exact:true}).click();
+const layout = (page: Page) =>
+  page.locator('body').evaluate((body) => {
+    const lines: string[] = [],
+      generated = /^radix-|«|_r_|^:r/;
+    const walk = (el: Element, depth: number) => {
+      const tag = el.tagName.toLowerCase(),
+        parts = [...el.attributes].flatMap((a) =>
+          a.name === 'class'
+            ? [`.${a.value.trim().split(/\s+/).join('.')}`]
+            : a.name.startsWith('data-') || a.name === 'type' || (a.name === 'id' && !generated.test(a.value))
+              ? [`[${a.name}${a.value ? `=${a.value}` : ''}]`]
+              : [],
+        );
+      lines.push(`${'  '.repeat(depth)}${tag}${parts.join('')}`);
+      if (tag !== 'svg') for (const child of el.children) walk(child, depth + 1);
+    };
+    for (const child of body.children) walk(child, 0);
+    return lines.join('\n') + '\n';
+  });
+const upNext = (page: Page) => page.getByRole('region', { name: 'Up next' });
+async function choose(page: Page, combobox: string, option: string, within = page.locator('body')) {
+  await within.getByRole('combobox', { name: combobox }).click();
+  await page.getByRole('option', { name: option, exact: true }).click();
 }
-async function expectSameAfterReload(page:Page){
-  const before=await aria(page);
-  await page.reload();await ready(page);
-  expect(await aria(page),'the same screen after a reload').toBe(before);
+async function expectSameAfterReload(page: Page) {
+  const before = await aria(page);
+  await page.reload();
+  await ready(page);
+  expect(await aria(page), 'the same screen after a reload').toBe(before);
 }
-async function openIngredients(page:Page){
-  await page.getByRole('tab',{name:'Ingredients'}).click();
-  for(const section of ['Leaven, salt & water split','Leaven build','Recipe defaults'])await page.getByRole('button',{name:section}).click();
+async function openIngredients(page: Page) {
+  await page.getByRole('tab', { name: 'Ingredients' }).click();
+  for (const section of ['Leaven, salt & water split', 'Leaven build', 'Recipe defaults'])
+    await page.getByRole('button', { name: section }).click();
 }
 
-const RECIPES=['house','tartine','white-wheat','red-rye','five-flour','four-flour'];
+const RECIPES = ['house', 'tartine', 'white-wheat', 'red-rye', 'five-flour', 'four-flour'];
 /** Screens recorded as a whole page too, at these widths. Kept to a few: whole pages are large. */
-const wholePage:Record<string,string[]>={'mid-bulk':['phone','desktop'],'cold-proof-next':['phone'],'quiet-batches':['phone'],'complete':['phone'],'recipe-house-ingredients':['phone']};
-const screens:{id:string;plan:string;ingredients?:boolean}[]=[
-  ...['fresh','mid-bulk','dough-check','cold-proof-next','ended','complete','quiet-batches','tartine-warm','daytime-proof'].map(plan=>({id:plan,plan})),
-  ...RECIPES.flatMap(r=>[{id:`recipe-${r}-schedule`,plan:`recipe-${r}`},{id:`recipe-${r}-ingredients`,plan:`recipe-${r}`,ingredients:true}]),
-  {id:'leaven-short-ingredients',plan:'leaven-short',ingredients:true},
+const wholePage: Record<string, string[]> = {
+  'mid-bulk': ['phone', 'desktop'],
+  'cold-proof-next': ['phone'],
+  'quiet-batches': ['phone'],
+  complete: ['phone'],
+  'recipe-house-ingredients': ['phone'],
+};
+const screens: { id: string; plan: string; ingredients?: boolean }[] = [
+  ...[
+    'fresh',
+    'mid-bulk',
+    'dough-check',
+    'cold-proof-next',
+    'ended',
+    'complete',
+    'quiet-batches',
+    'tartine-warm',
+    'daytime-proof',
+  ].map((plan) => ({ id: plan, plan })),
+  ...RECIPES.flatMap((r) => [
+    { id: `recipe-${r}-schedule`, plan: `recipe-${r}` },
+    { id: `recipe-${r}-ingredients`, plan: `recipe-${r}`, ingredients: true },
+  ]),
+  { id: 'leaven-short-ingredients', plan: 'leaven-short', ingredients: true },
 ];
 
-for(const screen of screens)test(`screen: ${screen.id}`,async({browser})=>{
-  // Both widths are open and compared with each other before anything is compared with, or written to, the record.
-  const opened=await Promise.all(Object.entries(widths).map(async([width,viewport])=>{
-    const context=await browser.newContext({...pageSettings,viewport}),page=await context.newPage(),problems=watch(page);
-    await open(page,screen.plan);
-    if(screen.ingredients)await openIngredients(page);
-    return {width,viewport,context,page,problems,aria:await aria(page),layout:await layout(page)};
-  }));
-  try{
-    const [phone,desktop]=opened;
-    expect(phone.aria,'phone and desktop show the same content').toBe(desktop.aria);
-    expect(phone.layout,'phone and desktop have the same markup').toBe(desktop.layout);
-    for(const {width,viewport,page,problems} of opened){
-      expect(await page.evaluate(()=>document.documentElement.scrollWidth),`no sideways scrolling at ${width} width`).toBe(viewport.width);
-      expect(problems,`console errors or warnings at ${width} width`).toEqual([]);
+for (const screen of screens)
+  test(`screen: ${screen.id}`, async ({ browser }) => {
+    // Both widths are open and compared with each other before anything is compared with, or written to, the record.
+    const opened = await Promise.all(
+      Object.entries(widths).map(async ([width, viewport]) => {
+        const context = await browser.newContext({ ...pageSettings, viewport }),
+          page = await context.newPage(),
+          problems = watch(page);
+        await open(page, screen.plan);
+        if (screen.ingredients) await openIngredients(page);
+        return { width, viewport, context, page, problems, aria: await aria(page), layout: await layout(page) };
+      }),
+    );
+    try {
+      const [phone, desktop] = opened;
+      expect(phone.aria, 'phone and desktop show the same content').toBe(desktop.aria);
+      expect(phone.layout, 'phone and desktop have the same markup').toBe(desktop.layout);
+      for (const { width, viewport, page, problems } of opened) {
+        expect(
+          await page.evaluate(() => document.documentElement.scrollWidth),
+          `no sideways scrolling at ${width} width`,
+        ).toBe(viewport.width);
+        expect(problems, `console errors or warnings at ${width} width`).toEqual([]);
+      }
+      expect(desktop.aria).toMatchSnapshot(`${screen.id}.aria.yml`);
+      expect(desktop.layout).toMatchSnapshot(`${screen.id}.layout.txt`);
+      for (const { width, page } of opened) {
+        await expect(page).toHaveScreenshot(`${screen.id}-${width}.png`);
+        if (wholePage[screen.id]?.includes(width))
+          await expect(page).toHaveScreenshot(`${screen.id}-whole-page-${width}.png`, { fullPage: true });
+      }
+    } finally {
+      await Promise.all(opened.map((o) => o.context.close()));
     }
-    expect(desktop.aria).toMatchSnapshot(`${screen.id}.aria.yml`);
-    expect(desktop.layout).toMatchSnapshot(`${screen.id}.layout.txt`);
-    for(const {width,page} of opened){
-      await expect(page).toHaveScreenshot(`${screen.id}-${width}.png`);
-      if(wholePage[screen.id]?.includes(width))await expect(page).toHaveScreenshot(`${screen.id}-whole-page-${width}.png`,{fullPage:true});
-    }
-  }finally{await Promise.all(opened.map(o=>o.context.close()));}
-});
+  });
 
-test.describe('flows',()=>{
-  test('Done on an overdue leaven moves the plan, and the check survives a reload',async({page})=>{
-    await open(page,'leaven-late');
-    await upNext(page).getByRole('button',{name:'Done'}).click();
+test.describe('flows', () => {
+  test('Done on an overdue leaven moves the plan, and the check survives a reload', async ({ page }) => {
+    await open(page, 'leaven-late');
+    await upNext(page).getByRole('button', { name: 'Done' }).click();
     await expect(upNext(page)).toContainText('Running 40 min behind plan');
     expect(await aria(page)).toMatchSnapshot('flow-done.aria.yml');
     await expectSameAfterReload(page);
   });
 
-  test('The dough temperature after mixing re-times bulk, and °C shows the same reading',async({page})=>{
-    await open(page,'mixed');
+  test('The dough temperature after mixing re-times bulk, and °C shows the same reading', async ({ page }) => {
+    await open(page, 'mixed');
     await upNext(page).getByLabel('Dough temperature after mixing').fill('84');
     await expect(upNext(page)).toContainText('Bulk should take about 3h 2m');
     expect(await aria(page)).toMatchSnapshot('flow-after-mixing-84F.aria.yml');
-    await choose(page,'Temperature unit','°C',upNext(page));
+    await choose(page, 'Temperature unit', '°C', upNext(page));
     await expect(upNext(page).getByLabel('Dough temperature after mixing')).toHaveValue('28.9');
     expect(await aria(page)).toMatchSnapshot('flow-after-mixing-celsius.aria.yml');
     await expectSameAfterReload(page);
   });
 
-  test('A later reading is listed and re-times what is left; removing it restores the plan',async({page})=>{
-    await open(page,'turn-one-78');
-    const before=await aria(page);
+  test('A later reading is listed and re-times what is left; removing it restores the plan', async ({ page }) => {
+    await open(page, 'turn-one-78');
+    const before = await aria(page);
     await upNext(page).getByLabel('Dough temperature now').fill('86');
-    await upNext(page).getByRole('button',{name:'Update'}).click();
-    await expect(page.getByRole('list',{name:'Later dough temperatures'})).toContainText('86°F at 3:20 PM');
+    await upNext(page).getByRole('button', { name: 'Update' }).click();
+    await expect(page.getByRole('list', { name: 'Later dough temperatures' })).toContainText('86°F at 3:20 PM');
     expect(await aria(page)).toMatchSnapshot('flow-reading-added.aria.yml');
     await expectSameAfterReload(page);
-    await page.getByRole('button',{name:'Remove the 86°F reading from 3:20 PM'}).click();
-    expect(await aria(page),'removing the reading restores the screen').toBe(before);
+    await page.getByRole('button', { name: 'Remove the 86°F reading from 3:20 PM' }).click();
+    expect(await aria(page), 'removing the reading restores the screen').toBe(before);
   });
 
-  test('Ready: preshape now checks preshape and marks the remaining turns skipped',async({page})=>{
-    await open(page,'dough-check');
-    await upNext(page).getByRole('button',{name:'Ready: preshape now'}).click();
+  test('Ready: preshape now checks preshape and marks the remaining turns skipped', async ({ page }) => {
+    await open(page, 'dough-check');
+    await upNext(page).getByRole('button', { name: 'Ready: preshape now' }).click();
     await expect(page.getByText('Skipped').first()).toBeVisible();
     expect(await aria(page)).toMatchSnapshot('flow-ready-preshape.aria.yml');
     await expectSameAfterReload(page);
   });
 
-  test('Done at corrections move the plan, across days too',async({page})=>{
-    await open(page,'leaven-done-late');
+  test('Done at corrections move the plan, across days too', async ({ page }) => {
+    await open(page, 'leaven-done-late');
     await expect(upNext(page)).toContainText('Running 40 min behind plan');
     await page.getByLabel('Time Start leaven was done').fill('09:00');
     await expect(upNext(page)).not.toContainText('behind plan');
@@ -165,34 +220,34 @@ test.describe('flows',()=>{
     await expectSameAfterReload(page);
   });
 
-  test('Clear checklist clears the checks and the dough temperatures',async({page})=>{
-    await open(page,'mid-bulk');
-    await page.getByRole('button',{name:'Clear checklist'}).click();
+  test('Clear checklist clears the checks and the dough temperatures', async ({ page }) => {
+    await open(page, 'mid-bulk');
+    await page.getByRole('button', { name: 'Clear checklist' }).click();
     await expect(page.getByText(/^0 of \d+ steps checked$/)).toBeVisible();
     await expect(page.locator('#timeline-dough-temp')).toHaveValue('');
     expect(await aria(page)).toMatchSnapshot('flow-clear-checklist.aria.yml');
     await expectSameAfterReload(page);
   });
 
-  test('Plan the next bake moves an ended plan to tomorrow',async({page})=>{
-    await open(page,'ended');
-    await page.getByRole('button',{name:'Plan the next bake'}).click();
+  test('Plan the next bake moves an ended plan to tomorrow', async ({ page }) => {
+    await open(page, 'ended');
+    await page.getByRole('button', { name: 'Plan the next bake' }).click();
     await expect(page.locator('#plan-date')).toHaveValue('2026-11-22');
     expect(await aria(page)).toMatchSnapshot('flow-plan-next-bake.aria.yml');
     await expectSameAfterReload(page);
   });
 
-  test('Plan the next bake on a fully checked plan moves the date but the plan stays ended',async({page})=>{
+  test('Plan the next bake on a fully checked plan moves the date but the plan stays ended', async ({ page }) => {
     // Recorded as it is today: the checklist is not cleared, so every step keeps its past check-off time.
-    await open(page,'complete');
-    await page.getByRole('button',{name:'Plan the next bake'}).click();
+    await open(page, 'complete');
+    await page.getByRole('button', { name: 'Plan the next bake' }).click();
     await expect(page.locator('#plan-date')).toHaveValue('2026-11-22');
-    await expect(page.getByRole('button',{name:'Plan the next bake'})).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Plan the next bake' })).toBeVisible();
     expect(await aria(page)).toMatchSnapshot('flow-plan-next-bake-when-complete.aria.yml');
   });
 
-  test('A new date before anything is checked clears a planning temperature',async({page})=>{
-    await open(page,'planned-temp');
+  test('A new date before anything is checked clears a planning temperature', async ({ page }) => {
+    await open(page, 'planned-temp');
     await expect(page.locator('#timeline-dough-temp')).toHaveValue('84');
     await page.locator('#plan-date').fill('2026-11-23');
     await expect(page.locator('#timeline-dough-temp')).toHaveValue('');
@@ -200,77 +255,99 @@ test.describe('flows',()=>{
     await expectSameAfterReload(page);
   });
 
-  test('Planning around the finish keeps every step time',async({page})=>{
-    await open(page,'fresh');
-    const timeline=page.getByRole('region',{name:'Bake schedule'}),before=await timeline.ariaSnapshot();
-    await choose(page,'Plan around','All loaves out of the oven');
+  test('Planning around the finish keeps every step time', async ({ page }) => {
+    await open(page, 'fresh');
+    const timeline = page.getByRole('region', { name: 'Bake schedule' }),
+      before = await timeline.ariaSnapshot();
+    await choose(page, 'Plan around', 'All loaves out of the oven');
     await expect(page.getByLabel('Last batch date')).toHaveValue('2026-11-23');
-    await expect(page.getByLabel('Time',{exact:true})).toHaveValue('09:33');
-    expect(await timeline.ariaSnapshot(),'the same steps at the same times').toBe(before);
+    await expect(page.getByLabel('Time', { exact: true })).toHaveValue('09:33');
+    expect(await timeline.ariaSnapshot(), 'the same steps at the same times').toBe(before);
     expect(await aria(page)).toMatchSnapshot('flow-plan-around-finish.aria.yml');
     await expectSameAfterReload(page);
   });
 
-  test('Ingredient edits recalculate the weights, invalid entries are refused, and defaults restore',async({page})=>{
-    await open(page,'fresh');
+  test('Ingredient edits recalculate the weights, invalid entries are refused, and defaults restore', async ({
+    page,
+  }) => {
+    await open(page, 'fresh');
     await openIngredients(page);
-    const hydration=page.getByLabel('Total hydration',{exact:true});
-    await hydration.fill('82');await hydration.blur();
+    const hydration = page.getByLabel('Total hydration', { exact: true });
+    await hydration.fill('82');
+    await hydration.blur();
     expect(await aria(page)).toMatchSnapshot('flow-hydration-82.aria.yml');
-    await page.getByRole('slider',{name:'Adjust total hydration'}).press('ArrowRight');
+    await page.getByRole('slider', { name: 'Adjust total hydration' }).press('ArrowRight');
     await expect(hydration).toHaveValue('83');
-    const loaves=page.getByLabel('Number of loaves');
+    const loaves = page.getByLabel('Number of loaves');
     await loaves.fill('0');
     await expect(page.getByText('Use a whole number ≥ 1')).toBeVisible();
     await loaves.blur();
     await expect(loaves).toHaveValue('2');
     expect(await aria(page)).toMatchSnapshot('flow-hydration-83.aria.yml');
     // The open tab and sections are not saved: a reload always opens the Schedule tab with every section closed.
-    const before=await aria(page);
-    await page.reload();await ready(page);await openIngredients(page);
-    expect(await aria(page),'the same edits after a reload').toBe(before);
-    await page.getByRole('button',{name:'Restore recipe defaults'}).click();
-    await page.getByRole('button',{name:'Restore defaults'}).click();
+    const before = await aria(page);
+    await page.reload();
+    await ready(page);
+    await openIngredients(page);
+    expect(await aria(page), 'the same edits after a reload').toBe(before);
+    await page.getByRole('button', { name: 'Restore recipe defaults' }).click();
+    await page.getByRole('button', { name: 'Restore defaults' }).click();
     await expect(hydration).toHaveValue('80');
     expect(await aria(page)).toMatchSnapshot('flow-restore-defaults.aria.yml');
   });
 
-  test('Loaf count and oven capacity on the Schedule tab set the batches',async({page})=>{
-    await open(page,'fresh');
+  test('Loaf count and oven capacity on the Schedule tab set the batches', async ({ page }) => {
+    await open(page, 'fresh');
     await page.getByLabel('Number of loaves').fill('3');
     await expect(page.getByText('2 batches')).toBeVisible();
-    await choose(page,'Loaves baked at once','1 loaf');
+    await choose(page, 'Loaves baked at once', '1 loaf');
     await expect(page.getByLabel('Reheat between batches')).toBeVisible();
     expect(await aria(page)).toMatchSnapshot('flow-loaves-and-oven.aria.yml');
     await expectSameAfterReload(page);
   });
 
-  test('Each recipe keeps its own checklist',async({page})=>{
-    await open(page,'fresh');
-    await page.getByRole('checkbox',{name:'Complete Feed starter'}).click();
+  test('Each recipe keeps its own checklist', async ({ page }) => {
+    await open(page, 'fresh');
+    await page.getByRole('checkbox', { name: 'Complete Feed starter' }).click();
     await expect(page.getByText('1 of 23 steps checked')).toBeVisible();
-    await choose(page,'Recipe','Original Tartine');
+    await choose(page, 'Recipe', 'Original Tartine');
     await expect(page.getByText(/^0 of \d+ steps checked$/)).toBeVisible();
-    await choose(page,'Recipe','Preuss House');
+    await choose(page, 'Recipe', 'Preuss House');
     await expect(page.getByText('1 of 23 steps checked')).toBeVisible();
     expect(await aria(page)).toMatchSnapshot('flow-recipe-checklists.aria.yml');
     await expectSameAfterReload(page);
   });
 
   // One test per recipe: `open` writes its save once per page.
-  for(const [name,houseParagraph] of [['house',true],['tartine',false]] as const)test(`The method guide for ${name}, ${houseParagraph?'with':'without'} the House-method paragraph`,async({page})=>{
-    await open(page,`recipe-${name}`);
-    await expect(page.getByRole('combobox',{name:'Recipe'})).toHaveText(name==='house'?'Preuss House':'Original Tartine');
-    const guide=page.locator('.method-guide');
-    for(const section of ['Mature starter and readiness guide','Establishing a starter from scratch','Shaping, basket preparation and baking'])await guide.getByRole('button',{name:section}).click();
-    const paragraph=guide.getByText('This recipe uses a separate flour-and-water autolyse');
-    if(houseParagraph)await expect(paragraph).toBeVisible();else await expect(paragraph).toHaveCount(0);
-    expect(await guide.ariaSnapshot()).toMatchSnapshot(`flow-method-guide-${name}.aria.yml`);
-  });
+  for (const [name, houseParagraph] of [
+    ['house', true],
+    ['tartine', false],
+  ] as const)
+    test(`The method guide for ${name}, ${houseParagraph ? 'with' : 'without'} the House-method paragraph`, async ({
+      page,
+    }) => {
+      await open(page, `recipe-${name}`);
+      await expect(page.getByRole('combobox', { name: 'Recipe' })).toHaveText(
+        name === 'house' ? 'Preuss House' : 'Original Tartine',
+      );
+      const guide = page.locator('.method-guide');
+      for (const section of [
+        'Mature starter and readiness guide',
+        'Establishing a starter from scratch',
+        'Shaping, basket preparation and baking',
+      ])
+        await guide.getByRole('button', { name: section }).click();
+      const paragraph = guide.getByText('This recipe uses a separate flour-and-water autolyse');
+      if (houseParagraph) await expect(paragraph).toBeVisible();
+      else await expect(paragraph).toHaveCount(0);
+      expect(await guide.ariaSnapshot()).toMatchSnapshot(`flow-method-guide-${name}.aria.yml`);
+    });
 
-  test('The quiet-hours warning lists the affected steps',async({page})=>{
-    await open(page,'quiet-batches');
-    await page.getByRole('button',{name:'View affected steps'}).click();
-    expect(await page.getByRole('region',{name:'Quiet hours warning'}).ariaSnapshot()).toMatchSnapshot('flow-quiet-hours.aria.yml');
+  test('The quiet-hours warning lists the affected steps', async ({ page }) => {
+    await open(page, 'quiet-batches');
+    await page.getByRole('button', { name: 'View affected steps' }).click();
+    expect(await page.getByRole('region', { name: 'Quiet hours warning' }).ariaSnapshot()).toMatchSnapshot(
+      'flow-quiet-hours.aria.yml',
+    );
   });
 });

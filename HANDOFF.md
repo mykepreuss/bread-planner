@@ -248,9 +248,11 @@ Evidence: 96 of 96 tests pass. The House name, leaven and dedup tests were updat
 
 Not verified: a saved plan carrying over on Michael's phone. Once a browser has loaded this version, an older version of the app would reset the House blend to its defaults (80/10/10) because it does not know `flour_anita`.
 
-## Rebuild step 0: today's behaviour recorded, November 21, 2026: committed, PR #20 open
+## Rebuild step 0: today's behaviour recorded, November 21, 2026: released and verified live
 
-Michael asked for a review of the whole codebase and then approved step 0 of the five-step rebuild plan: record what the app does before changing how it is built. Branch `rebuild-baseline`, from `main` at `34699a7`. PR #20 (https://github.com/mykepreuss/bread-planner/pull/20) is open for review and not merged. No file under `src/` changed.
+Michael asked for a review of the whole codebase and then approved step 0 of the five-step rebuild plan: record what the app does before changing how it is built. Branch `rebuild-baseline`, from `main` at `34699a7`. No file under `src/` changed.
+
+Release: Michael asked to merge PR #20, which merged as `5eea38c` with both Vercel checks passing on `9422b25`. Production completed, and `node scripts/verify-deployment.mjs https://bread.assemblydigital.com` passed 9 checks and 7 assets, unchanged.
 
 - `docs/BEHAVIOUR.md`: the behaviour, written from the code and checked against the records, with five decisions for Michael at the end.
 - `tests/baseline`: `npm test`, and so every Vercel build, now runs two more checks.
@@ -290,6 +292,36 @@ Vercel: the preview builds of `e5f2fe0`, `3ba69b5` and `d9b456f` failed. Vercel'
 - `vancouver.test.ts` compares it with the real zone wherever the host has it: over 300,000 readings at 15-minute steps through 2026, early 2027 and early 2030; every wall-clock time, including the skipped and repeated hours; invalid times; and day changes. It is skipped on Vercel.
 - `BASELINE_ZONE=rule npm test` runs here what Vercel runs, with the host left in UTC underneath: 120 of 120 pass, as with the host zone.
 
-Not verified: a passing Vercel build with that change, which the PR checks will show; the browser records on any machine but this Mac (the screenshots are Mac-specific).
+Vercel's build of `9422b25` then passed: 120 tests, 116 passed and 4 skipped (the comparisons with the real zone).
+
+Not verified: the browser records on any machine but this Mac (the screenshots are Mac-specific).
 
 Decisions for Michael are listed at the end of `docs/BEHAVIOUR.md`, including one defect found here: 38°C is accepted, then lost on reload.
+
+## Rebuild step 1: readable screen code, November 21, 2026: committed, pull request open
+
+Michael asked to start step 1 after merging step 0: make the screen code readable without changing what it does. Branch `rebuild-readable-screen`, from `main` at `5eea38c`, in two commits.
+
+- **Format every file.** Prettier 3.9.10 is now a dev dependency: the version `@astrojs/check` already installed, so no second copy. It uses single quotes and 120-character lines, with `npm run format` and `npm run format:check`. Left as written: generated records, the vendored shadcn components and stylesheet, Markdown and the two `.astro` pages. `npm run format:check` is not part of the Vercel build (a proposal, not done).
+- **Split App.tsx.** It went from 231 lines (one of 2,484 characters) to 78. It keeps loading and saving, the form, the tabs, the recipe menu and the method guide. Each part of the screen now has its own file in `src/components/`:
+  - `ScheduleTab` (the live schedule and bake-day actions, moved from App unchanged), `NowCard`, `QuietWarning`, `PlanCard`, `BatchCard`, `OvenCard`, `Timeline` (with each step row) and `DoughTemperature` (both temperature forms);
+  - `IngredientsTab` (was `RecipeFormula`), `FlourTable`, `NumberField`, `Panel` and `MethodGuide`;
+  - `calculator.ts` (loading and the shared form), `text.ts` and `useNow.ts`.
+  - The code moved by line range, not by retyping. Every line of the old App.tsx is in the new files, except regrouped imports, declarations that gained `export`, renamed props and handlers, and text Prettier re-wrapped at the new indentation.
+  - The Schedule tab's state now lives inside `ScheduleTab`, which mounts only while that tab is open. Inactive tabs were already unmounted, so nothing visible changes.
+
+Evidence (this session, on `rebuild-readable-screen`):
+- `npm test` passed 120 of 120 with the host zone and with `BASELINE_ZONE=rule`. That includes the check that renders App.tsx for every recorded plan, so the split shows the same Schedule tab as the record. `npm run build` had 0 errors, 0 warnings and the 4 existing hints.
+- The browser record passed 38 of 38 after formatting, and after the split it passed 3 full runs plus 152 of 152 with `--repeat-each=4`. No record file changed.
+- One screenshot (`recipe-five-flour-ingredients`) failed once, in the first browser run after the split. Its accessibility and layout snapshots had matched, and it then passed 155 times in a row. It was not reproduced, so the cause is unknown.
+
+- The `verifier` agent checked step 1 independently and found no behaviour change.
+  - The `src/lib` files compile to byte-identical minified output before and after formatting.
+  - Every declaration of the old App.tsx matches its new copy.
+  - 120 of 120 tests passed, and the browser record passed 38, 38 and 114 of 114.
+  - A deliberate regression in `Timeline.tsx` failed `npm test`, and a class typo in `OvenCard.tsx` failed 25 browser tests.
+  - It found the docs said a pull request was open before one existed, and three cosmetic slips; all are fixed.
+- Vercel's preview build of `58ea3bb` succeeded.
+
+Not verified: a real phone.
+
