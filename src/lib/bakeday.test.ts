@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createPlanner,recipeSchedule,restorePlanner} from './recipes.ts';
-import {liveSchedule,retime,clockText,untilText,shiftText,stampNow,skippedSteps,stepPhase,bulkEstimate,bulkAdvice,toF,fromF,BULK_REFERENCE_F} from './bakeday.ts';
+import {liveSchedule,retime,clockText,stepGaps,untilText,shiftText,stampNow,skippedSteps,stepPhase,bulkEstimate,bulkAdvice,toF,fromF,BULK_REFERENCE_F} from './bakeday.ts';
 const plan=()=>{const p=createPlanner();p.date='2026-10-21';p.time='09:00';return p;};
 const minutes=(n:number)=>n*60000;
 const at=(steps:{id:string;at:Date}[],id:string)=>+steps.find(s=>s.id===id)!.at;
@@ -156,4 +156,14 @@ test('Tartine turns follow the same rule',()=>{
   const p=plan();p.recipe='tartine';const planned=recipeSchedule(p);
   const {steps,shift}=liveSchedule(planned,['rest','turn1'],{rest:at(planned,'rest'),turn1:at(planned,'turn1')+minutes(15)});
   assert.equal(shift,0);assert.equal(at(steps,'turn2'),at(planned,'turn2'));assert.equal(at(steps,'shape'),at(planned,'shape'));
+});
+
+test('the gap shown between steps is the time to the next step, not the step\'s own length',()=>{
+  const steps=recipeSchedule(plan()),gaps=stepGaps(steps),gap=(id:string)=>gaps.get(id);
+  assert.equal(gap('rest'),30,'bulk starts, and turn 1 is 30 minutes later; bulk itself runs about 4 hours');
+  assert.equal(gap('feed'),660);
+  const warm=steps.findIndex(s=>s.id==='warmup');assert.equal(+steps[warm+1].at,+steps[warm].at,'warm-up and preheat start together');
+  assert.equal(gap('warmup'),0,'steps that start together show no gap');assert.equal(gap('preheat'),60);
+  assert.equal(gap(steps.at(-1)!.id),0);
+  for(const [id,n] of gaps)assert.ok(n>=0,id);
 });

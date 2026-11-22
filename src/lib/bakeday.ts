@@ -79,6 +79,10 @@ export function retime(date:string,hhmm:string){
 }
 export const clockText=(d:Date)=>`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 
+/** Minutes from each step's start to the next step's start, from the live times. Steps that start together, and the last step, get 0. */
+export function stepGaps(steps:{id:string;at:Date}[]){
+  return new Map(steps.map((s,i)=>[s.id,steps[i+1]?Math.max(0,Math.round((+steps[i+1].at-+s.at)/60000)):0]));
+}
 export function untilText(ms:number){
   const min=Math.round(ms/60000);
   return min===0?'due now':min>0?`in ${durationText(min)}`:`due ${durationText(-min)} ago`;
