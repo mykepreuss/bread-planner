@@ -157,8 +157,9 @@ export function planner(i: PlanInput | (FormulaInput & { date?: string; time?: s
 
 /**
  * The Schedule tab for one plan: every step as the timeline shows it, and what the Up next card, the notices and the
- * bake summary show. The view block mirrors App.tsx at 34699a7 (lines 173 to 205); step 3 of the rebuild moves those
- * rules into tested code and this adapter then calls it.
+ * bake summary show. The view block mirrors the start of ScheduleTab (src/components/ScheduleTab.tsx), and
+ * app.test.ts checks the real one against the record; step 3 of the rebuild moves those rules into tested code and
+ * this adapter then calls it.
  */
 export function observePlan(i: PlanInput) {
   const plan = planner(i),
