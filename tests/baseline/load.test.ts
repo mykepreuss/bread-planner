@@ -180,6 +180,7 @@ test('3,000 random corruptions of real saves load into a valid planner, as versi
     ['leaven', 'mix', 3, 'turn9'],
     { leaven: 1795400000000, mix: 'soon', turn1: 1795401000000 },
   ];
+  // The four recipes removed on November 22, 2026 stay here: a save from before then can still hold them.
   const recipes = ['house', 'tartine', 'white-wheat', 'red-rye', 'five-flour', 'four-flour'];
   const shared = [
     'recipe',

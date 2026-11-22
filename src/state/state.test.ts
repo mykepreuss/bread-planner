@@ -58,7 +58,7 @@ test('loading prefers version 6, falls back to version 5, and starts fresh from 
     [fromFive.recipe, fromFive.order, fromFive.date, fromFive.time],
     ['tartine', ['house', 'tartine'], '2026-11-13', '08:00'],
   );
-  const six = { ...freshState(NOW), recipe: 'red-rye', date: '2026-12-01' };
+  const six = { ...freshState(NOW), recipe: 'tartine', date: '2026-12-01' };
   const both = storage({ [STORAGE_V5]: JSON.stringify(v5), [STORAGE_V6]: serialize(six) });
   assert.deepEqual(loadState(both, NOW), six, 'version 6 wins over version 5');
   for (const broken of [
@@ -87,11 +87,7 @@ test('a saved planner loads back exactly, whatever was checked, timed or measure
     84,
     NOW + 7200000,
   );
-  const edited = act.setSetting(
-    act.setSetting(act.selectRecipe(s, 'five-flour'), 'flour:fife', 0),
-    'build:starter',
-    40,
-  );
+  const edited = act.setSetting(act.setSetting(act.selectRecipe(s, 'tartine'), 'flour:wheat', 0), 'build:starter', 40);
   for (const state of [
     freshState(NOW),
     s,
@@ -254,11 +250,10 @@ test("a House blend saved before Anita's flour keeps its red spring parts, and o
   assert.deepEqual(house({ flour_red: 60, flour_wheat: 25, flour_rye: 15 }), { anita: 60, wheat: 25, rye: 15 });
   assert.deepEqual(house({ flour_anita: 70, flour_red: 60 }), { anita: 70, wheat: 10, rye: 10 });
   assert.deepEqual(house({}), { anita: 80, wheat: 10, rye: 10 });
-  // Only House had red spring flour before Anita's; another recipe's red spring parts stay its own.
-  const redRye = fromV5({ version: 5, plan: { recipes: { 'red-rye': { params: { flour_red: 50 } } } } }, NOW).recipes[
-    'red-rye'
-  ].settings.flours;
-  assert.equal(redRye.red, 50);
+  // Only House had red spring flour before Anita's, and the recipes that kept it were removed on November 22, 2026.
+  const tartine = fromV5({ version: 5, plan: { recipes: { tartine: { params: { flour_red: 50 } } } } }, NOW).recipes
+    .tartine.settings.flours;
+  assert.deepEqual(tartine, { white: 90, wheat: 10 }, "Tartine doesn't take red spring parts");
 });
 
 test('checking a step records the minute, and unchecking forgets it', () => {
@@ -405,7 +400,8 @@ test('planning around the finish, and back, keeps every step where it was', () =
 
 test('the shared settings and recipe choice change as asked, and only to a recipe on the menu', () => {
   const s = plan();
-  assert.equal(act.selectRecipe(s, 'red-rye').recipe, 'red-rye');
+  assert.equal(act.selectRecipe(s, 'tartine').recipe, 'tartine');
+  assert.equal(act.selectRecipe(s, 'red-rye'), s, 'a removed recipe is not on the menu');
   assert.equal(act.selectRecipe(s, 'manual-rye'), s);
   assert.deepEqual(
     [
@@ -432,5 +428,34 @@ test('every temperature the °C field accepts is kept on reload, from 10°C to 3
       [toF(c, 'C')],
       `${c}°C later`,
     );
+  }
+});
+
+test('a save with one of the four removed recipes selected opens on Preuss House and keeps House and Tartine as saved', () => {
+  const six = ['house', 'tartine', 'white-wheat', 'red-rye', 'five-flour', 'four-flour'];
+  const checked = { done: ['leaven'], doneAt: { leaven: NOW }, doughTemp: 78, bulkTemps: [] };
+  const recipes = Object.fromEntries(
+    six.map((id) => [id, { settings: { count: 3 }, bake: id === 'red-rye' || id === 'tartine' ? checked : {} }]),
+  );
+  for (const [name, saved] of [
+    ['version 6', { [STORAGE_V6]: JSON.stringify({ version: 6, plan: { recipe: 'red-rye', order: six, recipes } }) }],
+    [
+      'version 5',
+      {
+        [STORAGE_V5]: JSON.stringify({
+          version: 5,
+          plan: { recipe: 'five-flour', order: six, recipes: { tartine: { params: { count: 3 }, ...checked } } },
+        }),
+      },
+    ],
+  ] as const) {
+    const s = loadState(storage(saved), NOW);
+    assert.deepEqual(
+      [s.recipe, s.order, Object.keys(s.recipes)],
+      ['house', ['house', 'tartine'], ['house', 'tartine']],
+      name,
+    );
+    assert.equal(s.recipes.tartine.settings.count, 3, `${name}: Tartine keeps its settings`);
+    assert.deepEqual(s.recipes.tartine.bake.done, ['leaven'], `${name}: and its checklist`);
   }
 });

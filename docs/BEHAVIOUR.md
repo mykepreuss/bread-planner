@@ -2,22 +2,18 @@
 
 This is the contract for the rebuild: what the app did at commit `34699a7`, written from the code and checked against the recorded outputs, and kept since except where Michael decided otherwise. His decisions are at the end; sections that changed say so.
 
-Two records back it up. `npm test` checks the code against `tests/baseline/baseline.json` (214 plans, 45 recipe calculations, 24 kinds of saved data), including `App.tsx` rendered for each plan. `npm run test:browser` checks the built site against 22 recorded screens, each at phone and desktop width, and 16 recorded actions.
+Two records back it up. `npm test` checks the code against `tests/baseline/baseline.json` (120 plans, 26 recipe calculations, 24 kinds of saved data), including `App.tsx` rendered for each plan. `npm run test:browser` checks the built site against 14 recorded screens, each at phone and desktop width, and 29 recorded actions.
 
 ## Recipes
 
-The recipe menu lists six recipes, in this order. Each keeps its own settings and checklist.
+The recipe menu lists two recipes, in this order. Each keeps its own settings and checklist. Changed at Michael's request (decision 9): four more were listed until November 22, 2026.
 
 | Recipe | Method | Flour parts | Loaves | Total hydration shown |
 | --- | --- | --- | --- | --- |
 | Preuss House (the default) | House | Anita's all-purpose 80, whole wheat 10, rye 10 | 2 × 1,000 g | 80% |
 | Original Tartine | Tartine | white-bread 90, whole wheat 10 | 2 × 985 g | 77% |
-| White & Whole Wheat | House | white-bread 80, whole wheat 20 | 2 × 1,010 g | 82% |
-| Red Spring & Rye | House | red spring 80.3, whole wheat 8.8, rye 10.9 | 2 × 1,001 g | 80% |
-| Five-Flour Sourdough | House | all-purpose 35, red spring 35, Red Fife 10, whole wheat 10, rye 10 | 2 × 1,010 g | 82% |
-| Four-Flour Sourdough | House | all-purpose 33.3, red spring 40, Red Fife 0, whole wheat 16.7, rye 10 | 3 × 1,010 g | 82% |
 
-Rye is added at the final mix in every recipe that has it. Five-Flour and Four-Flour say "Uses the House leaven, salt and overnight method."
+Rye is added at the final mix. A saved plan whose selected recipe was removed opens on Preuss House, and the removed recipes' settings and checklists are dropped the next time the planner saves.
 
 ## Ingredients
 
@@ -92,13 +88,14 @@ No saved data on this site can reach these, because every version of the app her
 
 ## Decisions for Michael
 
-The rebuild kept each of these as the app had them until Michael chose. He decided the first six on November 21, 2026, and asked for the seventh and eighth on November 22; the rules above follow his choices.
+The rebuild kept each of these as the app had them until Michael chose. He decided the first six on November 21, 2026, and asked for the seventh to ninth on November 22; the rules above follow his choices.
 
 1. **Next bake after a finished one.** On a plan with every step checked, "Plan the next bake" moved the date to tomorrow but kept the checklist, so the plan still showed as ended. **Decided: it now starts a fresh checklist**, so the next bake begins with nothing checked. The browser record's flow changed with it.
-2. **Cold proof name.** Red Spring & Rye called its cold proof "Refrigerated final proof" and left "overnight" out of its note; the other House-method recipes say "Overnight cold proof". **Decided: it uses the House wording**, including "Cold proof (daytime)" for a proof within one day.
+2. **Cold proof name.** Red Spring & Rye called its cold proof "Refrigerated final proof" and left "overnight" out of its note; the other House-method recipes say "Overnight cold proof". **Decided: it uses the House wording**, including "Cold proof (daytime)" for a proof within one day. Superseded on November 22, 2026: Red Spring & Rye was removed (decision 9).
 3. **Checklists per recipe.** Each recipe keeps its own checklist and temperatures, while the date and time are shared. **Decided: kept as it is.**
 4. **A corrupt saved date** fell back to the date the save was first created. **Decided: it falls back to tomorrow, and a time to 9:00 AM, as for a new plan.** The save no longer keeps a creation date.
 5. **38°C was accepted, then lost.** The °C field accepted 10–38°C, but saved temperatures must be 50–100°F, and 38°C is 100.4°F, so a 38°C reading disappeared on reload. **Decided: the °C field accepts 10–37.7°C**, and 38°C shows the allowed range.
 6. **Moving forward after a rollback.** If the site is rolled back to a release before step 3b and then moved forward again, edits made in between are in version 5 only, and the planner opens its version 6 save without them. The alternative was to keep a fingerprint of the version 5 save in version 6, and upgrade version 5 again whenever it changed. **Decided November 21, 2026: kept as it is.** Michael is the planner's only user, so it matters only if he rolls the site back and edits a plan before moving forward again.
 7. **An unchecked early step held Up next back.** Only the start of bulk and the turns counted as skipped, so with Feed starter unchecked and every step through Turn 3 checked, Up next still showed Feed starter. **Decided November 22, 2026: any step left unchecked before a later checked step is skipped**, so Up next shows Turn 4. A forgotten early step also no longer keeps a finished plan from ending. A step the plan starts at the same time as the checked one stays open: Preheat checked first leaves "Take both loaves out of the fridge" as Up next. 32 of the record's 214 plans changed with it.
 8. **One mis-tap passed over the whole bake.** Checking the last step on a fresh plan marked the 22 steps before it Skipped, hid Up next and showed "All batches done". **Decided November 22, 2026: a check that would skip more than three earlier steps asks first**, not counting the start of bulk and the turns once bulk is due. The record didn't change; the browser record gained a flow for it.
+9. **Six recipes.** The menu listed Preuss House, Original Tartine, White & Whole Wheat, Red Spring & Rye, Five-Flour Sourdough and Four-Flour Sourdough. **Decided November 22, 2026: only Preuss House and Original Tartine remain.** The red spring, all-purpose and Red Fife flours went with them, and so did "Uses the House leaven, salt and overnight method.", which only Five-Flour and Four-Flour showed. The record dropped those recipes' 94 plans and 19 calculations; every other case is unchanged.

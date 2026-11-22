@@ -842,4 +842,45 @@ Second check (the verifier, on `022d29d`): FAIL on two small items.
 - What Michael should know, from its notes:
   - Once bulk is due, a tap past preshape still skips quietly: "Basket rest" at the start of bulk skips 10 steps, all turns and shaping, without asking.
   - Whether a tap asks depends on the clock while the start of bulk is unchecked.
-  - A two-batch bake with only its bake steps checked asks "Skip 5" at Batch 2.
+  - A two-batch bake with the 30-minute reheat and only its bake steps checked asks "Skip 5" at Batch 2.
+
+## Only Preuss House and Original Tartine, November 22, 2026: committed, pull request open
+
+Michael's request: remove the four-flour, five-flour, Red Spring & Rye and White & Whole Wheat recipes, so only Preuss House and Tartine are available. Branch `remove-four-recipes`, from `confirm-big-skip`.
+
+Change:
+- `src/domain/recipes.ts` keeps Preuss House and Original Tartine. Things only the removed recipes used went with them:
+  - the red spring, all-purpose and Red Fife flours;
+  - the `houseCompletion` flag, with its line "Uses the House leaven, salt and overnight method." on the Ingredients tab and its style;
+  - the per-kilo helper.
+- Saved data needs no new code. The loader already reads only recipes it knows and falls back to the first recipe on the menu:
+  - A save whose selected recipe was removed opens on Preuss House.
+  - House and Tartine keep their settings and checklists.
+  - The removed recipes' data is dropped at the next save. A version 5 save is never written, so its copy stays as it was.
+- docs/BEHAVIOUR.md records it as decision 9 and marks decision 2, Red Spring & Rye's cold-proof wording, superseded. Its record counts, and the README's, are updated. The README and BEHAVIOUR.md had said 16 browser actions since step 0; there are now 29.
+
+Tests:
+- New, each failing before the change:
+  - The menu is exactly Preuss House then Original Tartine, and the four ids find nothing.
+  - A version 6 save with Red Spring & Rye selected, and a version 5 save with Five-Flour selected, open on Preuss House with House and Tartine only. Tartine keeps its settings and checklist.
+  - A browser flow opens the recipe menu and finds exactly the two options.
+- Tests that covered only a removed recipe are gone:
+  - Red Spring & Rye as the spreadsheet's main calculator;
+  - White & Whole Wheat and the two blends' weights and stages;
+  - Red Spring & Rye's own red spring parts on load.
+- Tests that used a removed recipe as an example now use Preuss House or Tartine:
+  - The schedule tests moved from Red Spring & Rye to Preuss House with every expected time unchanged; the two schedule the same.
+  - The floating-point case Red Spring & Rye covered, 311.99999999999994 g made against 312 g used, is kept by Preuss House set to its numbers. A direct check confirmed the noise reproduces.
+  - "Every setting changes the weights" and "no flour, no weights" now use House and Tartine. The note test now changes House's flours.
+- The load fuzz test still names the removed recipes, because old saves can hold them.
+
+Record changes:
+- `baseline.json`: the 80 random bakes were drawn from all six recipes with a seeded generator. Drawing from two would change every later bake, so the remaining ones are now kept exactly as recorded, like the saved-data cases. The generator is in git history.
+- A script compared the old and new records:
+  - 94 plans and 19 recipe calculations left, exactly those for the removed recipes.
+  - The other 120 plans, 26 calculations and 53 helper results are identical, in the same order.
+  - All 24 saved-data cases changed: each lists the recipes, and the four are gone. Two cases also changed recipe:
+    - "an edited plan" had Five-Flour selected and now opens on Preuss House, with its schedule.
+    - "an odd recipe order", whose menu held only Four-Flour, now opens on Preuss House with House alone on the menu. That is the loader's existing rule for such a save.
+  - A second `npm run baseline:update` left the record unchanged.
+- The browser record: the eight screens of the removed recipes, with their 32 snapshot files, are deleted.

@@ -107,7 +107,7 @@ async function openIngredients(page: Page) {
   }
 }
 
-const RECIPES = ['house', 'tartine', 'white-wheat', 'red-rye', 'five-flour', 'four-flour'];
+const RECIPES = ['house', 'tartine'];
 /** Screens recorded as a whole page too, at these widths. Kept to a few: whole pages are large. */
 const wholePage: Record<string, string[]> = {
   'mid-bulk': ['phone', 'desktop'],
@@ -452,6 +452,12 @@ test.describe('flows', () => {
     await expect(page.getByLabel('Reheat between batches')).toBeVisible();
     expect(await aria(page)).toMatchSnapshot('flow-loaves-and-oven.aria.yml');
     await expectSameAfterReload(page);
+  });
+
+  test('The recipe menu offers only Preuss House and Original Tartine', async ({ page }) => {
+    await open(page, 'fresh');
+    await page.getByRole('combobox', { name: 'Recipe' }).click();
+    await expect(page.getByRole('option')).toHaveText(['Preuss House', 'Original Tartine']);
   });
 
   test('Each recipe keeps its own checklist', async ({ page }) => {
