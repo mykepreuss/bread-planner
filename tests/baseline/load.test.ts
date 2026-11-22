@@ -19,8 +19,20 @@ import type { SavedPlan } from '../browser/saved-plans.ts';
  */
 useBaselineTimeZone();
 const now = local(LOADED_AT);
-const DATE = /^\d{4}-\d{2}-\d{2}$/,
-  TIME = /^\d{2}:\d{2}$/;
+const DATE = /^(\d{4})-(\d{2})-(\d{2})$/,
+  TIME = /^(\d{2}):(\d{2})$/;
+/** A real calendar date, checked through the Date object rather than the loader's own month table. */
+function realDate(s: string) {
+  const m = DATE.exec(s);
+  if (!m) return false;
+  const d = new Date(Date.UTC(2000, 0, 1));
+  d.setUTCFullYear(+m[1], +m[2] - 1, +m[3]);
+  return d.getUTCFullYear() === +m[1] && d.getUTCMonth() === +m[2] - 1 && d.getUTCDate() === +m[3];
+}
+const realTime = (s: string) => {
+  const m = TIME.exec(s);
+  return !!m && +m[1] <= 23 && +m[2] <= 59;
+};
 const finite = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n);
 
 /** Every way a loaded planner could be unusable, as messages; none for a valid one. */
@@ -33,8 +45,8 @@ function problems(s: PlannerState): string[] {
   check(s.order.length > 0 && s.order.every((id) => ids.includes(id)), `order ${JSON.stringify(s.order)}`);
   check(new Set(s.order).size === s.order.length, 'order repeats a recipe');
   check(s.order.includes(s.recipe), `recipe ${s.recipe} not on the menu`);
-  check(DATE.test(s.date) && TIME.test(s.time), `when ${s.date} ${s.time}`);
-  check(DATE.test(s.created.date) && TIME.test(s.created.time), `created ${JSON.stringify(s.created)}`);
+  check(realDate(s.date) && realTime(s.time), `when ${s.date} ${s.time}`);
+  check(realDate(s.created.date) && realTime(s.created.time), `created ${JSON.stringify(s.created)}`);
   check(s.anchor === 'leaven' || s.anchor === 'done', `anchor ${s.anchor}`);
   check(s.proof === 'cold' || s.proof === 'warm', `proof ${s.proof}`);
   check(s.ovenCapacity === 1 || s.ovenCapacity === 2, `ovenCapacity ${s.ovenCapacity}`);
@@ -70,7 +82,9 @@ function problems(s: PlannerState): string[] {
   }
   if (out.length) return out;
   const selected = recipeById(s.recipe)!;
-  // Every loaded plan has steps, all at real times, unless its recipe has no flour at all, which the screen shows as such.
+  // Every plan loaded here has steps, all at real times, unless its recipe has no flour, which the screen shows as
+  // such. Two plans could still have none, though no save here holds one: a time skipped by daylight saving, which the
+  // screen itself allows, and a year before 1000 (see the proposal in HANDOFF.md, step 4).
   const steps = schedule(planOf(s)),
     flourless = Object.values(s.recipes[s.recipe].settings.flours).every((v) => v === 0);
   check(steps.length > 0 || flourless, 'a plan with flour but no steps');

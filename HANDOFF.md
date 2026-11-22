@@ -9,7 +9,7 @@ Production branch: main
 Project: prj_oaBadxUrg76MQyvwFsY68FvfuM8r (bread-planner)
 Team: team_U2Fu7jNsQEgGylxpq9YR7M2f (mpmba)
 
-Each dated section below ends with its delivery state, newest last. The last one marked "verified live" is what production runs. When this header was last edited, that was rebuild step 3c: `main` at `e39c146972f6620d2fdf28b911d935e3529c4d0e`, production deployment `dpl_5JFY9yWnrExGSB7voohA6NAnXPXn` (READY). Michael is the planner's only user.
+Each dated release section below ends with its delivery state, newest last. The last one marked "verified live" is what production runs. When this header was last edited, that was rebuild step 3c: `main` at `e39c146972f6620d2fdf28b911d935e3529c4d0e`, production deployment `dpl_5JFY9yWnrExGSB7voohA6NAnXPXn` (READY). Michael is the planner's only user.
 
 ## Scope and decisions
 
@@ -530,17 +530,17 @@ Release: merged as pull request #25 at `e39c146`, after that PASS. Production de
 
 Michael agreed to every item proposed after step 3c and asked for step 4. Branch `rebuild-cleanup`, from `main` at `e39c146`.
 - Removed the unused shadcn `dialog` and `separator` components and the unused `.dark` colour block. The `dark` variant line stays, with a note: without it, Tailwind would apply the components' `dark:` styles whenever the phone is in dark mode.
-  - The built JavaScript is byte-identical. In the CSS, the `.dark` block and the utility classes only the deleted components used are gone, and the 51 effective `:root` colours are unchanged.
-- Loading now checks that a saved date is a real calendar date and a time is from 00:00 to 23:59. An impossible one falls back to the plan's creation date or time, as a malformed one already did, so a damaged save can no longer open a plan with no steps (docs/BEHAVIOUR.md, saved data).
-  - New state test: leap years, the edges of the day, and the creation date checked the same way.
-  - `load.test.ts` is tighter: every loaded plan must now have steps unless its recipe has no flour.
+  - Removing them left the built JavaScript byte-identical; the app's bundle changes only through the new date and time checks below. In the CSS, the `.dark` block and the 7 utility classes only the deleted components used are gone, and the 51 effective `:root` properties are unchanged.
+- Loading now checks that a saved date is a real calendar date and a time is from 00:00 to 23:59. An impossible one falls back to the plan's creation date or time, as a malformed one already did, so an impossible date or time in a damaged save no longer opens a plan with no steps (docs/BEHAVIOUR.md, saved data). Two cases still give no steps, as before this step: a time skipped by daylight saving, which the screen itself allows, and a year before 1000 (a proposal below).
+  - New state test: the last day of every month and the day after, in a common and a leap year, century leap years, the edges of the day, values with anything before or after them, and the creation date checked the same way.
+  - `load.test.ts` is tighter: every plan it loads must have steps unless its recipe has no flour, and it checks loaded dates and times as real ones through the Date object, independently of the loader's month table.
   - Two recorded plans, "an impossible date" (2026-02-31) and "an impossible time" (25:00), can no longer reach the screen through saved data, so `app.test.ts` lists them as unreachable. `baseline.json` is unchanged. (Before writing the code I had checked only the saved-data cases and expected no test to change; the recorded plans showed otherwise.)
 - The per-setting state test from step 3c now also loads every setting that may be 0 as 0, from both save versions. The verifier's two zero-value breaks now fail it.
 - The flaky Ingredients phone screenshots: `openIngredients` waits for each section to finish opening before the next click, so the final scroll position no longer depends on the machine's speed.
-  - Under heavy load (16 workers on 8 cores, each Ingredients screen 12 times), it went from 58 of 84 failing to 84 of 84 passing. It also passed 70 of 70 at normal load.
-  - The seven phone first-screen images of the Ingredients screens were re-recorded. A full-page screenshot of each screen contains both the old and the new image, apart from at most 7 pixels on one anti-aliased line, about 368 px apart. Only the scroll position changed. Every other record file, desktop and whole-page images included, is unchanged.
+  - Under heavy load (16 workers on 8 cores, each Ingredients screen 12 times), it went from 58 of 84 failing (54 in the verifier's run) to 84 of 84 passing. It also passed 70 of 70 at normal load.
+  - The seven phone first-screen images of the Ingredients screens were re-recorded. A full-page screenshot of each screen contains both the old and the new image, about 368 px apart. Where they overlap they differ by at most 14 pixels, each by one colour level, along the card's two edges. Only the scroll position changed. Every other record file, desktop and whole-page images included, is unchanged.
 - `npm run build` now runs `prettier --check .` first, so a badly formatted file fails the Vercel build. A deliberately misformatted file made the build exit 1.
-  - The first Vercel build of this branch failed on `vercel.json` alone. A diagnostic build on a throwaway branch printed the file: on Vercel's build machine it is rewritten as one minified line. `.prettierignore` now leaves `vercel.json` out, with that reason.
+  - The first Vercel build of this branch failed on `vercel.json` alone. A diagnostic build on a throwaway branch printed the file: on Vercel's build machine it is rewritten as one minified line of 382 bytes, which is what `JSON.stringify` gives for the committed file. The build now checks `prettier --check . '!vercel.json'`, so only the build leaves that file out; `npm run format:check` still covers it.
 - Decision 6 is closed as kept: Michael is the planner's only user.
 - This file's header now points to the newest section marked verified live instead of naming an old release.
 - Step 3c's release, and its verifier's second check, are recorded in its section above. Two of its proposals are marked done here.
@@ -557,3 +557,18 @@ Evidence (this session, on `rebuild-cleanup`):
 | Any day up to 31 accepted | 2 |
 | Every fourth year counted as a leap year | 1 |
 | Times checked for shape only | 3 |
+
+Independent check (the verifier, on `bfa8586` and `c87066a`): FAIL on criteria 5 and 8; criteria 1 to 4, 6 (at `c87066a`) and 7 were met.
+- It confirmed the code: 10,626 dates from year 0000 to 9999 and all 10,000 `HH:MM` strings agree with an independent check, on both save versions. Nothing a person can enter is newly refused, both daylight-saving days included. The record changes are only the intended ones, the flake fix held through three heavy-load runs, and the wait fails at the timeout instead of hanging.
+- Five of its 50 breaks survived every test: January given 30 days, June or September given 31, and either date or time pattern without its anchors.
+- Docs: "the built JavaScript is byte-identical" held only for the component removal; "a damaged save can no longer open a plan with no steps" was too broad; and some figures and wording were wrong.
+- It suggested leaving `vercel.json` out of the build's check only.
+
+Fixed on the same branch:
+- The state test above now covers every month's last day, in a common and a leap year, and values with anything before or after them. Each of the five breaks now fails it.
+- `load.test.ts` checks loaded dates and times as real ones, and its comment names the two cases that still give no steps.
+- The build alone leaves `vercel.json` out; the README says so.
+- The corrections above.
+- After the fixes: `npm test` passed 120 of 120 in both zones, and the build had 0 errors, 0 warnings and 0 hints.
+
+Proposal, not done: a year before 1000 gives a plan with no steps, because `dateString` in `src/domain/text.ts` doesn't pad the year, so the schedule's own date check fails. It was already so before the rebuild. The date field allows such a year, as in 0202. Padding the year to four digits would fix it.

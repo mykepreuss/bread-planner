@@ -223,6 +223,27 @@ test('a saved date must be a real calendar date and a time must be from 00:00 to
     assert.equal(load(date, '09:00'), '2026-10-20 09:00', `${date} falls back`);
   for (const time of ['24:00', '25:00', '23:60', '99:99'])
     assert.equal(load('2026-11-22', time), '2026-11-22 07:30', `${time} falls back`);
+  // The last day of every month is kept and the day after falls back, in a common year and a leap year.
+  const days = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  for (const [year, leap] of [
+    [2026, false],
+    [2028, true],
+  ] as const)
+    days.forEach((n, i) => {
+      const month = String(i + 1).padStart(2, '0'),
+        last = n + (leap && i === 1 ? 1 : 0);
+      assert.equal(
+        load(`${year}-${month}-${last}`, '09:00'),
+        `${year}-${month}-${last} 09:00`,
+        `${year}-${month}-${last}`,
+      );
+      assert.equal(load(`${year}-${month}-${last + 1}`, '09:00'), '2026-10-20 09:00', `${year}-${month}-${last + 1}`);
+    });
+  // Only the whole value counts: nothing may come before or after it.
+  for (const date of ['x2026-11-22', '2026-11-22x', ' 2026-11-22'])
+    assert.equal(load(date, '09:00'), '2026-10-20 09:00', `${JSON.stringify(date)} falls back`);
+  for (const time of ['09:00:00', 'x09:00', '09:00 '])
+    assert.equal(load('2026-11-22', time), '2026-11-22 07:30', `${JSON.stringify(time)} falls back`);
   // The creation date and time are checked the same way, and then fall back to tomorrow at 9:00 AM.
   const created = fromV6({ version: 6, plan: { created: { date: '2026-02-30', time: '24:00' } } }, NOW)!.created;
   assert.deepEqual(created, { date: tomorrow(NOW), time: '09:00' });
