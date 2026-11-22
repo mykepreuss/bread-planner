@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Info } from 'lucide-react';
 import {
   AlertDialog,
@@ -34,14 +34,20 @@ export function ScheduleTab({ onViewIngredients }: { onViewIngredients: () => vo
   const v = useMemo(() => scheduleView(state, now, (at) => whenText(at, now)), [state, now]);
   const book = v.recipe.method === 'tartine',
     checks = v.bake.done;
-  const [asking, setAsking] = useState<{ id: string; title: string; skips: number } | null>(null);
+  // A check that asks first is recorded at the tap, so what it skips is what the question counted.
+  const [asking, setAsking] = useState<{ id: string; title: string; skips: number; at: number } | null>(null);
+  const asked = useRef<string | null>(null);
   const check = (id: string, checked: boolean) => {
+    const at = Date.now();
     if (checked) {
-      const { skips, ask } = skipsOnCheck(state, id, Date.now());
+      const { skips, ask } = skipsOnCheck(state, id, at);
       const title = v.steps.find((s) => s.id === id)?.title ?? '';
-      if (ask) return setAsking({ id, title, skips: skips.length });
+      if (ask) {
+        asked.current = id;
+        return setAsking({ id, title, skips: skips.length, at });
+      }
     }
-    update((s) => act.setChecked(s, id, checked, Date.now()));
+    update((s) => act.setChecked(s, id, checked, at));
   };
   const onUnit = (u: TempUnit) => update((s) => act.setTempUnit(s, u));
   const afterMixField = (id: string) => (
@@ -141,7 +147,16 @@ export function ScheduleTab({ onViewIngredients }: { onViewIngredients: () => vo
         />
       </div>
       <AlertDialog open={asking !== null} onOpenChange={(open) => !open && setAsking(null)}>
-        <AlertDialogContent>
+        <AlertDialogContent
+          onCloseAutoFocus={(e) => {
+            // Back to the step's check box, as after a check that doesn't ask.
+            const box = asked.current && document.getElementById(`step-${asked.current}`);
+            if (box) {
+              e.preventDefault();
+              box.focus();
+            }
+          }}
+        >
           <AlertDialogHeader>
             <AlertDialogTitle>Skip {asking?.skips} earlier steps?</AlertDialogTitle>
             <AlertDialogDescription>
@@ -150,7 +165,7 @@ export function ScheduleTab({ onViewIngredients }: { onViewIngredients: () => vo
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Don't check it</AlertDialogCancel>
-            <AlertDialogAction onClick={() => asking && update((s) => act.setChecked(s, asking.id, true, Date.now()))}>
+            <AlertDialogAction onClick={() => asking && update((s) => act.setChecked(s, asking.id, true, asking.at))}>
               Check and skip
             </AlertDialogAction>
           </AlertDialogFooter>

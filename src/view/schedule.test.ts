@@ -140,3 +140,25 @@ test('checking a step that would skip more than three earlier steps, besides bul
     fridge = act.setChecked(fridge, id, true, NOW);
   assert.deepEqual(skipsOnCheck(fridge, 'preheat', NOW), { skips: [], ask: false });
 });
+
+test('before the start of bulk is due, the start of bulk and the turns count towards asking', () => {
+  const fresh = freshState(NOW),
+    ids = (r: { skips: { id: string }[] }) => r.skips.map((s) => s.id);
+  // The evening before: a tap on preshape would skip twelve steps, seven of them turns, and asks.
+  const shape = skipsOnCheck(fresh, 'shape', NOW);
+  assert.deepEqual([shape.skips.length, shape.ask], [12, true]);
+  // The feed checked: Turn 1 would skip the leaven, the autolyse, the mix and the start of bulk.
+  const fed = act.setChecked(fresh, 'feed', true, NOW);
+  const early = skipsOnCheck(fed, 'turn1', NOW);
+  assert.deepEqual([ids(early), early.ask], [['leaven', 'autolyse', 'mix', 'rest'], true]);
+  // From its planned start, 2:15 PM on bake day, the start of bulk and the turns don't count.
+  const during = new Date(2026, 10, 22, 14, 30).getTime(),
+    later = skipsOnCheck(fed, 'turn1', during);
+  assert.deepEqual([ids(later), later.ask], [['leaven', 'autolyse', 'mix', 'rest'], false]);
+  assert.equal(skipsOnCheck(fed, 'shape', during).ask, false);
+  assert.equal(
+    skipsOnCheck(fed, 'shape', new Date(2026, 10, 22, 14, 14).getTime()).ask,
+    true,
+    'a minute before, it asks',
+  );
+});

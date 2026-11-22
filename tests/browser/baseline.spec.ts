@@ -300,16 +300,44 @@ test.describe('flows', () => {
     await expect(dialog).toContainText('Checking "15-minute cooling mark" marks 22 earlier steps as Skipped.');
     await dialog.getByRole('button', { name: "Don't check it" }).click();
     await expect(dialog).toHaveCount(0);
+    await expect(last, 'focus goes back to the check box').toBeFocused();
     await expect(page.getByText('0 of 23 steps checked')).toBeVisible();
     await expect(last).not.toBeChecked();
     await expect(upNext(page).getByRole('heading', { level: 2 })).toHaveText('Feed starter');
     await last.click();
     await dialog.getByRole('button', { name: 'Check and skip' }).click();
     await expect(dialog).toHaveCount(0);
+    await expect(last).toBeFocused();
     await expect(page.getByText('1 of 23 steps checked')).toBeVisible();
     await expect(page.getByText('Skipped', { exact: true })).toHaveCount(22);
     await expect(page.getByText('All batches done. Enjoy your bread.')).toBeVisible();
     await expectSameAfterReload(page);
+  });
+
+  test('A check that asks is recorded at the tap, so it skips what the question counted', async ({ page }) => {
+    // Cool dough at 60°F, preshape tapped at 5:45 PM on bake day and confirmed a minute later, when Turn 7 has come due.
+    await page.clock.setFixedTime(new Date('2026-11-22T17:45:00-08:00'));
+    await page.addInitScript(
+      (save) => {
+        if (sessionStorage.getItem('seeded')) return;
+        localStorage.clear();
+        localStorage.setItem('bread-planner.v6', save);
+        sessionStorage.setItem('seeded', '1');
+      },
+      JSON.stringify({
+        version: 6,
+        plan: { date: '2026-11-22', time: '09:00', recipes: { house: { bake: { doughTemp: 60 } } } },
+      }),
+    );
+    await page.goto('/');
+    await ready(page);
+    await page.getByRole('checkbox', { name: 'Complete Cut and preshape' }).click();
+    const dialog = page.getByRole('alertdialog');
+    await expect(dialog.getByRole('heading')).toHaveText('Skip 11 earlier steps?');
+    await page.clock.setFixedTime(new Date('2026-11-22T17:46:00-08:00'));
+    await dialog.getByRole('button', { name: 'Check and skip' }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(page.getByText('Skipped', { exact: true })).toHaveCount(11);
   });
 
   test('Clear checklist clears the checks and the dough temperatures', async ({ page }) => {
