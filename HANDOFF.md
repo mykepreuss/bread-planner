@@ -9,7 +9,7 @@ Production branch: main
 Project: prj_oaBadxUrg76MQyvwFsY68FvfuM8r (bread-planner)
 Team: team_U2Fu7jNsQEgGylxpq9YR7M2f (mpmba)
 
-Each dated release section below ends with its delivery state, newest last. The last one marked "verified live" is what production runs. When this header was last edited, that was a big skip asking first: `main` at `0b92450b7a1b9d7f4470227adeca93ccf58addcc`, production deployment `dpl_5tUND9ZQHFkgCn4v4mnExZRGZLQD` (READY). Michael is the planner's only user.
+Each dated release section below ends with its delivery state, newest last. The last one marked "verified live" is what production runs. When this header was last edited, that was keeping only Preuss House and Original Tartine: `main` at `b45583d06c2e88fd887c9d4724036f398eb0a9a3`, production deployment `dpl_5p3djbnay3ZJPsPop51mQvpMkV29` (READY). Michael is the planner's only user.
 
 ## Scope and decisions
 
@@ -853,7 +853,7 @@ Release: merged as pull request #31 at `0b92450`, with Michael's approval once t
   - "Check and skip" gave 1 of 23 checked, 22 Skipped and "All batches done", the same after a reload.
   - Michael's example, Start leaven through Turn 3 checked with Feed starter left, asked nothing and showed Up next Turn 4.
 
-## Only Preuss House and Original Tartine, November 22, 2026: committed, pull request open
+## Only Preuss House and Original Tartine, November 22, 2026: merged and verified live
 
 Michael's request: remove the four-flour, five-flour, Red Spring & Rye and White & Whole Wheat recipes, so only Preuss House and Tartine are available. Branch `remove-four-recipes`, from `confirm-big-skip`.
 
@@ -915,11 +915,18 @@ Independent check (the verifier, on `2267301`): FAIL on criterion 6 only, three 
 - It noted for Michael:
   - Rolling back to `0b92450` after the new build has saved won't bring the four recipes back, except at their defaults after clearing storage.
   - A hand-made saved order can leave a recipe off the menu.
-- Not part of this pull request: the Tartine recipes change, branch `tartine-recipes` at `66d29e8` and not yet merged, makes `src/state/load.ts` add every recipe a saved order doesn't name, which also closes that gap.
+- Not part of this pull request: the Tartine recipes change, branch `tartine-recipes` at `66d29e8` before it was rebased onto `main`, makes `src/state/load.ts` add every recipe a saved order doesn't name, which also closes that gap.
+
+Second and third checks (the verifier, on `c440653` and `a17f6a8`): the three doc sentences were corrected, then one new sentence that claimed an uncommitted loader fix was reworded; PASS at `a17f6a8`.
+
+Release: merged as pull request #32 at `b45583d`, with Michael's approval once the verifier passed. Production deployment `dpl_5p3djbnay3ZJPsPop51mQvpMkV29` is READY for that commit and holds the `bread.assemblydigital.com` alias. On November 22 after the merge, with no console errors:
+- `verify-deployment.mjs` passed 9 checks and 7 assets; the live smoke, upgrade, impossible-date and big-skip checks passed as for the last release.
+- A fresh planner shows only Preuss House and Original Tartine on the menu.
+- A version 6 save from before the removal, with Red Spring & Rye selected and Tartine at 4 loaves with its leaven checked, opened on Preuss House with the same two-recipe menu. Tartine showed 4 loaves and "1 of 25 steps checked". The next save held only `house` and `tartine`, and no version 5 save was written.
 
 ## Four recipes from Tartine Bread, November 22, 2026: committed, pull request open
 
-Michael's requests: add the book's Olive (page 88) and Sesame (page 90) variations, using two agents, then its Whole-Wheat Bread (page 114) and Country Rye (page 118). Branch `tartine-recipes`, from `remove-four-recipes`.
+Michael's requests: add the book's Olive (page 88) and Sesame (page 90) variations, using two agents, then its Whole-Wheat Bread (page 114) and Country Rye (page 118). Branch `tartine-recipes`, rebased onto `main` at `b45583d` once pull request #32 merged.
 
 How it was built:
 - I wrote the shared support first, on `tartine-add-ins`: `src/domain/addins.ts`, an `addIns` field on a recipe, the add-in step in the Tartine schedule, and the "03 / Add-ins" panel. Then three agents worked in parallel, each in its own worktree on that base: Olive (`tartine-olive`), Sesame (`tartine-sesame`, which also added the toast step) and Whole Wheat (`tartine-whole-wheat`, which added the `initialMix` override and the all-purpose flour back). They were told to write in their own words, write tests first, leave the record inputs, browser tests and docs to me, and not use the browser test port.
@@ -937,5 +944,6 @@ Record changes:
   - each of the 24 saved-data cases gains the four recipes at their defaults, and its menu gains them too; no selected recipe changes.
   A second `npm run baseline:update` left the record unchanged.
 - `tests/browser/saved-plans.json` gains four saves, copies of Original Tartine's with each recipe selected, added in the file's one-line format.
+- `tests/baseline/load.test.ts` counts the saved plans it loads; the count goes from 21 to 25.
 
 Not verified: how the add-ins and toast step read on Michael's iPhone, and whether the book's whole-wheat and rye pages intend 50 g of water to wait for the salt.
