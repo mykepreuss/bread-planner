@@ -32,11 +32,15 @@ export function liveSchedule(steps: Step[], done: string[], doneAt: Record<strin
   return { steps: live, shift: Math.round(shift / MINUTE) };
 }
 
-/** Bulk steps (its start and the turns) left unchecked once a later step is checked were skipped: the dough was ready sooner. */
+/**
+ * Steps left unchecked once a later step is checked were skipped, so Up next moves on to the first step after the
+ * latest checked one. A skipped step can still be checked. Before November 22, 2026 only the start of bulk and the
+ * turns could be skipped, so an unchecked starter feed held Up next back however far the bake had gone.
+ */
 export function skippedSteps(steps: Step[], done: string[]) {
   const checked = new Set(done),
     last = steps.reduce((index, step, i) => (checked.has(step.id) ? i : index), -1);
-  return steps.filter((step, i) => i < last && !checked.has(step.id) && step.bulk).map((step) => step.id);
+  return steps.filter((step, i) => i < last && !checked.has(step.id)).map((step) => step.id);
 }
 
 /**

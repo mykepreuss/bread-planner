@@ -33,7 +33,7 @@ export type Phase = 'room' | 'cold' | 'oven';
  *   lasts, for mixing and shaping that can run past the cutoff.
  * - `movesPlan`: checking it late or early moves the steps after it. The starter feed, the autolyse and the turns
  *   record their time but move nothing.
- * - `bulk`: the start of bulk or a turn, which counts as skipped when a later step is checked first.
+ * - `bulk`: the start of bulk or a turn. Bulk never ends before the latest of them that is checked.
  * - `turn`: the turn's number, from 1, or 0.
  */
 export type Step = {

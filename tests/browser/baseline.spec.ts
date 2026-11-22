@@ -254,6 +254,29 @@ test.describe('flows', () => {
     }
   });
 
+  test('Up next moves past an unchecked Feed starter to Turn 4 once Turn 3 is checked', async ({ page }) => {
+    await open(page, 'fresh');
+    for (const title of [
+      'Start leaven',
+      'Start autolyse',
+      'Mix final dough',
+      'Start bulk fermentation',
+      'Turn 1',
+      'Turn 2',
+      'Turn 3',
+    ])
+      await page.getByRole('checkbox', { name: `Complete ${title}` }).click();
+    await expect(page.getByText('7 of 23 steps checked')).toBeVisible();
+    await expect(upNext(page).getByRole('heading', { level: 2 })).toHaveText('Turn 4');
+    const feed = page.locator('.timeline-step', { has: page.getByRole('checkbox', { name: 'Complete Feed starter' }) });
+    await expect(feed.getByText('Skipped', { exact: true })).toBeVisible();
+    await expectSameAfterReload(page);
+    // Checked late, the feed is no longer skipped, and Up next stays on Turn 4.
+    await page.getByRole('checkbox', { name: 'Complete Feed starter' }).click();
+    await expect(feed.getByText('Skipped', { exact: true })).toHaveCount(0);
+    await expect(upNext(page).getByRole('heading', { level: 2 })).toHaveText('Turn 4');
+  });
+
   test('Clear checklist clears the checks and the dough temperatures', async ({ page }) => {
     await open(page, 'mid-bulk');
     await page.getByRole('button', { name: 'Clear checklist' }).click();

@@ -25,3 +25,26 @@ test('the checked count leaves out checks for steps no longer on the schedule, b
   const after = scheduleView(s, NOW, String);
   assert.deepEqual([after.completed, after.underway], [0, true]);
 });
+
+test('Up next passes over an unchecked starter feed once the bake is through turn 3, and the feed can still be checked', () => {
+  let s = freshState(NOW);
+  for (const id of ['leaven', 'autolyse', 'mix', 'rest', 'turn1', 'turn2', 'turn3'])
+    s = act.setChecked(s, id, true, NOW);
+  const v = scheduleView(s, NOW, String);
+  assert.deepEqual(v.skipped, ['feed']);
+  assert.deepEqual([v.next?.id, v.then?.id], ['turn4', 'turn5']);
+  assert.ok(!v.remaining.some((step) => step.id === 'feed'));
+  s = act.setChecked(s, 'feed', true, NOW);
+  const checked = scheduleView(s, NOW, String);
+  assert.deepEqual([checked.skipped, checked.next?.id, checked.completed], [[], 'turn4', 8]);
+});
+
+test('a plan whose last loaf is out has ended once every step but a forgotten starter feed is checked', () => {
+  let s = freshState(NOW);
+  const ids = schedule(planOf(s)).map((step) => step.id);
+  for (const id of ids.slice(1)) s = act.setChecked(s, id, true, NOW);
+  const later = NOW + 3 * 24 * 60 * 60000,
+    v = scheduleView(s, later, String);
+  assert.equal(ids[0], 'feed');
+  assert.deepEqual([v.skipped, v.next, v.allDone, v.stale], [['feed'], undefined, true, true]);
+});
