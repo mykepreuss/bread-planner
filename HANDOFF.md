@@ -139,27 +139,35 @@ PR #14 merged as `7bedc0d`. It supersedes the Astro 7.4.1 and explicit cookie 2.
 
 Evidence: locally on Node 26, `npm ci` was clean, `npm audit` found 0 vulnerabilities, 96 of 96 tests passed, and the build had 0 errors and 0 warnings with the same output file set. The dev server hydrated with no errors, and a loaf-count edit recalculated and was restored. The Vercel PR build on Node 24 passed. Production deploy completed, and the verifier passed with 9 checks and 7 assets, unchanged. The live app hydrated 23 steps with the Atkinson font and no console errors. `npm audit` on `main` after `npm ci` found 0 vulnerabilities.
 
-## Calendar export removed, November 21, 2026: locally verified, not released
+## Calendar export removed, November 21, 2026: released and verified live
+
+Release: PR #15 merged as `1a858fb`, with both Vercel checks passing before the merge. Vercel production completed, and `node scripts/verify-deployment.mjs https://bread.assemblydigital.com` passed 9 checks and 7 assets. The live bundle has no calendar export code, and the live page showed all 23 steps with no calendar button and no console errors.
 
 Michael's decision: remove the "Add steps to calendar" feature. This supersedes the calendar button described in the bake-day view section above. The button, its sidebar note, the `.ics` generator `scheduleCalendar`, its test and its styles are gone. Nothing else in the schedule or bake-day view changed.
 
-## Done at takes a date, November 21, 2026: locally verified, not released
+## Done at takes a date, November 21, 2026: released and verified live
+
+Release: PR #16 merged as `c3d02ab`. After PR #15 merged, `main` was merged into its branch and the import and HANDOFF conflicts were resolved by keeping both sides; 95 of 95 tests passed on the result, and both Vercel checks passed on `a7b6112` before the merge. Production completed, the verifier passed 9 checks and 7 assets, and the live bundle contains the date field and its styles.
 
 Michael's request: a checked step's "Done at" should let you change the day as well as the time. It now has a date field beside the time field, and the record is set to exactly the date and time shown. This supersedes the nearest-day rule from the bake-day view, where a time-only edit picked whichever of yesterday, today or tomorrow was closest. An incomplete or impossible entry, such as a cleared date, is ignored and the field keeps the recorded value. "Done at" is now plain text above the two fields, so it is no longer struck through with the step title.
 
 Evidence: 96 of 96 tests pass. The nearest-day test was replaced by one covering a date move, a past-midnight correction, a year end and five invalid entries. The build had 0 errors, 0 warnings and the 4 existing hints. In the dev server at 375px, moving the leaven from Nov 21 to Nov 20 moved the record and the autolyse back a day. Setting 23:50 kept Nov 20, and a cleared date was ignored. The label sits above the two fields at 375px and 861px, with a document width of 375 at phone size. The local plan was restored to the leaven done at 3:22 PM on Nov 21.
 
-Not verified: the native date picker on a real phone, and the live site.
+Not verified: the native date picker on a real phone, and the date field on the live site (no step was checked in the browser's saved plan there).
 
-## Loaf count on the Schedule tab, November 21, 2026: locally verified, not released
+## Loaf count on the Schedule tab, November 21, 2026: released and verified live
+
+Release: PR #17 merged as `5a001e3`, together with the Schedule review fixes below, with both Vercel checks passing before the merge. Verified live after all three merges, with production at `1bc99cb`: `node scripts/verify-deployment.mjs https://bread.assemblydigital.com` passed 9 checks and 7 assets, and the live page had no console errors. The live page showed "Your batch" with the loaf field.
 
 Michael's request: be able to make 3, 4, 6 or 8 loaves instead of the default 2. The loaf count already had no upper limit, but it was only editable on the Ingredients tab. The Schedule tab's only loaf control was "Loaves baked at once", which is capped at 2 on purpose (one pot per loaf). The batch card on the Schedule tab now has the same "Number of loaves" field, under its "N loaves at W g each" summary. Both tabs edit the same saved setting. Inactive tabs are unmounted, so the shared `field-count` id appears once on the page.
 
 Evidence: 95 of 95 tests pass, and the build had 0 errors, 0 warnings and the 4 existing hints. No logic changed, so no test was added. In the dev server, typing 3, 4, 6 and 8 into the Schedule field updated the summary, total dough, batch count and finish time: 3 and 4 loaves gave 2 batches finishing at 5:08 PM, 6 gave 3 batches at 6:21 PM, and 8 gave 4 batches at 7:34 PM with 41 steps. The Ingredients tab then showed 8 and 8,000 g, and 8 survived a reload. At 375px the field fits the card with a document width of 375. The local plan was restored to 2 loaves.
 
-Not verified: the live site.
+Not verified: changing the loaf count on the live site.
 
-## Schedule review fixes, November 21, 2026: locally verified, not released
+## Schedule review fixes, November 21, 2026: released and verified live
+
+Release: part of PR #17 (`5a001e3`). The live bundle has "Bake schedule", "Your batch" and the step-gap labels, and none of "Count one pot per loaf", "supplied recipe", "Your bake, step by step" or "The default is 12 hours". The live page showed "Day 1" to "Day 3" and the gap labels.
 
 Michael asked for all five findings from a design and content review of the Schedule tab. They sit on the same branch as the loaf-count field above.
 
@@ -172,11 +180,13 @@ Michael asked for all five findings from a design and content review of the Sche
 
 Evidence: 97 of 97 tests pass. New tests cover the step gaps (bulk start 30 min, parallel warm-up 0, preheat 60, last step 0) and the copy rules (no "supplied recipe" or "default is" in any recipe's step notes, and the later-batches sentence only with several batches). The build had 0 errors, 0 warnings and the 4 existing hints. In the dev server with a fresh plan at 1280px, the gap labels matched those values and the colours followed the phases. At 375px, checking the first step moved the first timeline step from 2,400px to 1,835px from the top and the batch card from 1,326px to 6,620px. At 768px the reorder held, unchecking restored it, the document width matched the viewport, and the console had no errors. The local plan was restored.
 
-Not verified: the live site, and a real phone.
+Not verified: a real phone.
 
-## Dough temperature moves bulk, November 21, 2026: locally verified, not released
+## Dough temperature moves bulk, November 21, 2026: released and verified live
 
-Built on branch `temperature-moves-bulk`, from `loaf-count-on-schedule` at `36299ea` (committed locally, not pushed). This supersedes the November 15 decision that the dough temperature is advice only. Michael chose this design in session, including these two choices:
+Release: PR #18 merged as `b4e5b88`. It was stacked on PR #17; once #17 merged, its base was changed to `main`, where its diff showed only this work, and both Vercel checks passed on `168e9f9` before the merge. Verified live after all three merges, with production at `1bc99cb`: `node scripts/verify-deployment.mjs https://bread.assemblydigital.com` passed 9 checks and 7 assets, and the live page had no console errors. The live bundle contains "Dough temperature now", "Ready: preshape now", "Check the dough before this turn" and "Bulk took". In the in-app browser, the live site's saved plan was an old November 8 test plan, with nothing checked, holding an 82°F reading, probably from the November 15 release check. The new code correctly moved that plan (6 turns, preshape 41 minutes early); "Plan the next bake", Clear checklist or a date change clears it. That saved data was left as it was.
+
+Built on branch `temperature-moves-bulk`, stacked on `loaf-count-on-schedule` (PR #17). This supersedes the November 15 decision that the dough temperature is advice only. Michael chose this design in session, including these two choices:
 
 - Cool dough keeps folding: when the estimate runs past the planned turns, a turn is added every 30 minutes until then.
 - Everything after preshape shifts by the same amount, bake included, as a late check-off does.
@@ -194,7 +204,7 @@ Evidence: 104 of 104 tests pass. New tests cover: no reading leaves the schedule
 
 In the dev server, with a bake set 2h 35m into bulk at 84°F and turns 1 to 4 checked: preshape moved to 4:42 PM, turns 6 and 7 dropped, and turn 5's card led with the dough check. A 72°F reading entered through the form at 4:16 PM moved preshape to 5:01 PM and brought turn 6 back. Removing that reading restored 4:42 PM. "Ready: preshape now" checked preshape at 4:16 PM, marked turns 5 to 7 skipped, and moved the rest of the plan. The 375px layout fit, with no console errors. The local plan was restored.
 
-Not verified: the live site, a real phone, and a real bake.
+Not verified: the temperature controls on a real phone, and a real bake.
 
 Review fixes, same day (Michael asked for the four blocking findings from a code review):
 
@@ -224,7 +234,9 @@ Cleanup pass, same day (`/simplify`: reuse, simplification, efficiency and altit
 
 Proposals, not done: build the two date formatters in `model.ts` once instead of on every call (about 1–2 ms per render, every 30-second tick); generate turns from a bulk length in `model.ts` if a duration editor ever returns; `planNext` never clears the checklist, so a fully checked plan cannot be moved forward (existing before this branch).
 
-## Preuss House uses Anita's all-purpose flour, November 21, 2026: locally verified, not released
+## Preuss House uses Anita's all-purpose flour, November 21, 2026: released and verified live
+
+Release: PR #19 merged as `1bc99cb`, last of the three. After PRs #17 and #18 merged, `main` was merged into its branch, and the conflicts in the `App.tsx` imports, the `Profile` type, the tests and HANDOFF were resolved by keeping both sides. 111 of 111 tests passed and the build was clean on the result, and both Vercel checks passed on `018d79e` before the merge. Verified live after all three merges, with production at `1bc99cb`: `node scripts/verify-deployment.mjs https://bread.assemblydigital.com` passed 9 checks and 7 assets, and the live page had no console errors. The live recipe description reads "Anita's all-purpose flour with whole wheat and rye.", and the live bundle contains "Anita's all-purpose flour".
 
 Michael's decision: Preuss House uses Anita's all-purpose flour instead of red spring flour. This covers the dough (800 g in the autolyse at the defaults) and the leaven build (71 g per 1,000 g added flour). Quantities, hydration and timing are unchanged. Anita's is a new flour of its own (`anita`), so the generic "All-purpose flour" in the Five-Flour and Four-Flour recipes is untouched, as is every other recipe that uses red spring.
 
@@ -234,4 +246,4 @@ Michael's decision: Preuss House uses Anita's all-purpose flour instead of red s
 
 Evidence: 96 of 96 tests pass. The House name, leaven and dedup tests were updated, and a new test covers the saved-blend carry-over. The build had 0 errors, 0 warnings and the 4 existing hints. In the dev server, the saved local plan loaded with 80/10/10 Anita's, whole-wheat and rye parts, its checked leaven intact, and Anita's in the leaven step, autolyse step, flour table, weighing lists and leaven build, with no "red spring" left on the House page. A fresh plan listed the same six recipes. The console had no errors.
 
-Not verified: the live site. Once a browser has loaded this version, an older version of the app would reset the House blend to its defaults (80/10/10) because it does not know `flour_anita`.
+Not verified: a saved plan carrying over on Michael's phone. Once a browser has loaded this version, an older version of the app would reset the House blend to its defaults (80/10/10) because it does not know `flour_anita`.
