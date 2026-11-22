@@ -103,9 +103,9 @@ test('checking a step that would skip more than three earlier steps, besides bul
   const fresh = freshState(NOW),
     ids = (r: { skips: { id: string }[] }) => r.skips.map((s) => s.id);
   // The mis-tap: the last step on a fresh plan would pass over the whole bake.
-  const last = skipsOnCheck(fresh, 'cooled', NOW);
+  const last = skipsOnCheck(fresh, 'done', NOW);
   assert.equal(last.ask, true);
-  assert.equal(last.skips.length, 22);
+  assert.equal(last.skips.length, 21);
   assert.equal(ids(last)[0], 'feed');
   // Michael's example: the feed is skipped, without asking, once the leaven is checked; Turn 3 then skips nothing new.
   assert.deepEqual(

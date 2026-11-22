@@ -84,7 +84,6 @@ const TARTINE_PLANS: { name: string; change: Partial<PlanInput>; rows: Row[] }[]
       ['covered', '2026-10-22 14:10', 20, 'Bake covered (both loaves)'],
       ['uncovered', '2026-10-22 14:30', 20, 'Remove lid'],
       ['done', '2026-10-22 14:50', 15, 'All loaves out of the oven'],
-      ['cooled', '2026-10-22 15:05', 0, '15-minute cooling mark'],
     ],
   },
   {
@@ -97,7 +96,6 @@ const TARTINE_PLANS: { name: string; change: Partial<PlanInput>; rows: Row[] }[]
       ['covered', '2026-10-22 04:40', 20, 'Bake covered (both loaves)'],
       ['uncovered', '2026-10-22 05:00', 20, 'Remove lid'],
       ['done', '2026-10-22 05:20', 15, 'All loaves out of the oven'],
-      ['cooled', '2026-10-22 05:35', 0, '15-minute cooling mark'],
     ],
   },
   {
@@ -113,11 +111,9 @@ const TARTINE_PLANS: { name: string; change: Partial<PlanInput>; rows: Row[] }[]
       ['uncovered', '2026-10-22 14:30', 20, 'Batch 1: remove lid'],
       ['out-1', '2026-10-22 14:50', 15, 'Batch 1 out of the oven'],
       ['reheat-2', '2026-10-22 14:50', 30, 'Reheat for batch 2'],
-      ['cooled-1', '2026-10-22 15:05', 0, 'Batch 1: 15-minute cooling mark'],
       ['covered-2', '2026-10-22 15:20', 20, 'Batch 2: bake covered (loaf 2)'],
       ['uncovered-2', '2026-10-22 15:40', 20, 'Batch 2: remove lid'],
       ['done', '2026-10-22 16:00', 15, 'All loaves out of the oven'],
-      ['cooled', '2026-10-22 16:15', 0, 'Last batch: 15-minute cooling mark'],
     ],
   },
   {
@@ -131,11 +127,9 @@ const TARTINE_PLANS: { name: string; change: Partial<PlanInput>; rows: Row[] }[]
       ['uncovered', '2026-10-22 05:00', 20, 'Batch 1: remove lid'],
       ['out-1', '2026-10-22 05:20', 15, 'Batch 1 out of the oven'],
       ['reheat-2', '2026-10-22 05:20', 30, 'Reheat for batch 2'],
-      ['cooled-1', '2026-10-22 05:35', 0, 'Batch 1: 15-minute cooling mark'],
       ['covered-2', '2026-10-22 05:50', 20, 'Batch 2: bake covered (loaf 2)'],
       ['uncovered-2', '2026-10-22 06:10', 20, 'Batch 2: remove lid'],
       ['done', '2026-10-22 06:30', 15, 'All loaves out of the oven'],
-      ['cooled', '2026-10-22 06:45', 0, 'Last batch: 15-minute cooling mark'],
     ],
   },
 ];
@@ -167,7 +161,6 @@ const TARTINE_NOTES: Record<string, string> = {
     'Dust the loaf tops. Carefully turn seam-side down into the hot pot, score with a lame or razor, and cover. Reduce oven to 450°F / 232°C.',
   uncovered: 'Remove lid carefully: hot steam can escape. Continue at 450°F / 232°C.',
   done: 'Transfer to a wire rack. The base should sound hollow when tapped. Cool each loaf at least 15 minutes before slicing.',
-  cooled: 'The loaves are ready to slice.',
 };
 const TARTINE_READINESS: Record<string, string> = {
   leaven:

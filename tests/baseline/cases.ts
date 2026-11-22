@@ -324,7 +324,7 @@ function bakeDays(): [string, PlanInput][] {
       'five loaves, two at a time, into the second batch',
       { ...upTo(house({ params: { count: 5 } }), 'reheat-2', { covered: 10 }), now: '2026-11-23 09:55' },
     ],
-    ['every step checked: the bake is complete', { ...upTo(house(), 'cooled'), now: '2026-11-23 12:00' }],
+    ['every step checked: the bake is complete', { ...upTo(house(), 'done'), now: '2026-11-23 12:00' }],
     ['a plan that ended with nothing checked', house({ date: '2026-11-13' })],
     ['a plan that ended part way: Up next is overdue', { ...upTo(house({ date: '2026-11-13' }), 'leaven') }],
     [

@@ -27,12 +27,7 @@ function plan(id: string, change: (s: Settings) => void = () => {}, input: Parti
 }
 
 const house = schedule(plan('house')),
-  tartine = schedule(plan('tartine')),
-  threeBatches = schedule(
-    plan('house', (s) => {
-      s.count = 6;
-    }),
-  );
+  tartine = schedule(plan('tartine'));
 
 /**
  * A step as the planner makes it, moved to a local clock time on 21 October 2026, so the test sees the new core's own
@@ -53,14 +48,12 @@ test('quiet hours catch required actions after 10:30 PM, across midnight and bef
   for (const time of ['07:00', '09:00', '22:00', '22:30']) assert.equal(quietHourActions([feed(time)]).length, 0, time);
 });
 
-test('quiet hours ignore passive overnight intervals and cooling, but flag their required handling', () => {
+test('quiet hours ignore passive overnight intervals, but flag their required handling', () => {
   assert.deepEqual(
     quietHourActions([
       at(tartine, 'leaven', 720, '21:00'),
       at(house, 'fridge', 750, '19:15'),
       at(house, 'rest', 30, '23:00'),
-      at(house, 'cooled', 0, '23:00'),
-      at(threeBatches, 'cooled-2', 0, '02:00'),
     ]),
     [],
   );
@@ -101,7 +94,6 @@ test('quiet hours include subsequent oven batches and exclude completed actions'
   assert.ok(ids.includes('covered-2'));
   assert.ok(ids.includes('uncovered-2'));
   assert.ok(ids.includes('done'));
-  assert.ok(!ids.some((id) => id.startsWith('cooled')));
   assert.deepEqual(quietHourActions(s, ids), []);
   assert.deepEqual(quietHourActions([]), []);
 });

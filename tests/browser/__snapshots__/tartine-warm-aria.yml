@@ -53,7 +53,7 @@
     - paragraph: Readiness comes before the clock. Wait until the dough is ready, then check the step. Later steps move to match.
     - region "Bake schedule":
       - heading "Bake schedule" [level=2]
-      - text: 20h 20m total 0 of 18 steps checked
+      - text: 20h 20m total 0 of 17 steps checked
       - button "Clear checklist" [disabled]
       - text: Day 1
       - heading "Sunday, Nov 22" [level=3]
@@ -154,11 +154,6 @@
       - time: 5:20 AM
       - text: Loaf out of the oven Quiet hours
       - paragraph: Transfer to a wire rack. The base should sound hollow when tapped. Cool each loaf at least 15 minutes before slicing.
-      - text: Next step in 15 min
-      - checkbox "Complete 15-minute cooling mark"
-      - time: 5:35 AM
-      - text: 15-minute cooling mark
-      - paragraph: The loaf is ready to slice.
   - heading "Mature starter and readiness guide" [level=3]:
     - button "Mature starter and readiness guide"
   - heading "Establishing a starter from scratch" [level=3]:
