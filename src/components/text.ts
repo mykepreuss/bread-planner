@@ -1,4 +1,4 @@
-import { dateString } from '@/domain/text';
+import { dateString } from '../domain/text.ts';
 
 /** A weight or percentage as the screen writes it: grouped, with at most one decimal. */
 export const g = (n: number) => n.toLocaleString(undefined, { maximumFractionDigits: 1 });

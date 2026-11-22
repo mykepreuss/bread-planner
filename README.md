@@ -15,14 +15,14 @@ npm run test:browser
 npm run format
 ```
 
-`docs/BEHAVIOUR.md` describes what the app does. Two records hold it to that. `npm test` includes `tests/baseline`, which compares the code's output for 214 plans, 45 recipe calculations and 24 kinds of saved data with `tests/baseline/baseline.json`. It also renders `App.tsx` itself for every plan and checks the Schedule tab shows the same, so it runs in every Vercel build. `npm run test:browser` builds the site and compares 22 screens, each at phone and desktop width, and 16 actions, with the records in `tests/browser`, using Playwright's Chromium. It runs on this Mac only, not in the Vercel build. After a deliberate change, rewrite the records with `npm run baseline:update` or `npm run test:browser -- --update-snapshots`, and review the diff.
+`docs/BEHAVIOUR.md` describes what the app does. `npm test` runs the rules' own tests, next to the code in `src/domain/`, `src/state/`, `src/view/` and `src/components/`, and two records hold the app to that description. `npm test` also includes `tests/baseline`, which compares the code's output for 214 plans, 45 recipe calculations and 24 kinds of saved data with `tests/baseline/baseline.json`. It also renders `App.tsx` itself for every plan and checks the Schedule tab shows the same, so it runs in every Vercel build. `npm run test:browser` builds the site and compares 22 screens, each at phone and desktop width, and 16 actions, with the records in `tests/browser`, using Playwright's Chromium. It runs on this Mac only, not in the Vercel build. After a deliberate change, rewrite the records with `npm run baseline:update` or `npm run test:browser -- --update-snapshots`, and review the diff.
 
 Astro statically builds the page shell, metadata and 404 page. The calculator is one React island because its recipe inputs, ingredient weights, schedule and checklists share live state. There is no server or database. `src/App.tsx` holds the page: loading and saving, the tabs, the recipe menu and the method guide. The rules are plain, tested TypeScript:
 - `src/domain/`: the recipes as data, the formula, the House and Tartine timings, the schedule with each step's facts, the bake-day rules and quiet hours.
 - `src/state/`: what the planner saves (version 6, under `bread-planner.v6`), how it upgrades a version 5 save without changing it, and every change the screen can make, as a function from one state to the next.
 - `src/view/schedule.ts`: what the Schedule tab shows at a moment.
 
-Each part of the screen has its own file in `src/components/`, which shows the view and turns each control into an action. The old core in `src/lib/` no longer runs in the app; `tests/baseline/agree.test.ts` checks the new one against it until step 3c of the rebuild deletes it.
+Each part of the screen has its own file in `src/components/`, which shows the view and turns each control into an action. `src/lib/` holds only shadcn's `cn` helper, where shadcn's configuration (`components.json`) expects it.
 
 The code is formatted with Prettier (`npm run format`; `npm run format:check` reports any file that is not). Generated records, the vendored shadcn source, Markdown and the `.astro` pages are left as written.
 

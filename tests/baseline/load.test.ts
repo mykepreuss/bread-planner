@@ -1,133 +1,107 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { createPlanner, restorePlanner, type Planner } from '../../src/lib/recipes.ts';
-import { recipeById } from '../../src/domain/recipes.ts';
+import { RECIPES, recipeById } from '../../src/domain/recipes.ts';
+import { formula } from '../../src/domain/formula.ts';
 import { schedule } from '../../src/domain/schedule.ts';
-import { fromV5 } from '../../src/state/load.ts';
+import { inTempRange } from '../../src/domain/bakeday.ts';
+import { fromV5, fromV6, serialize } from '../../src/state/load.ts';
 import { planOf, type PlannerState } from '../../src/state/schema.ts';
-import { decode, difference } from './format.ts';
-import { atMoment, local, stamp, useBaselineTimeZone, LOADED_AT } from './observe.ts';
+import { decode } from './format.ts';
+import { local, useBaselineTimeZone, LOADED_AT } from './observe.ts';
 import type { SavedPlan } from '../browser/saved-plans.ts';
 
 /**
- * The new loader (src/state) against the old one (src/lib restorePlanner) on version 5 saves: the recorded cases,
- * the saved plans the browser tests open, and thousands of random corruptions of real saves. Both must give every
- * recipe the same settings, checklist, times and readings, and the same shared settings. The new planner does not
- * carry the hidden `manual-rye` recipe (docs/BEHAVIOUR.md), so it is left out of the comparison.
+ * Loading never fails and always gives a usable planner, whatever a save holds. In step 3a these random corruptions of
+ * real saves proved the new loader loads every version 5 save exactly as the old one did. Step 3c deleted the old
+ * loader, so they now check what any loaded planner must be, from a damaged version 5 or version 6 save alike. The
+ * exact results for the recorded kinds of saved data are pinned by baseline.json (`restores`).
  */
 useBaselineTimeZone();
 const now = local(LOADED_AT);
-const RETIRED = 'manual-rye';
+const DATE = /^\d{4}-\d{2}-\d{2}$/,
+  TIME = /^\d{2}:\d{2}$/;
+const finite = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n);
 
-/** A loaded planner in the record's terms: version 5 parameter names, local times. */
-function fromOld(p: Planner) {
-  return {
-    recipe: p.recipe,
-    order: p.order.filter((id) => id !== RETIRED),
-    date: p.date,
-    time: p.time,
-    anchor: p.anchor,
-    proof: p.proof,
-    ovenCapacity: p.ovenCapacity,
-    reheat: p.reheat,
-    tempUnit: p.tempUnit,
-    created: { date: p.legacy.date, time: p.legacy.time },
-    recipes: Object.fromEntries(
-      Object.entries(p.recipes)
-        .filter(([id]) => id !== RETIRED)
-        .map(([id, r]) => [
-          id,
-          {
-            params: r.params,
-            done: r.done,
-            doneAt: Object.fromEntries(Object.entries(r.doneAt).map(([k, t]) => [k, stamp(t)])),
-            doughTemp: r.doughTemp,
-            bulkTemps: r.bulkTemps.map((b) => ({ at: stamp(b.at), f: b.f })),
-          },
-        ]),
-    ),
-  };
-}
-function fromNew(s: PlannerState) {
-  return {
-    recipe: s.recipe,
-    order: s.order,
-    date: s.date,
-    time: s.time,
-    anchor: s.anchor,
-    proof: s.proof,
-    ovenCapacity: s.ovenCapacity,
-    reheat: s.reheat,
-    tempUnit: s.tempUnit,
-    created: s.created,
-    recipes: Object.fromEntries(
-      Object.entries(s.recipes).map(([id, { settings: q, bake }]) => [
-        id,
-        {
-          params: {
-            count: q.count,
-            weight: q.weight,
-            hydration: q.hydration,
-            leaven: q.leaven,
-            salt: q.salt,
-            reserve: q.reserve,
-            ...Object.fromEntries(recipeById(id)!.flours.map((k) => [`flour_${k}`, q.flours[k]])),
-            buildSeed: q.build.starter,
-            buildBread: q.build.flour,
-            buildWheat: q.build.wheat,
-            buildWater: q.build.water,
-          },
-          done: bake.done,
-          doneAt: Object.fromEntries(Object.entries(bake.doneAt).map(([k, t]) => [k, stamp(t)])),
-          doughTemp: bake.doughTemp,
-          bulkTemps: bake.bulkTemps.map((b) => ({ at: stamp(b.at), f: b.f })),
-        },
-      ]),
-    ),
-  };
-}
-/** The old app caught a failed load and started fresh, so this does too. */
-const oldLoad = (saved: unknown) =>
-  atMoment(now, () => {
-    try {
-      return restorePlanner(saved);
-    } catch {
-      return createPlanner();
-    }
-  });
-const json = (x: unknown) => JSON.parse(JSON.stringify(x ?? null));
-const compare = (saved: unknown) =>
-  difference(json(fromOld(oldLoad(saved))), json(fromNew(fromV5(saved, now))), 'loaded');
-
-test('the recorded saved data loads as the record says, with the selected plan at the same times', () => {
-  const baseline = decode(readFileSync(new URL('./baseline.json', import.meta.url), 'utf8'));
-  const changed = baseline.restores.flatMap(({ name, input, output }) => {
-    const state = fromV5(input, now),
-      expected = json(output) as { recipes: Record<string, unknown> };
-    delete expected.recipes[RETIRED];
-    // The record has no creation date; the other two tests compare it with the old loader's.
-    const shown = {
-      ...fromNew(state),
-      created: undefined,
-      schedule: schedule(planOf(state)).map((s) => `${s.id} ${stamp(s.at)}`),
+/** Every way a loaded planner could be unusable, as messages; none for a valid one. */
+function problems(s: PlannerState): string[] {
+  const out: string[] = [],
+    check = (ok: boolean, what: string) => {
+      if (!ok) out.push(what);
     };
-    const d = difference(expected, json(shown), 'loaded');
+  const ids = RECIPES.map((r) => r.id);
+  check(s.order.length > 0 && s.order.every((id) => ids.includes(id)), `order ${JSON.stringify(s.order)}`);
+  check(new Set(s.order).size === s.order.length, 'order repeats a recipe');
+  check(s.order.includes(s.recipe), `recipe ${s.recipe} not on the menu`);
+  check(DATE.test(s.date) && TIME.test(s.time), `when ${s.date} ${s.time}`);
+  check(DATE.test(s.created.date) && TIME.test(s.created.time), `created ${JSON.stringify(s.created)}`);
+  check(s.anchor === 'leaven' || s.anchor === 'done', `anchor ${s.anchor}`);
+  check(s.proof === 'cold' || s.proof === 'warm', `proof ${s.proof}`);
+  check(s.ovenCapacity === 1 || s.ovenCapacity === 2, `ovenCapacity ${s.ovenCapacity}`);
+  check(finite(s.reheat) && s.reheat >= 0, `reheat ${s.reheat}`);
+  check(s.tempUnit === 'F' || s.tempUnit === 'C', `tempUnit ${s.tempUnit}`);
+  check(JSON.stringify(Object.keys(s.recipes).sort()) === JSON.stringify([...ids].sort()), 'recipes');
+  for (const recipe of RECIPES) {
+    const r = s.recipes[recipe.id];
+    if (!r) continue;
+    const q = r.settings,
+      at = recipe.id;
+    check(Number.isInteger(q.count) && q.count >= 1, `${at} count ${q.count}`);
+    check(finite(q.weight) && q.weight >= 1, `${at} weight ${q.weight}`);
+    for (const k of ['hydration', 'leaven', 'salt'] as const) check(finite(q[k]) && q[k] >= 0, `${at} ${k} ${q[k]}`);
+    check(finite(q.reserve) && q.reserve >= 0 && q.reserve <= 100, `${at} reserve ${q.reserve}`);
+    check(JSON.stringify(Object.keys(q.flours)) === JSON.stringify(recipe.flours), `${at} flours`);
+    for (const v of [...Object.values(q.flours), ...Object.values(q.build)])
+      check(finite(v) && v >= 0, `${at} flour or build ${v}`);
+    const b = r.bake;
+    check(
+      b.done.every((id) => typeof id === 'string'),
+      `${at} done`,
+    );
+    check(
+      Object.entries(b.doneAt).every(([id, t]) => b.done.includes(id) && finite(t)),
+      `${at} doneAt`,
+    );
+    check(b.doughTemp === null || (finite(b.doughTemp) && inTempRange(b.doughTemp, 'F')), `${at} doughTemp`);
+    check(
+      b.bulkTemps.every((x, i) => finite(x.at) && inTempRange(x.f, 'F') && (i === 0 || b.bulkTemps[i - 1].at < x.at)),
+      `${at} readings out of order or range`,
+    );
+  }
+  if (out.length) return out;
+  const selected = recipeById(s.recipe)!;
+  // A time such as 25:00 passes the HH:MM check and gives no steps at all, as it did before the rebuild (a proposal in
+  // HANDOFF.md). What must never happen is a step with an invalid time.
+  check(
+    schedule(planOf(s)).every((step) => Number.isFinite(+step.at)),
+    'a step with an invalid time',
+  );
+  // Must not throw; a recipe with no flour has no formula, which the Ingredients tab shows as such.
+  formula(selected, s.recipes[s.recipe].settings);
+  return out;
+}
+/** A loaded planner must be valid, and come back the same from its own version 6 save. */
+function verdict(s: PlannerState) {
+  const p = problems(s);
+  if (p.length) return p.join('; ');
+  const again = fromV6(JSON.parse(serialize(s)), now);
+  return JSON.stringify(again) === JSON.stringify(s) ? null : 'changes when saved and reloaded';
+}
+
+const plans = JSON.parse(readFileSync(new URL('../browser/saved-plans.json', import.meta.url), 'utf8')) as SavedPlan[];
+const baseline = decode(readFileSync(new URL('./baseline.json', import.meta.url), 'utf8'));
+
+test('every recorded save and saved plan loads into a valid planner that survives its own save', () => {
+  const inputs: [string, unknown][] = [
+    ...plans.map((p): [string, unknown] => [p.name, p.saved]),
+    ...baseline.restores.map((c): [string, unknown] => [c.name, c.input]),
+  ];
+  assert.equal(inputs.length, 21 + 24);
+  const bad = inputs.flatMap(([name, saved]) => {
+    const d = verdict(fromV5(JSON.parse(JSON.stringify(saved ?? null)), now));
     return d ? [`${name}: ${d}`] : [];
   });
-  assert.equal(changed.length, 0, changed.join('\n'));
-});
-
-test('every saved plan the browser tests open loads the same through the old and new loaders', () => {
-  const plans = JSON.parse(
-    readFileSync(new URL('../browser/saved-plans.json', import.meta.url), 'utf8'),
-  ) as SavedPlan[];
-  assert.equal(plans.length, 21);
-  const differ = plans.flatMap((p) => {
-    const d = compare(p.saved);
-    return d ? [`${p.name}: ${d}`] : [];
-  });
-  assert.equal(differ.length, 0, differ.join('\n'));
+  assert.deepEqual(bad, []);
 });
 
 /** Deterministic pseudo-random numbers (mulberry32). */
@@ -140,13 +114,9 @@ function random(seed: number) {
   };
 }
 
-test('3,000 random corruptions of real saves load the same through the old and new loaders', () => {
+test('3,000 random corruptions of real saves load into a valid planner, as version 5 and as version 6', () => {
   const r = random(5),
     pick = <T>(a: readonly T[]) => a[Math.floor(r() * a.length)];
-  const plans = JSON.parse(
-    readFileSync(new URL('../browser/saved-plans.json', import.meta.url), 'utf8'),
-  ) as SavedPlan[];
-  const baseline = decode(readFileSync(new URL('./baseline.json', import.meta.url), 'utf8'));
   const bases = [...plans.map((p) => p.saved), ...baseline.restores.map((c) => c.input)].filter(
     (s): s is { version: 5; plan: Record<string, unknown> } =>
       !!s &&
@@ -187,59 +157,49 @@ test('3,000 random corruptions of real saves load the same through the old and n
     'house',
     'tartine',
     'bogus',
+    'constructor',
     ['house', 'house', 'four-flour', 7],
     [{ at: 1795400000000, f: 80 }, { at: 1795400000000, f: 84 }, null, { at: 'x', f: 80 }],
     ['leaven', 'mix', 3, 'turn9'],
     { leaven: 1795400000000, mix: 'soon', turn1: 1795401000000 },
   ];
   const recipes = ['house', 'tartine', 'white-wheat', 'red-rye', 'five-flour', 'four-flour'];
-  const paramKeys = [
-    'count',
-    'weight',
-    'hydration',
-    'leaven',
-    'salt',
-    'reserve',
-    'flour_anita',
-    'flour_red',
-    'flour_wheat',
-    'flour_rye',
-    'flour_white',
-    'flour_ap',
-    'flour_fife',
-    'buildSeed',
-    'buildBread',
-    'buildWheat',
-    'buildWater',
+  const shared = [
+    'recipe',
+    'order',
+    'date',
+    'time',
+    'anchor',
+    'proof',
+    'ovenCapacity',
+    'reheat',
+    'tempUnit',
+    'recipes',
   ];
-  const paths: (() => string[])[] = [
-    () => [
-      pick([
-        'recipe',
-        'order',
-        'date',
-        'time',
-        'anchor',
-        'proof',
-        'ovenCapacity',
-        'reheat',
-        'tempUnit',
-        'recipes',
-        'legacy',
-      ]),
-    ],
+  const scalars = ['count', 'weight', 'hydration', 'leaven', 'salt', 'reserve'],
+    flours = ['anita', 'red', 'wheat', 'rye', 'white', 'ap', 'fife'],
+    builds = ['starter', 'flour', 'wheat', 'water'],
+    bakeKeys = ['done', 'doneAt', 'doughTemp', 'bulkTemps'];
+  const v5Paths: (() => string[])[] = [
+    () => [pick([...shared, 'legacy'])],
     () => ['legacy', pick(['date', 'time', 'cells'])],
     () => ['recipes', pick(recipes)],
-    () => ['recipes', pick(recipes), pick(['params', 'done', 'doneAt', 'doughTemp', 'bulkTemps'])],
-    () => ['recipes', pick(recipes), 'params', pick(paramKeys)],
-    () => ['recipes', pick(recipes), 'params', pick(paramKeys)],
+    () => ['recipes', pick(recipes), pick(['params', ...bakeKeys])],
+    () => ['recipes', pick(recipes), 'params', pick([...scalars, ...flours.map((k) => `flour_${k}`)])],
+    () => ['recipes', pick(recipes), 'params', pick(['buildSeed', 'buildBread', 'buildWheat', 'buildWater'])],
   ];
-  const differ: string[] = [];
-  for (let k = 0; k < 3000; k++) {
-    const saved = structuredClone(pick(bases)) as { plan: Record<string, unknown> };
+  const v6Paths: (() => string[])[] = [
+    () => [pick([...shared, 'created'])],
+    () => ['created', pick(['date', 'time'])],
+    () => ['recipes', pick(recipes), pick(['settings', 'bake'])],
+    () => ['recipes', pick(recipes), 'bake', pick(bakeKeys)],
+    () => ['recipes', pick(recipes), 'settings', pick([...scalars, 'flours', 'build'])],
+    () => ['recipes', pick(recipes), 'settings', pick(['flours', 'build']), pick([...flours, ...builds])],
+  ];
+  const corrupt = (plan: Record<string, unknown>, paths: (() => string[])[]) => {
     for (let m = 1 + Math.floor(r() * 4); m > 0; m--) {
       const path = pick(paths)();
-      let target: Record<string, unknown> = saved.plan;
+      let target: Record<string, unknown> = plan;
       for (const key of path.slice(0, -1)) {
         if (!target[key] || typeof target[key] !== 'object') target[key] = {};
         target = target[key] as Record<string, unknown>;
@@ -248,9 +208,27 @@ test('3,000 random corruptions of real saves load the same through the old and n
       if (value === undefined) delete target[path.at(-1)!];
       else target[path.at(-1)!] = structuredClone(value);
     }
-    const input = json(saved),
-      d = compare(input);
-    if (d) differ.push(`${JSON.stringify(input).slice(0, 300)}…\n  ${d}`);
+  };
+  const bad: string[] = [];
+  for (let k = 0; k < 3000; k++) {
+    const five = structuredClone(pick(bases)) as { plan: Record<string, unknown> };
+    // The same save upgraded and written as version 6, so the version 6 corruption starts from a real save too.
+    const six = JSON.parse(serialize(fromV5(five, now))) as { plan: Record<string, unknown> };
+    corrupt(five.plan, v5Paths);
+    corrupt(six.plan, v6Paths);
+    for (const [version, saved, load] of [
+      [5, five, fromV5],
+      [6, six, (s: unknown, t: number) => fromV6(s, t)!],
+    ] as const) {
+      const input = JSON.parse(JSON.stringify(saved));
+      let d: string | null;
+      try {
+        d = verdict(load(input, now));
+      } catch (e) {
+        d = `threw ${(e as Error).message}`;
+      }
+      if (d) bad.push(`version ${version} ${JSON.stringify(input).slice(0, 300)}…\n  ${d}`);
+    }
   }
-  assert.equal(differ.length, 0, `${differ.length} saves load differently:\n${differ.slice(0, 5).join('\n')}`);
+  assert.equal(bad.length, 0, `${bad.length} saves load badly:\n${bad.slice(0, 5).join('\n')}`);
 });

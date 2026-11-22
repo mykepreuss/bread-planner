@@ -1,18 +1,22 @@
 /**
- * What the planner shows, in the shape baseline.json records. Step 0 of the rebuild recorded these observations, and
- * every later step must reproduce them. Plans, recipe settings and helpers are read through a core (cores.ts): the old
- * one in src/lib or the new one in src/domain. Saved data is still read through src/lib (`observeRestore`), and
- * `planner` builds inputs with it, until step 3 moves both to the new core. Inputs are plain data, so the record
- * outlives the code it was taken from.
+ * What the planner shows, in the shape baseline.json records. Step 0 of the rebuild recorded these observations from
+ * the code of the time, and every later step must reproduce them. They are taken through the code the app runs: the
+ * core in src/domain, the Schedule tab's view in src/view and the saved-data loader in src/state. Inputs are plain
+ * data, with recipe settings under their version 5 names (`flour_anita`, `buildSeed`), so the record outlives the code
+ * it was taken from.
  *
  * Everything runs in America/Vancouver (`useBaselineTimeZone`). Times are written as local wall-clock time with the
  * UTC offset, such as `2026-11-22 09:00 -08`, so a daylight-saving change shows.
  */
-import { createPlanner, restorePlanner, recipeSchedule, addedHydration, type Planner } from '../../src/lib/recipes.ts';
-import { dateString } from '../../src/lib/model.ts';
-import { clockText, type BulkReading } from '../../src/lib/bakeday.ts';
+import { defaultSettings, recipeById, type FlourKey, type Recipe, type Settings } from '../../src/domain/recipes.ts';
+import { addedHydration, formula, totalHydration } from '../../src/domain/formula.ts';
+import { schedule } from '../../src/domain/schedule.ts';
+import { fromF, inTempRange, retime, stampNow, toF, withReading, type BulkReading } from '../../src/domain/bakeday.ts';
+import { clockText, dateString, durationText, shiftText, untilText } from '../../src/domain/text.ts';
+import { scheduleView } from '../../src/view/schedule.ts';
+import { freshState, planOf, selected, type PlannerState } from '../../src/state/schema.ts';
+import { loadState, STORAGE_V5 } from '../../src/state/load.ts';
 import { useVancouverRule } from './vancouver.ts';
-import { oldCore, type Core } from './cores.ts';
 
 export const TIME_ZONE = 'America/Vancouver';
 /**
@@ -104,11 +108,44 @@ export type PlanInput = {
 export type FormulaInput = { recipe: string; params?: Record<string, number>; totalHydration?: number };
 export type HelperCall = { fn: string; args: unknown[] };
 
-export function planner(i: PlanInput | (FormulaInput & { date?: string; time?: string })): Planner {
-  const p = createPlanner(),
-    full = i as Partial<PlanInput>;
-  if (!(i.recipe in p.recipes)) throw new Error(`Unknown recipe ${i.recipe}`);
-  Object.assign(p, {
+/** Version 5 names for the build settings, as the record's inputs give them. */
+const BUILD = { buildSeed: 'starter', buildBread: 'flour', buildWheat: 'wheat', buildWater: 'water' } as const;
+const SCALARS = ['count', 'weight', 'hydration', 'leaven', 'salt', 'reserve'] as const;
+
+/** A recipe's settings with the input's version 5 `params` applied over its defaults. */
+function settingsFrom(recipe: Recipe, params: Record<string, number> = {}): Settings {
+  const s = defaultSettings(recipe);
+  for (const [key, value] of Object.entries(params)) {
+    const flour = key.slice(6) as FlourKey;
+    if (key in BUILD) s.build[BUILD[key as keyof typeof BUILD]] = value;
+    else if (key.startsWith('flour_') && recipe.flours.includes(flour)) s.flours[flour] = value;
+    else if ((SCALARS as readonly string[]).includes(key)) s[key as (typeof SCALARS)[number]] = value;
+    else throw new Error(`${recipe.id} has no setting ${key}`);
+  }
+  return s;
+}
+/** A recipe's settings under their version 5 names, as the record writes them. */
+export function v5Params(recipe: Recipe, s: Settings): Record<string, number> {
+  return {
+    ...Object.fromEntries(SCALARS.map((k) => [k, s[k]])),
+    ...Object.fromEntries(recipe.flours.map((k) => [`flour_${k}`, s.flours[k]])),
+    buildSeed: s.build.starter,
+    buildBread: s.build.flour,
+    buildWheat: s.build.wheat,
+    buildWater: s.build.water,
+  };
+}
+
+/** The planner for an input, taken as it is: loading saved data would correct a few recorded plans, which the record keeps. */
+export function plannerState(i: PlanInput | (FormulaInput & { date?: string; time?: string })): PlannerState {
+  const recipe = recipeById(i.recipe);
+  if (!recipe) throw new Error(`Unknown recipe ${i.recipe}`);
+  const full = i as Partial<PlanInput>,
+    settings = settingsFrom(recipe, i.params);
+  if (i.totalHydration !== undefined) settings.hydration = Math.max(0, addedHydration(i.totalHydration, settings));
+  const base = freshState(local(LOADED_AT));
+  return {
+    ...base,
     recipe: i.recipe,
     date: full.date ?? '2026-11-22',
     time: full.time ?? '09:00',
@@ -117,29 +154,31 @@ export function planner(i: PlanInput | (FormulaInput & { date?: string; time?: s
     ovenCapacity: full.ovenCapacity ?? 2,
     reheat: full.reheat ?? 30,
     tempUnit: full.tempUnit ?? 'F',
-  });
-  if (!p.order.includes(i.recipe)) p.order.push(i.recipe);
-  const profile = p.recipes[i.recipe];
-  Object.assign(profile.params, i.params);
-  if (i.totalHydration !== undefined)
-    profile.params.hydration = Math.max(0, addedHydration(i.totalHydration, profile.params));
-  profile.done = [...(full.done ?? [])];
-  profile.doneAt = Object.fromEntries(Object.entries(full.doneAt ?? {}).map(([id, t]) => [id, local(t)]));
-  profile.doughTemp = full.doughTemp ?? null;
-  profile.bulkTemps = (full.bulkTemps ?? []).map((r) => ({ at: local(r.at), f: r.f }));
-  return p;
+    recipes: {
+      ...base.recipes,
+      [i.recipe]: {
+        settings,
+        bake: {
+          done: [...(full.done ?? [])],
+          doneAt: Object.fromEntries(Object.entries(full.doneAt ?? {}).map(([id, t]) => [id, local(t)])),
+          doughTemp: full.doughTemp ?? null,
+          bulkTemps: (full.bulkTemps ?? []).map((r) => ({ at: local(r.at), f: r.f })),
+        },
+      },
+    },
+  };
 }
 
 /**
  * The Schedule tab for one plan: every step as the timeline shows it, and what the Up next card, the notices and the
- * bake summary show. The core works out the view (`Core.view`: the new one is src/view/schedule.ts, which the app's
- * ScheduleTab shows), and app.test.ts checks the real screen against the record.
+ * bake summary show, as src/view/schedule.ts works them out for the app's ScheduleTab. app.test.ts checks the real
+ * screen against the record too.
  */
-export function observePlan(i: PlanInput, core: Core = oldCore) {
-  const plan = planner(i),
-    now = local(i.now);
-  const v = core.view(plan, now, stamp),
-    { steps, checks, skipped, stale, next, doneStep, estimate, checkFrom } = v;
+export function observePlan(i: PlanInput) {
+  const now = local(i.now),
+    v = scheduleView(plannerState(i), now, stamp),
+    { steps, skipped, stale, next, doneStep, estimate, checkFrom } = v,
+    checks = v.bake.done;
   const quiet = new Map(v.night.map((a) => [a.step.id, a.continues ? 'continues' : 'starts']));
   const gaps = v.gaps,
     proof = v.proofWindow;
@@ -148,7 +187,7 @@ export function observePlan(i: PlanInput, core: Core = oldCore) {
       id: s.id,
       title: s.title,
       at: stamp(s.at),
-      phase: core.phase(s),
+      phase: s.phase,
       gap: gaps.get(s.id) ?? 0,
       ...(s.note !== undefined && { note: s.note }),
       ...(s.readiness !== undefined && { ready: s.readiness }),
@@ -166,7 +205,7 @@ export function observePlan(i: PlanInput, core: Core = oldCore) {
     view: {
       batches: v.batches,
       finish: doneStep ? stamp(doneStep.at) : null,
-      totalTime: v.totalMinutes !== null ? core.text.duration(v.totalMinutes) : null,
+      totalTime: v.totalMinutes !== null ? durationText(v.totalMinutes) : null,
       checked: v.completed,
       stale,
       underway: v.underway,
@@ -176,14 +215,14 @@ export function observePlan(i: PlanInput, core: Core = oldCore) {
         next && !stale
           ? {
               id: next.id,
-              countdown: core.text.until(+next.at - now),
+              countdown: untilText(+next.at - now),
               then: v.then?.id ?? null,
               doughCheck: v.doughCheck,
               temperatureField: v.temperatureField,
             }
           : null,
       shift: v.shift,
-      shiftText: core.text.shift(v.shift),
+      shiftText: shiftText(v.shift),
       estimate: estimate && {
         planned: estimate.planned,
         minutes: estimate.minutes,
@@ -208,9 +247,9 @@ export function observePlan(i: PlanInput, core: Core = oldCore) {
 }
 
 /** The Ingredients tab for one recipe: the weights, totals and leaven balance it shows. Null when it cannot calculate. */
-export function observeFormula(i: FormulaInput, core: Core = oldCore) {
-  const plan = planner(i),
-    r = core.formula(plan);
+export function observeFormula(i: FormulaInput) {
+  const { recipe, settings } = selected(plannerState(i)),
+    r = formula(recipe, settings);
   if (!r) return null;
   return {
     total: r.total,
@@ -221,7 +260,7 @@ export function observeFormula(i: FormulaInput, core: Core = oldCore) {
     addedHydration: r.hydration,
     totalHydration: r.totalHydration,
     shownHydration: Math.round(r.totalHydration),
-    hydrationMin: Math.ceil(core.hydrationFloor(plan)),
+    hydrationMin: Math.ceil(totalHydration({ ...settings, hydration: 0 })),
     totalFlour: r.totalFlour,
     totalWater: r.totalWater,
     flours: r.flours.map((f) => ({ key: f.key, name: f.name, grams: f.grams, percent: f.percent })),
@@ -241,50 +280,54 @@ export function observeFormula(i: FormulaInput, core: Core = oldCore) {
  */
 export const LOADED_AT = '2030-01-01 12:00';
 
-/** Saved browser data after loading: the settings, checklists and readings it gives every recipe, and the selected plan's times. */
+/**
+ * Saved browser data, stored as the version 5 save it is, after loading: the settings (under their version 5 names),
+ * checklists and readings it gives every recipe, and the selected plan's times.
+ */
 export function observeRestore(saved: unknown) {
-  const p = atMoment(local(LOADED_AT), () => restorePlanner(saved));
+  const text = JSON.stringify(saved ?? null),
+    s = loadState((key) => (key === STORAGE_V5 ? text : null), local(LOADED_AT));
   return {
-    recipe: p.recipe,
-    order: p.order,
-    date: p.date,
-    time: p.time,
-    anchor: p.anchor,
-    proof: p.proof,
-    ovenCapacity: p.ovenCapacity,
-    reheat: p.reheat,
-    tempUnit: p.tempUnit,
+    recipe: s.recipe,
+    order: s.order,
+    date: s.date,
+    time: s.time,
+    anchor: s.anchor,
+    proof: s.proof,
+    ovenCapacity: s.ovenCapacity,
+    reheat: s.reheat,
+    tempUnit: s.tempUnit,
     recipes: Object.fromEntries(
-      Object.entries(p.recipes).map(([id, r]) => [
+      Object.entries(s.recipes).map(([id, { settings, bake }]) => [
         id,
         {
-          params: r.params,
-          done: r.done,
-          doneAt: Object.fromEntries(Object.entries(r.doneAt).map(([k, t]) => [k, stamp(t)])),
-          doughTemp: r.doughTemp,
-          bulkTemps: r.bulkTemps.map((b) => ({ at: stamp(b.at), f: b.f })),
+          params: v5Params(recipeById(id)!, settings),
+          done: bake.done,
+          doneAt: Object.fromEntries(Object.entries(bake.doneAt).map(([k, t]) => [k, stamp(t)])),
+          doughTemp: bake.doughTemp,
+          bulkTemps: bake.bulkTemps.map((b) => ({ at: stamp(b.at), f: b.f })),
         },
       ]),
     ),
-    schedule: recipeSchedule(p).map((s) => `${s.id} ${stamp(s.at)}`),
+    schedule: schedule(planOf(s)).map((step) => `${step.id} ${stamp(step.at)}`),
   };
 }
 
 /** Small helpers whose wording or rounding the screen shows directly. */
-export function observeHelper({ fn, args }: HelperCall, core: Core = oldCore): unknown {
+export function observeHelper({ fn, args }: HelperCall): unknown {
   const a = args as never[],
-    h = core.helpers;
+    h = { retime, stampNow, withReading, toF, fromF, inTempRange };
   switch (fn) {
     case 'retime': {
       const t = h.retime(a[0], a[1]);
       return t === null ? null : stamp(t);
     }
     case 'untilText':
-      return core.text.until(a[0]);
+      return untilText(a[0]);
     case 'shiftText':
-      return core.text.shift(a[0]);
+      return shiftText(a[0]);
     case 'durationText':
-      return core.text.duration(a[0]);
+      return durationText(a[0]);
     case 'stampNow':
       return stamp(h.stampNow(local(a[0]) + (a[1] as number) * 1000));
     case 'withReading': {
