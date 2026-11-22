@@ -642,3 +642,16 @@ Release: merged as pull request #27 at `40fd02b`, with Michael's approval. Produ
   5. In °C, 38 showed "Use 10 to 37.7°C" with Update disabled, and Enter added nothing; 37.7 was added as "37.7°C at 3:20 PM" and kept after a reload. A saved 100°F showed as 37.8 with no error, also after a reload, and typing 37.9 showed the error.
 - A plan dated 0202-11-22 kept that date and showed 23 steps.
 
+
+## Done at fits an iPhone screen, November 22, 2026: committed, pull request open
+
+Observed in Michael's iPhone screenshot of production, November 22: in each checked step, the Done at date field ran into its time field, and the time field ran off the right edge of the screen.
+
+Cause, from the code and its history (not reproduced on an iPhone): the Done at date field came in on November 21 (`6e5f7c5`, "Let Done at take a date as well as a time") without the reset the plan card's date and time fields got on October 19 (`7aa9882`). iPhone Safari sizes a native date or time field by its own picker unless the field's appearance is reset.
+
+Change: `src/index.css` gives the Done at fields the plan card's reset: no native appearance, the value aligned left, and no padding inside the field's own parts. Branch `fix-done-at-iphone`, from `handoff-decisions-release`.
+
+Evidence (this session):
+- A new browser flow opens a bake in progress at phone width. It checks that all 14 date and time fields have their appearance reset, and that each of the 6 Done at pairs keeps its date before its time and its time inside the screen. It failed before the change (appearance "auto", not "none") and passes after; taking Done at out of the reset again fails it.
+- `npm run test:browser` passed 46 of 46 with no recorded screenshot changed, so Chromium draws both widths as before. `npm test` passed 122 of 122. The build had 0 errors, 0 warnings and 0 hints, with a clean format check.
+- Not verified: how an iPhone draws the fields. Chromium can't draw iPhone's control, this Mac has no Xcode for the iOS Simulator, and the test checks the reset rather than the iPhone layout. Not sent to the verifier, as a one-rule style change.

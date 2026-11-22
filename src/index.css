@@ -484,25 +484,31 @@ h2 {
   grid-template-columns: 1fr;
   gap: 18px;
 }
-/* Native date and time controls. iOS sizes them by their own picker chrome unless appearance is reset, which let them overflow their cells. */
-.date-time-fields input {
+/* Native date and time controls, in the plan card and in Done at. iOS sizes them by their own picker chrome unless appearance is reset, which let them overflow their cells. */
+.date-time-fields input,
+.done-at input {
   appearance: none;
   -webkit-appearance: none;
   display: block;
-  width: 100%;
   min-width: 0;
+}
+.date-time-fields input {
+  width: 100%;
   padding: 10px 12px;
   border-radius: var(--radius-control);
 }
-.date-time-fields input::-webkit-date-and-time-value {
+.date-time-fields input::-webkit-date-and-time-value,
+.done-at input::-webkit-date-and-time-value {
   min-height: 1.5em;
   text-align: left;
 }
-.date-time-fields input::-webkit-datetime-edit {
+.date-time-fields input::-webkit-datetime-edit,
+.done-at input::-webkit-datetime-edit {
   display: inline-flex;
   padding: 0;
 }
-.date-time-fields input::-webkit-datetime-edit-fields-wrapper {
+.date-time-fields input::-webkit-datetime-edit-fields-wrapper,
+.done-at input::-webkit-datetime-edit-fields-wrapper {
   padding: 0;
 }
 .date-time-fields > div {
