@@ -27,11 +27,11 @@ function update(state: PlannerState, change: { settings?: Settings; bake?: Parti
 const bakeOf = (state: PlannerState) => state.recipes[state.recipe].bake;
 const settingsOf = (state: PlannerState) => state.recipes[state.recipe].settings;
 
-/** Dough temperatures belong to one bake, so a new bake starts without them. */
+/** Dough temperatures and final-mix ticks belong to one bake, so a new bake starts without them. */
 function clearTemperatures(state: PlannerState) {
   const bake = bakeOf(state);
-  return bake.doughTemp !== null || bake.bulkTemps.length
-    ? update(state, { bake: { doughTemp: null, bulkTemps: [] } })
+  return bake.doughTemp !== null || bake.bulkTemps.length || bake.added.length
+    ? update(state, { bake: { doughTemp: null, bulkTemps: [], added: [] } })
     : state;
 }
 
@@ -75,7 +75,7 @@ export const setReheat = (state: PlannerState, minutes: number): PlannerState =>
 export const setProof = (state: PlannerState, proof: 'cold' | 'warm'): PlannerState => ({ ...state, proof });
 export const setTempUnit = (state: PlannerState, unit: TempUnit): PlannerState => ({ ...state, tempUnit: unit });
 
-/** A new date or time. Before anything is checked it is a new bake, so the dough temperatures clear. */
+/** A new date or time. Before anything is checked it is a new bake, so the dough temperatures and final-mix ticks clear. */
 export function setDate(state: PlannerState, date: string): PlannerState {
   const next = { ...state, date };
   return bakeOf(state).done.length ? next : clearTemperatures(next);
@@ -123,7 +123,7 @@ export function setAdded(state: PlannerState, id: string, added: boolean): Plann
 
 /** Clears the selected recipe's checklist, check-off times, ticked additions and dough temperatures. */
 export function clearChecklist(state: PlannerState): PlannerState {
-  return clearTemperatures(update(state, { bake: { done: [], doneAt: {}, added: [] } }));
+  return clearTemperatures(update(state, { bake: { done: [], doneAt: {} } }));
 }
 
 export const setDoughTemp = (state: PlannerState, f: number | null): PlannerState =>

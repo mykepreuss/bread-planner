@@ -357,6 +357,17 @@ test('ticking an addition is kept for the selected recipe, unticking removes it,
   assert.deepEqual(selected(act.restoreDefaults(salted)).bake.added, []);
 });
 
+test('a new date or time clears the final-mix ticks while nothing is checked, as it does the temperatures', () => {
+  const ticked = act.setAdded(plan(), 'mix:salt', true);
+  assert.deepEqual(selected(act.setDate(ticked, '2026-11-23')).bake.added, []);
+  assert.deepEqual(selected(act.setTime(ticked, '10:00')).bake.added, []);
+  // Once a step is checked it is the same bake, so the ticks stay.
+  const underway = act.setAdded(act.setChecked(plan(), 'leaven', true, NOW), 'mix:salt', true);
+  assert.deepEqual(selected(act.setDate(underway, '2026-11-23')).bake.added, ['mix:salt']);
+  // Clear checklist clears ticks even when nothing is checked.
+  assert.deepEqual(selected(act.clearChecklist(ticked)).bake.added, []);
+});
+
 test('a save from before the tick-offs loads with nothing ticked, from version 5 or version 6', () => {
   const six = JSON.parse(serialize(act.setChecked(plan(), 'mix', true, NOW)));
   delete six.plan.recipes.house.bake.added;

@@ -196,7 +196,13 @@ export function Timeline({
         </span>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon-sm" aria-label="Clear checklist" disabled={!completed} onClick={onClear}>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Clear checklist"
+              disabled={!completed && !actions.added.length}
+              onClick={onClear}
+            >
               <RotateCcw size={14} />
             </Button>
           </TooltipTrigger>

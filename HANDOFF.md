@@ -1073,3 +1073,10 @@ Evidence (this session, on `final-mix-tick-offs`):
 Not verified: a real phone, and a real bake.
 
 Proposal, not done: ask before Done when an ingredient isn't ticked ("Salt isn't ticked. Check the step anyway?"). It would catch a missed salt at the moment it matters, at the cost of an extra tap for a baker who doesn't use the ticks.
+
+Independent check (the verifier, on `11cda78`): PASS on all seven criteria.
+- It decoded both records and confirmed only the mixing step changed. It compared old and new `schedule()` on 12,000 random plans and `scheduleView` on 3,000 random bakes: identical apart from the mix note and the new list. All 25 browser saves and an old version 6 save loaded intact with nothing ticked.
+- Its seven breaks were each caught, though two (both lists sharing one set of ids) only by `npm run test:browser`, which runs on this Mac and not in the Vercel build.
+- One real defect, fixed in the next commit: a tick made with nothing checked survived a new date, and Clear checklist stayed disabled, so last bake's tick could show on the next one. A new date or time while nothing is checked now clears the ticks as it does the temperatures, and Clear checklist is available once anything is ticked. A new test covers it; `npm test` passed 171 of 171 in both zones, the build was clean and `npm run test:browser` passed 54 of 54.
+- Its doc nits are corrected in BEHAVIOUR.md: the 66 plans are those with a schedule, Tartine gets a list of its own, and Restore defaults and Clear checklist mention the ticks.
+- Noted, not changed: no check box in the app shows a visible keyboard focus ring (`box-shadow: none` in `src/index.css`), which predates this change.
