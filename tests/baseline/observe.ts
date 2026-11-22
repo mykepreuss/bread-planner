@@ -270,7 +270,6 @@ export function observeFormula(i: FormulaInput) {
     madeParts: r.madeParts,
     reserve: r.reserve,
     shortfall: r.shortfall,
-    dustingRice: r.dustingRice,
   };
 }
 

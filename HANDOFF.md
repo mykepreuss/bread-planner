@@ -1006,3 +1006,23 @@ Record changes, checked by a script against `main`:
   - Three plans had a cooling mark checked, so their checked count drops by one. In random bake 19 that late check had also set how far behind the plan ran: 1h 55m, now 1h 57m from the last loaf out.
 - The saved-data cases' schedules lose their cooling marks, and nothing else changes. Recipe calculations and helpers are unchanged. A second `npm run baseline:update` left the record unchanged.
 - The browser record: 54 files rewritten. The text records only lose the cooling-mark steps and their labels, step counts go from 23 to 22, and every total time is unchanged. The layout records changed by deletions only.
+
+## No basket and dusting flour card, November 22, 2026: committed, pull request open
+
+Michael's request, pointing at the card on the Ingredients tab: "We don't need the entire card." Branch `remove-dusting-card`, from `remove-cooling-mark` (pull request #34, not yet merged), so its diff includes #34's until that merges. A small display change, checked here without a verifier pass, under the lighter verification Michael asked for.
+
+Change:
+- The "Basket and dusting flour" card, shown only for Tartine recipes, is gone from `src/components/IngredientsTab.tsx`.
+- So is the rice-flour amount it showed (`dustingRice` in `src/domain/formula.ts`), which nothing else used, and its line in the record (`tests/baseline/observe.ts`).
+- The bench-rest note and the method guide keep their advice to dust the baskets with rice flour.
+- docs/BEHAVIOUR.md records it as decision 12.
+
+Tests, each failing before the change:
+- The Tartine formula test now checks there is no rice-flour amount.
+- The Olive add-ins browser flow checks the card isn't on the Ingredients tab.
+
+Evidence:
+- The record: the 41 recipe calculations that had a rice-flour amount lost only that field (the 42nd has no flour); plans, saved-data cases and helpers are identical, and a second `npm run baseline:update` left it unchanged.
+- The browser record: only the five Tartine recipes' Ingredients screens changed, each only by losing the card's lines. Their screenshots show the first screen only, so they didn't change.
+- `npm test` passed 164 of 164 in both zones. The build had 0 errors, 0 warnings and 0 hints, and `npm run test:browser` passed 53 of 53.
+- A flaky flow, fixed on the way: "Ingredient edits recalculate the weights…" failed once in a full run. Its recorded snapshot had caught the "Restore defaults" dialog mid-close, so a loaded run could read the page after it had closed. The flow now waits for the dialog to close, and the snapshot is re-recorded in that settled state. It passed 12 of 12 under six workers, and the full record passed 53 of 53.

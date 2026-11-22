@@ -372,6 +372,7 @@ test.describe('flows', () => {
     await open(page, 'recipe-olive');
     await page.getByRole('tab', { name: 'Ingredients' }).click();
     const addIns = page.locator('.work-card', { hasText: '03 / Add-ins' }).getByRole('listitem');
+    await expect(page.getByText('Basket and dusting flour'), 'no dusting flour card').toHaveCount(0);
     await expect(addIns).toHaveText([
       '3 cups pitted olives, coarsely chopped',
       '2 cups toasted walnuts or hazelnuts, coarsely chopped (optional)',
@@ -473,6 +474,8 @@ test.describe('flows', () => {
     await page.getByRole('button', { name: 'Restore recipe defaults' }).click();
     await page.getByRole('button', { name: 'Restore defaults' }).click();
     await expect(hydration).toHaveValue('80');
+    // Read the page once the dialog has closed: the record used to catch it mid-close, which made this flow flaky.
+    await expect(page.getByRole('alertdialog')).toHaveCount(0);
     expect(await aria(page)).toMatchSnapshot('flow-restore-defaults.aria.yml');
   });
 

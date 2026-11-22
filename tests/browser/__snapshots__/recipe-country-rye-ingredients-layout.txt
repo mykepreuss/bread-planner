@@ -265,17 +265,6 @@ main
                   strong
                 span
                   strong
-              div[data-slot=card][data-size=default].group/card.flex.flex-col.gap-(--card-spacing).overflow-hidden.rounded-xl.bg-card.py-(--card-spacing).text-sm.text-card-foreground.ring-1.ring-foreground/10.[--card-spacing:--spacing(4)].has-data-[slot=card-footer]:pb-0.has-[>img:first-child]:pt-0.data-[size=sm]:[--card-spacing:--spacing(3)].data-[size=sm]:has-data-[slot=card-footer]:pb-0.*:[img:first-child]:rounded-t-xl.*:[img:last-child]:rounded-b-xl.work-card
-                div[data-slot=card-header].group/card-header.@container/card-header.grid.auto-rows-min.items-start.gap-1.rounded-t-xl.px-(--card-spacing).has-data-[slot=card-action]:grid-cols-[1fr_auto].has-data-[slot=card-description]:grid-rows-[auto_auto].[.border-b]:pb-(--card-spacing)
-                  div.card-title-row
-                    div[data-slot=card-title].font-heading.text-base.leading-snug.font-medium.group-data-[size=sm]/card:text-sm
-                  div[data-slot=card-description].text-sm.text-muted-foreground
-                div[data-slot=card-content].px-(--card-spacing)
-                  dl.weights
-                    div
-                      dt
-                      dd
-                        span
       div[data-slot=accordion].flex.w-full.flex-col.method-guide[data-orientation=vertical]
         div[data-state=closed][data-orientation=vertical][data-slot=accordion-item].not-last:border-b
           h3[data-orientation=vertical][data-state=closed].flex
