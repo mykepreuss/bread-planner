@@ -277,6 +277,20 @@ test.describe('flows', () => {
     await expect(upNext(page).getByRole('heading', { level: 2 })).toHaveText('Turn 4');
   });
 
+  test('Preheat checked before the fridge step it starts with leaves Up next on the fridge step', async ({ page }) => {
+    await open(page, 'fresh');
+    const boxes = page.getByRole('checkbox', { name: /^Complete / });
+    const names = await boxes.evaluateAll((els) => els.map((el) => el.getAttribute('aria-label') ?? ''));
+    const fridge = names.indexOf('Complete Take both loaves out of the fridge');
+    expect(names[fridge + 1]).toBe('Complete Preheat oven and Dutch oven');
+    for (const name of names.slice(0, fridge)) await page.getByRole('checkbox', { name, exact: true }).click();
+    await page.getByRole('checkbox', { name: 'Complete Preheat oven and Dutch oven' }).click();
+    await expect(page.getByText(`${fridge + 1} of 23 steps checked`)).toBeVisible();
+    await expect(upNext(page).getByRole('heading', { level: 2 })).toHaveText('Take both loaves out of the fridge');
+    await expect(page.getByText('Skipped', { exact: true })).toHaveCount(0);
+    await expectSameAfterReload(page);
+  });
+
   test('Clear checklist clears the checks and the dough temperatures', async ({ page }) => {
     await open(page, 'mid-bulk');
     await page.getByRole('button', { name: 'Clear checklist' }).click();
