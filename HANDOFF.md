@@ -540,6 +540,7 @@ Michael agreed to every item proposed after step 3c and asked for step 4. Branch
   - Under heavy load (16 workers on 8 cores, each Ingredients screen 12 times), it went from 58 of 84 failing to 84 of 84 passing. It also passed 70 of 70 at normal load.
   - The seven phone first-screen images of the Ingredients screens were re-recorded. A full-page screenshot of each screen contains both the old and the new image, apart from at most 7 pixels on one anti-aliased line, about 368 px apart. Only the scroll position changed. Every other record file, desktop and whole-page images included, is unchanged.
 - `npm run build` now runs `prettier --check .` first, so a badly formatted file fails the Vercel build. A deliberately misformatted file made the build exit 1.
+  - The first Vercel build of this branch failed on `vercel.json` alone. A diagnostic build on a throwaway branch printed the file: on Vercel's build machine it is rewritten as one minified line. `.prettierignore` now leaves `vercel.json` out, with that reason.
 - Decision 6 is closed as kept: Michael is the planner's only user.
 - This file's header now points to the newest section marked verified live instead of naming an old release.
 - Step 3c's release, and its verifier's second check, are recorded in its section above. Two of its proposals are marked done here.

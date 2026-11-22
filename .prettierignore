@@ -15,6 +15,9 @@ tests/browser/__snapshots__/
 tests/browser/__screenshots__/
 src/components/ui/
 src/styles/shadcn.css
+# Vercel rewrites vercel.json as one minified line on its build machine (seen in the build log, November 21, 2026),
+# so the build's format check cannot hold it to the committed formatting.
+vercel.json
 # Prose is written by hand, and the two pages need a plugin Prettier does not ship with.
 *.md
 *.astro
