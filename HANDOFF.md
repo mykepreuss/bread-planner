@@ -9,7 +9,7 @@ Production branch: main
 Project: prj_oaBadxUrg76MQyvwFsY68FvfuM8r (bread-planner)
 Team: team_U2Fu7jNsQEgGylxpq9YR7M2f (mpmba)
 
-Each dated release section below ends with its delivery state, newest last. The last one marked "verified live" is what production runs. When this header was last edited, that was rebuild step 4: `main` at `5e79d671282d15a03e430d8d5181cb2a177520a8`, production deployment `dpl_9V4VeDQ7fS1AqWiWnwg59QZQzcex` (READY). Michael is the planner's only user.
+Each dated release section below ends with its delivery state, newest last. The last one marked "verified live" is what production runs. When this header was last edited, that was Michael's decisions: `main` at `40fd02b6dd313f3c83ec7bfff36a0a2dd614c11f`, production deployment `dpl_ADz3fHU5bkKXqaxoUXx7fLqvQ6Po` (READY). Michael is the planner's only user.
 
 ## Scope and decisions
 
@@ -583,7 +583,7 @@ Release: merged as pull request #26 at `5e79d67`, with Michael's approval after 
 
 Correction, found while making Michael's decisions: "every plan it loads must have steps unless its recipe has no flour" missed one case. The schedule also gives no steps for more than 1,000 batches, and a corruption with a loaf count of 1,000,000,000 showed it once the random sequence changed. `load.test.ts` now allows that case, and the schedule's comment and docs/BEHAVIOUR.md now name it.
 
-## Michael's decisions, November 21, 2026: committed, pull request open
+## Michael's decisions, November 21, 2026: merged and verified live
 
 Michael chose all of the recommendations for decisions 1 to 5 in docs/BEHAVIOUR.md, plus the step 4 proposal about years before 1000. Branch `rebuild-decisions`, from `main` at `5e79d67`.
 1. "Plan the next bake" starts a fresh checklist: `planNextBake` clears the checks, their times and the dough temperatures as it moves the date. It is offered only once a plan has ended, when nothing is checked or every step is checked or skipped.
@@ -627,4 +627,18 @@ Fixed on the same branch:
 - After the fixes: `npm test` passed 122 of 122 in both zones and `npm run test:browser` 45 of 45. Undoing either temperature fix fails its new flow, and the creation-time fallback fails the state test.
 
 Second check (the verifier, on `e8e590f`): every behaviour check passed in the built app, including what `noValidate` and the shown-value rule let through and still refuse. FAIL on one HANDOFF sentence about the text table, now corrected. It also found two breaks no test caught: an after-mixing field that never shows its error, and a later-reading field without the planner's own range check. The two °C flows now type 37.9°C and 38°C, expect the error, and expect 38°C not to be added even with Enter.
+
+The last commit, `1819d02`, made those fixes and changed only tests and this file. It was checked in this session but not sent back to the verifier: `npm test` passed 122 of 122, the build had 0 errors, 0 warnings and 0 hints with a clean format check, `npm run test:browser` passed 45 of 45, and Vercel built it.
+
+Release: merged as pull request #27 at `40fd02b`, with Michael's approval. Production deployment `dpl_ADz3fHU5bkKXqaxoUXx7fLqvQ6Po` is READY for that commit and holds the `bread.assemblydigital.com` alias. On November 22 after the merge:
+- `verify-deployment.mjs` passed 9 checks and 7 assets.
+- The live smoke at phone width passed: 23 steps, an Up next card, 2,000 g in the Ingredients tab, nothing wider than the screen, no console errors.
+- The live upgrade check passed again: "6 of 22 steps checked" before and after a reload, version 5 text unchanged.
+- A live check of each decision, with the clock fixed at November 21, 3:20 PM, and no console errors:
+  1. A fully checked plan (23 of 23): "Plan the next bake" moved the date to 2026-11-22 with "0 of 23 steps checked" and no button, the same after a reload.
+  2. Red Spring & Rye showed "Overnight cold proof" with "Cover the shaped loaves in their baskets and refrigerate overnight."
+  3. One step checked on House showed 0 of 19 on Tartine and 1 of 23 again on House.
+  4. A version 6 save holding 2026-02-31 at 25:00, created 2026-11-23 at 08:30, opened on 2026-11-22 at 09:00, and the saved plan no longer holds a creation date.
+  5. In °C, 38 showed "Use 10 to 37.7°C" with Update disabled, and Enter added nothing; 37.7 was added as "37.7°C at 3:20 PM" and kept after a reload. A saved 100°F showed as 37.8 with no error, also after a reload, and typing 37.9 showed the error.
+- A plan dated 0202-11-22 kept that date and showed 23 steps.
 
