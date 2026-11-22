@@ -59,6 +59,16 @@ test('Preheat checked before the fridge step it starts with leaves Up next on th
   assert.deepEqual(scheduleView(s, NOW, String).skipped, ['warmup']);
 });
 
+test('Basket rest checked late, after Preheat, still leaves Up next on the fridge step', () => {
+  let s = freshState(NOW);
+  const ids = schedule(planOf(s)).map((step) => step.id);
+  for (const id of ids.slice(0, ids.indexOf('warmup')).filter((id) => id !== 'basket'))
+    s = act.setChecked(s, id, true, NOW);
+  s = act.setChecked(act.setChecked(s, 'preheat', true, NOW), 'basket', true, NOW);
+  const v = scheduleView(s, NOW, String);
+  assert.deepEqual([v.skipped, v.next?.id], [[], 'warmup']);
+});
+
 test('in Tartine, warm bulk checked before the salt step it starts with leaves Up next on the salt step', () => {
   let s = act.selectRecipe(freshState(NOW), 'tartine');
   for (const id of ['leaven', 'autolyse', 'rest']) s = act.setChecked(s, id, true, NOW);

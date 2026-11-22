@@ -520,6 +520,39 @@ test('a step the plan starts at the same time as the furthest checked one stays 
     ['feed', 'leaven', 'autolyse', 'mix', 'rest', ...turns, 'turn8'],
     'an extra turn at the planned preshape time is still skipped once preshape is done',
   );
+  // Two extra turns, neither in the plan: checking the second passes over the first, even though both are missing.
+  const extra9 = { ...extra, id: 'turn9', title: 'Turn 9', turn: 9, at: new Date(extra.at.getTime() + 30 * 60000) },
+    withTwo = [...steps.slice(0, shape), extra, extra9, ...steps.slice(shape)];
+  assert.deepEqual(
+    skippedSteps(withTwo, [...turns, 'turn9'], steps),
+    ['feed', 'leaven', 'autolyse', 'mix', 'rest', 'turn8'],
+    'turn 9 checked before turn 8 skips turn 8',
+  );
+  // The step furthest along sets the shared time, not the one checked last: Basket rest checked late, after Preheat.
+  assert.deepEqual(
+    skippedSteps(steps, ['preheat', 'basket'], steps),
+    toFridge.filter((id) => id !== 'basket'),
+    'a late check of an earlier step leaves the fridge step open',
+  );
+});
+
+test('a group of three steps the plan starts together stays open when the last of them is checked first', () => {
+  // Four loaves, two at once, with no reheat: batch 1 comes out, the oven reheats and batch 2 goes in at 9:33.
+  const house = recipeById('house')!,
+    steps = plan('house', { settings: { ...defaultSettings(house), count: 4 }, ovenCapacity: 2, reheat: 0 });
+  const at = (id: string) => steps.find((s) => s.id === id)!.at.getTime();
+  assert.deepEqual([at('reheat-2'), at('covered-2')], [at('out-1'), at('out-1')]);
+  const ids = steps.map((s) => s.id),
+    before = ids.slice(0, ids.indexOf('out-1'));
+  assert.equal(before.at(-1), 'uncovered');
+  assert.deepEqual(skippedSteps(steps, ['covered-2'], steps), before, 'batch 1 out and the reheat stay open');
+  assert.deepEqual(skippedSteps(steps, ['uncovered-2'], steps), [
+    ...before,
+    'out-1',
+    'reheat-2',
+    'covered-2',
+    'cooled-1',
+  ]);
 });
 
 test('each step is coloured by its temperature: only the cold proof is cold, and preheat through the last loaf out is oven', () => {
