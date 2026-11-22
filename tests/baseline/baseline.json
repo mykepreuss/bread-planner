@@ -1,6 +1,6 @@
 {
 "about": "What Bread Planner shows for each input, recorded from the code before the rebuild and reproduced by every step since. Step 3c left out the hidden manual-rye recipe, which the rebuild does not carry, from the saved-data results. tests/baseline/baseline.test.ts checks the current code against it.",
-"recordedFrom": "src/ as in commit fda25ac, with uncommitted changes",
+"recordedFrom": "src/ as in commit 513701d",
 "timeZone": "America/Vancouver",
 "texts": [
   "Feed starter",
