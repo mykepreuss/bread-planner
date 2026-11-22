@@ -392,7 +392,7 @@ test.describe('flows', () => {
     // Every line wraps inside the screen.
     for (const item of await addIns.all()) {
       const box = (await item.boundingBox())!;
-      expect(box.x + box.width, await item.textContent()).toBeLessThanOrEqual(widths.phone.width);
+      expect(box.x + box.width, (await item.textContent()) ?? '').toBeLessThanOrEqual(widths.phone.width);
     }
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(widths.phone.width);
   });
