@@ -673,30 +673,45 @@ Change: `skippedSteps` in `src/domain/bakeday.ts` marks any step left unchecked 
 docs/BEHAVIOUR.md records it as decision 7, and the `bulk` flag's comment in `src/domain/schedule.ts` now says what the flag still does: bulk never ends before the latest checked bulk step.
 
 Tests, each failing before the change:
-- `bakeday.test.ts`: the skip test is rewritten for the new rule. Its old assertions, "feed, leaven and autolyse are never skipped" and "only bulk steps", described the rule Michael changed.
+- `bakeday.test.ts`: the skip test is rewritten for the new rule. Its old assertions, "feed, leaven and autolyse are never skipped" and "only bulk steps", described the rule Michael changed. It also checks that a step checked out of order, such as a late feed, does not decide what is skipped: the step furthest along the schedule does. A made-up id passes nothing over. (A checked "turn 9" would, because the planner adds a checked extra turn to the schedule.)
 - `view/schedule.test.ts`:
   - Michael's example: the feed skipped, Up next Turn 4 then Turn 5, and checking the feed late leaves Up next on Turn 4.
+  - With the feed and the autolyse both forgotten, checking the feed late leaves the autolyse skipped and Up next on Turn 4.
   - A plan with only the feed unchecked has ended once its last loaf is out.
 - A browser flow checks Michael's example in the built app. It failed before with "Feed starter" where "Turn 4" was expected, and it now also checks the Skipped badge, a reload, and checking the feed late.
 
-Record changes: `baseline.json` was regenerated. 32 of its 214 plans changed. A script checked each one against the old record and the new rule, and found no other difference:
+Record changes: `baseline.json` was regenerated. 32 of its 214 plans changed, all as the new rule implies:
 - Every step that was neither checked nor skipped and comes before the latest checked step is now skipped.
 - Up next and the step after it are the first steps left.
-- Whether the plan has ended and whether everything is done follow from that.
+- Whether the plan has ended and whether everything is done follow from that. One plan, "random bake 71", now counts as ended, so it is no longer underway; that is the one change to `underway`.
 - Only the newly skipped steps lost their quiet-hours mark, and the quiet-hours count matches the marks in every plan.
 
-Otherwise only the `recordedFrom` line changed. No browser screen changed: no saved browser plan leaves an early step unchecked.
+My script checked each changed plan against the old record and the rule, and the verifier separately rebuilt every plan's new output from the old record and the rule, with no mismatch in 214 plans. Otherwise only the `recordedFrom` line changed. No browser screen changed: no saved browser plan leaves an early step unchecked.
 
 Evidence (this session, on `up-next-after-checked`):
-- `npm test` passed 124 of 124 with the host zone and with `BASELINE_ZONE=rule`.
+- `npm test` passed 125 of 125 with the host zone and with `BASELINE_ZONE=rule`, and `npm run build` had 0 errors, 0 warnings and 0 hints with a clean format check.
 - `npm run test:browser` passed 47 of 47.
-- Deliberate breaks, each caught and then restored:
+- Deliberate breaks, each caught and then restored, counted on the final tests against the full unit and browser suites:
 
-| Break | Unit tests failing | Browser flows failing |
+| Break | Unit tests failing | Browser tests failing |
 |---|---|---|
-| Only bulk steps skip (the old rule) | 5 | 1 |
+| Only bulk steps skip (the old rule) | 6 | 1 |
 | The step just before the latest checked one is not skipped | 3 | 1 |
-| Steps after the latest checked one are skipped too | 5 | 5 |
-| The first checked step decides, not the latest | 3 | 1 |
-| Up next ignores skipped steps | 4 | 2 |
+| Steps after the latest checked one are skipped too | 6 | 30 |
+| The first checked step decides, not the latest | 4 | 2 |
+| Up next ignores skipped steps | 5 | 3 |
 | Skipped steps stay on the quiet-hours list | 2 | 0 |
+| The step checked last decides, not the one furthest along | 2 | 0 |
+
+Independent check (the verifier, on `c08319a`): FAIL on one of seven criteria.
+- It drove the built app with its own script. In Michael's example, Up next showed Turn 4, then Turn 5, with Feed starter marked Skipped, through two reloads. Checking the feed late kept Up next on Turn 4.
+- The rule held for several batches, steps at the same time, extra turns, "Ready: preshape now", Original Tartine and a warm proof. The test commands passed, the docs matched, and nothing else changed.
+- Not met: one of its seven breaks survived. When the step checked last decided, rather than the one furthest along, a late check of one forgotten step brought back another. The last row above is that break; the two tests added for it now catch it.
+- It also found two inexact claims in this section, now corrected:
+  - The record's `underway` change was left out.
+  - The browser column of an earlier version of the break table counted only five chosen flows, so its "5" for the third break couldn't be reproduced.
+
+What the rule does that Michael should know, found by the verifier and each confirmed in the built app:
+- Of two steps at the same time, checking the second first skips the first. Checking Preheat before "Take both loaves out of the fridge" (both 7:50 AM) marks the fridge step Skipped, and Up next jumps to "Bake covered", an hour later. The same happens to Tartine's "Add salt and final water" beside "Begin warm bulk fermentation", and to a second batch's warm-up beside the first batch's lid removal. Before this change, Up next stayed on those steps until they were checked.
+- One mis-tap on the last step ends the bake: checking the cooling mark on a fresh plan skips the 22 steps before it, hides Up next and shows "All batches done". Unchecking it puts everything back.
+- A skipped step records no time. If it is one that moves the plan, such as Mix final dough, the times keep following the last checked step that moves it.

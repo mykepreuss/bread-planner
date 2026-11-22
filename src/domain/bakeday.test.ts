@@ -476,7 +476,12 @@ test('any step left unchecked before a later checked step counts as skipped', ()
   );
   assert.deepEqual(skippedSteps(steps, ['turn1', 'turn2']), ['feed', 'leaven', 'autolyse', 'mix', 'rest']);
   assert.deepEqual(skippedSteps(steps, ['feed']), [], 'nothing after the latest checked step is skipped');
-  assert.deepEqual(skippedSteps(steps, ['feed', 'turn9']), [], 'a check for a step not on the schedule passes nothing');
+  assert.deepEqual(
+    skippedSteps(steps, ['leaven', 'mix', 'rest', 'turn1', 'turn2', 'turn3', 'feed']),
+    ['autolyse'],
+    'the step furthest along decides, not the one checked last',
+  );
+  assert.deepEqual(skippedSteps(steps, ['feed', 'no-such-step']), [], 'a check for a step not listed passes nothing');
 });
 
 test('each step is coloured by its temperature: only the cold proof is cold, and preheat through the last loaf out is oven', () => {
