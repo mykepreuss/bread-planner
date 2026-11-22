@@ -291,6 +291,27 @@ test.describe('flows', () => {
     await expectSameAfterReload(page);
   });
 
+  test('Checking the last step on a fresh plan asks before skipping the whole bake', async ({ page }) => {
+    await open(page, 'fresh');
+    const last = page.getByRole('checkbox', { name: 'Complete 15-minute cooling mark' }),
+      dialog = page.getByRole('alertdialog');
+    await last.click();
+    await expect(dialog.getByRole('heading')).toHaveText('Skip 22 earlier steps?');
+    await expect(dialog).toContainText('Checking "15-minute cooling mark" marks 22 earlier steps as Skipped.');
+    await dialog.getByRole('button', { name: "Don't check it" }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(page.getByText('0 of 23 steps checked')).toBeVisible();
+    await expect(last).not.toBeChecked();
+    await expect(upNext(page).getByRole('heading', { level: 2 })).toHaveText('Feed starter');
+    await last.click();
+    await dialog.getByRole('button', { name: 'Check and skip' }).click();
+    await expect(dialog).toHaveCount(0);
+    await expect(page.getByText('1 of 23 steps checked')).toBeVisible();
+    await expect(page.getByText('Skipped', { exact: true })).toHaveCount(22);
+    await expect(page.getByText('All batches done. Enjoy your bread.')).toBeVisible();
+    await expectSameAfterReload(page);
+  });
+
   test('Clear checklist clears the checks and the dough temperatures', async ({ page }) => {
     await open(page, 'mid-bulk');
     await page.getByRole('button', { name: 'Clear checklist' }).click();

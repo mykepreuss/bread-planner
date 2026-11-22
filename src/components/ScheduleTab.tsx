@@ -1,7 +1,17 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Info } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 import * as act from '@/state/actions';
-import { scheduleView } from '@/view/schedule';
+import { scheduleView, skipsOnCheck } from '@/view/schedule';
 import { usePlanner } from './calculator';
 import { useNow } from './useNow';
 import { whenText } from './text';
@@ -16,7 +26,7 @@ import { Timeline } from './Timeline';
 /**
  * The Schedule tab. It shows the live schedule for the selected recipe (src/view/schedule.ts) and turns each bake-day
  * control into a planner action: checking a step, correcting when it was done, temperature readings, and starting the
- * next bake.
+ * next bake. A check that would skip many earlier steps asks first (see `skipsOnCheck`).
  */
 export function ScheduleTab({ onViewIngredients }: { onViewIngredients: () => void }) {
   const { state, update } = usePlanner(),
@@ -24,7 +34,15 @@ export function ScheduleTab({ onViewIngredients }: { onViewIngredients: () => vo
   const v = useMemo(() => scheduleView(state, now, (at) => whenText(at, now)), [state, now]);
   const book = v.recipe.method === 'tartine',
     checks = v.bake.done;
-  const check = (id: string, checked: boolean) => update((s) => act.setChecked(s, id, checked, Date.now()));
+  const [asking, setAsking] = useState<{ id: string; title: string; skips: number } | null>(null);
+  const check = (id: string, checked: boolean) => {
+    if (checked) {
+      const { skips, ask } = skipsOnCheck(state, id, Date.now());
+      const title = v.steps.find((s) => s.id === id)?.title ?? '';
+      if (ask) return setAsking({ id, title, skips: skips.length });
+    }
+    update((s) => act.setChecked(s, id, checked, Date.now()));
+  };
   const onUnit = (u: TempUnit) => update((s) => act.setTempUnit(s, u));
   const afterMixField = (id: string) => (
     <DoughTemperature
@@ -122,6 +140,22 @@ export function ScheduleTab({ onViewIngredients }: { onViewIngredients: () => vo
           tempText={v.tempText}
         />
       </div>
+      <AlertDialog open={asking !== null} onOpenChange={(open) => !open && setAsking(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Skip {asking?.skips} earlier steps?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Checking "{asking?.title}" marks {asking?.skips} earlier steps as Skipped. You can still check them later.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Don't check it</AlertDialogCancel>
+            <AlertDialogAction onClick={() => asking && update((s) => act.setChecked(s, asking.id, true, Date.now()))}>
+              Check and skip
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
