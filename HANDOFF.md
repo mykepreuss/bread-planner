@@ -995,7 +995,7 @@ Michael's request: remove the 15-minute cooling mark from the process. Branch `r
 Change: `src/domain/schedule.ts` no longer adds a cooling-mark step after each batch, and the `cooled` step kind is gone. The out-of-the-oven step keeps its note, which says to cool each loaf at least 15 minutes before slicing, and its 15-minute length. The quiet-hours comment no longer mentions the mark. docs/BEHAVIOUR.md records it as decision 11.
 
 Tests:
-- New, failing before the change: for House and Tartine, cold and warm proofs and four loaf and oven combinations, no step is a cooling mark, the last step is "All loaves out of the oven" (`done`), and its note keeps the cooling advice.
+- New, failing before the change: for House and Tartine, cold and warm proofs and four loaf and oven combinations, no step is a cooling mark, the last step is the last loaf out (id `done`), and its note keeps the cooling advice.
 - Tests that named the marks now don't: their times, titles, notes and skip lists lose the cooling-mark entries, and the note tests check the out-of-the-oven note's cooling advice instead. The last-step question now taps "All loaves out of the oven" and counts 21 earlier steps, not 22, and step counts go from 23 to 22.
 
 Record changes, checked by a script against `main`:
@@ -1005,7 +1005,19 @@ Record changes, checked by a script against `main`:
   - "five loaves, two at a time, into the second batch": Up next was batch 1's cooling mark and is now batch 2's bake.
   - Three plans had a cooling mark checked, so their checked count drops by one. In random bake 19 that late check had also set how far behind the plan ran: 1h 55m, now 1h 57m from the last loaf out.
 - The saved-data cases' schedules lose their cooling marks, and nothing else changes. Recipe calculations and helpers are unchanged. A second `npm run baseline:update` left the record unchanged.
-- The browser record: 54 files rewritten. The text records only lose the cooling-mark steps and their labels, step counts go from 23 to 22, and every total time is unchanged. The layout records changed by deletions only.
+- The browser record: 53 record files rewritten, plus the spec. The text records only lose the cooling-mark steps and their labels, each step count drops by the number of batches (23 to 22 for the default Preuss House plan), and every total time is unchanged. The layout records changed by deletions only.
+
+Independent check (the verifier, on `60f27d4`): PASS on all five criteria.
+- Its own browser spec passed 26 of 26 on this build, and failed 10 on `main`. It covered six recipes, both proofs and eight loaf and oven combinations, the last step, the total time, "All batches done", the ended notice, and old saves with cooling marks checked.
+- It decoded the record and confirmed the four plan changes. All four of its breaks were caught, and the commands passed with the stated counts.
+- Its wording nits are corrected in the next section's branch, so #34 merges as checked:
+  - decision 11's "every other step is unchanged";
+  - the new test's description;
+  - the "54 files";
+  - "23 to 22" as a general count.
+- It noted:
+  - Old cooling-mark checks stay in saved data. They are ignored in counts, skips and the shift, but still mark a bake as underway.
+  - A bake with everything checked except its cooling mark now shows "All batches done".
 
 ## No basket and dusting flour card, November 22, 2026: committed, pull request open
 
