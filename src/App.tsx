@@ -1,7 +1,7 @@
 import {createContext,useContext,useEffect,useMemo,useState,type ReactNode} from 'react';
 import {useForm,useSelector} from '@tanstack/react-form';
 import {useTable,tableFeatures,flexRender,type ColumnDef} from '@tanstack/react-table';
-import {Wheat,Clock3,Check,RotateCcw,Info,Flame,Snowflake,Scale,CalendarDays,Moon} from 'lucide-react';
+import {Wheat,Clock3,Check,RotateCcw,Info,Flame,Snowflake,Scale,CalendarDays,Moon,X} from 'lucide-react';
 import {Button} from '@/components/ui/button';
 import {Input} from '@/components/ui/input';
 import {Slider} from '@/components/ui/slider';
@@ -16,8 +16,9 @@ import {Table,TableHeader,TableHead,TableBody,TableRow,TableCell} from '@/compon
 import {Tooltip,TooltipTrigger,TooltipContent,TooltipProvider} from '@/components/ui/tooltip';
 import {AlertDialog,AlertDialogTrigger,AlertDialogContent,AlertDialogHeader,AlertDialogTitle,AlertDialogDescription,AlertDialogFooter,AlertDialogCancel,AlertDialogAction} from '@/components/ui/alert-dialog';
 import {coldProofWindow,calendarText,dateString,durationText,loafText,timeText,round,type InputSpec} from '@/lib/model';
-import {definitions,flourNames,createPlanner,restorePlanner,calculateRecipe,recipeSchedule,recipeDefaults,quietHourActions,totalHydration,addedHydration,type Planner} from '@/lib/recipes';
-import {liveSchedule,retime,clockText,stepGaps,shiftText,stampNow,untilText,skippedSteps,stepPhase,bulkEstimate,bulkAdvice,toF,fromF,tempLimits,type LiveStep} from '@/lib/bakeday';
+import {definitions,flourNames,createPlanner,restorePlanner,calculateRecipe,recipeSchedule,recipeDefaults,quietHourActions,totalHydration,addedHydration,type Planner,type Profile} from '@/lib/recipes';
+import {followDough,holdTemperature,withReading,bulkDoneText,turnNumber,inTempRange,retime,clockText,stepGaps,shiftText,stampNow,untilText,skippedSteps,stepPhase,bulkAdvice,toF,fromF,tempLimits,type LiveStep} from '@/lib/bakeday';
+import {cn} from '@/lib/utils';
 
 const STORAGE='bread-planner.v5';
 function loadPlan():Planner {
@@ -54,7 +55,7 @@ function NumberField({spec,compact=false,context,hydrationParams}:{spec:InputSpe
   </div>;}}</form.Field>;
 }
 function FieldGroup({specs}:{specs:InputSpec[]}){return <div className="field-grid">{specs.map(spec=><NumberField key={spec.cell} spec={spec}/>)}</div>;}
-function Panel({title,description,children,icon,className}:{title:string;description?:string;children:ReactNode;icon?:ReactNode;className?:string}){return <Card className={className?`work-card ${className}`:'work-card'}><CardHeader><div className="card-title-row"><CardTitle>{title}</CardTitle>{icon}</div>{description&&<CardDescription>{description}</CardDescription>}</CardHeader><CardContent>{children}</CardContent></Card>;}
+function Panel({title,description,children,icon,className}:{title:string;description?:string;children:ReactNode;icon?:ReactNode;className?:string}){return <Card className={cn('work-card',className)}><CardHeader><div className="card-title-row"><CardTitle>{title}</CardTitle>{icon}</div>{description&&<CardDescription>{description}</CardDescription>}</CardHeader><CardContent>{children}</CardContent></Card>;}
 function Weights({rows,totalLabel,total}:{rows:[string,number][];totalLabel?:string;total?:number}){return <dl className="weights">{rows.map(([name,amount])=><div key={name}><dt>{name}</dt><dd>{g(amount)} <span>g</span></dd></div>)}{total!==undefined&&<div className="weight-total"><dt>{totalLabel||'Total'}</dt><dd>{g(total)} <span>g</span></dd></div>}</dl>;}
 
 function LeavenBalance({made,used,reserve,shortfall}:{made:number;used:number;reserve:number;shortfall:number}){
@@ -91,25 +92,42 @@ function useNow(){
 function whenText(at:Date,now:number){return dateString(at)===dateString(new Date(now))?timeText(at):`${calendarText(at)} at ${timeText(at)}`;}
 type TempUnit='F'|'C';
 /** Measured dough temperature, stored in °F and entered in either unit. An empty field clears it. */
+/** The number field and °F/°C switch shared by both dough temperature forms, with an optional action beside them. */
+function TempRow({id,draft,unit,invalid,onDraft,onUnit,onFocus,onBlur,children}:{id:string;draft:string;unit:TempUnit;invalid:boolean;onDraft:(v:string)=>void;onUnit:(u:TempUnit)=>void;onFocus?:()=>void;onBlur?:()=>void;children?:ReactNode}){
+  const limits=tempLimits[unit];
+  return <><div className="dough-temp-row"><Input id={id} type="number" inputMode="decimal" step={.5} min={limits.min} max={limits.max} placeholder={unit==='F'?'78':'26'} value={draft} aria-invalid={invalid} onFocus={onFocus} onChange={e=>onDraft(e.target.value)} onBlur={onBlur}/>
+      <Select value={unit} onValueChange={v=>onUnit(v as TempUnit)}><SelectTrigger className="temp-unit" aria-label="Temperature unit"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="F">°F</SelectItem><SelectItem value="C">°C</SelectItem></SelectContent></Select>{children}</div>
+    {invalid&&<span className="input-error">Use {limits.min} to {limits.max}°{unit}</span>}</>;
+}
 function DoughTemperature({id,valueF,unit,onChange,onUnit,advice}:{id:string;valueF:number|null;unit:TempUnit;onChange:(f:number|null)=>void;onUnit:(u:TempUnit)=>void;advice?:string}){
-  const shown=valueF===null?'':String(Math.round(fromF(valueF,unit)*10)/10),limits=tempLimits[unit];
+  const shown=valueF===null?'':String(Math.round(fromF(valueF,unit)*10)/10);
   const [draft,setDraft]=useState(shown),[focused,setFocused]=useState(false);
   useEffect(()=>{if(!focused)setDraft(shown);},[shown,focused]);
-  const n=Number(draft),invalid=draft.trim()!==''&&(!Number.isFinite(n)||n<limits.min||n>limits.max);
+  const invalid=draft.trim()!==''&&!inTempRange(Number(draft),unit);
+  const change=(v:string)=>{setDraft(v);if(v.trim()==='')onChange(null);else if(inTempRange(Number(v),unit))onChange(toF(Number(v),unit));};
   return <div className="dough-temp">
     <Label htmlFor={id}>Dough temperature after mixing</Label>
-    <div className="dough-temp-row"><Input id={id} type="number" inputMode="decimal" step={.5} min={limits.min} max={limits.max} placeholder={unit==='F'?'78':'26'} value={draft} aria-invalid={invalid} onFocus={()=>setFocused(true)} onChange={e=>{const v=e.target.value;setDraft(v);if(v.trim()==='')onChange(null);else{const x=Number(v);if(Number.isFinite(x)&&x>=limits.min&&x<=limits.max)onChange(toF(x,unit));}}} onBlur={()=>{setFocused(false);if(invalid)setDraft(shown);}}/>
-      <Select value={unit} onValueChange={v=>onUnit(v as TempUnit)}><SelectTrigger className="temp-unit" aria-label="Temperature unit"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="F">°F</SelectItem><SelectItem value="C">°C</SelectItem></SelectContent></Select></div>
-    {invalid&&<span className="input-error">Use {limits.min} to {limits.max}°{unit}</span>}
+    <TempRow id={id} draft={draft} unit={unit} invalid={invalid} onDraft={change} onUnit={onUnit} onFocus={()=>setFocused(true)} onBlur={()=>{setFocused(false);if(invalid)setDraft(shown);}}/>
     <p className="bulk-advice" aria-live="polite">{advice??'Measure the dough after mixing to estimate how long bulk will take. The plan counts 78°F / 26°C as normal.'}</p>
   </div>;
 }
-function NowCard({next,then,shift,now,onDone,bulk}:{next:LiveStep;then?:LiveStep;shift:number;now:number;onDone:()=>void;bulk?:ReactNode}){
+/** A later reading during bulk. It is added with the time it was taken, and re-times only the fermentation still to come. */
+function Remeasure({id,unit,onUnit,onAdd,advice}:{id:string;unit:TempUnit;onUnit:(u:TempUnit)=>void;onAdd:(f:number)=>void;advice?:string}){
+  const [draft,setDraft]=useState(''),entered=draft.trim()!=='',valid=entered&&inTempRange(Number(draft),unit);
+  return <form className="dough-temp" onSubmit={e=>{e.preventDefault();if(valid){onAdd(toF(Number(draft),unit));setDraft('');}}}>
+    {advice&&<p className="bulk-advice lead" aria-live="polite">{advice}</p>}
+    <Label htmlFor={id}>Dough temperature now</Label>
+    <TempRow id={id} draft={draft} unit={unit} invalid={entered&&!valid} onDraft={setDraft} onUnit={onUnit}><Button type="submit" variant="outline" disabled={!valid}>Update</Button></TempRow>
+  </form>;
+}
+/** From 30 minutes before bulk should end, a turn's card leads with the dough: check it, and preshape now if it is ready. */
+function NowCard({next,then,shift,now,onDone,bulk,doughCheck}:{next:LiveStep;then?:LiveStep;shift:number;now:number;onDone:()=>void;bulk?:ReactNode;doughCheck?:{readiness?:string;onReady:()=>void}}){
   const due=+next.at<=now;
   return <section className={`now-card phase-${stepPhase(next.id)}${due?' is-due':''}`} aria-label="Up next">
     <div className="now-when"><span className="eyebrow">Up next</span><span className="now-countdown">{untilText(+next.at-now)}</span></div>
     <h2>{next.title}</h2>
-    <p className="now-time"><time dateTime={next.at.toISOString()}>{whenText(next.at,now)}</time>{next.duration>0&&<span> · {durationText(next.duration)}</span>}</p>
+    <p className="now-time"><time dateTime={next.at.toISOString()}>{whenText(next.at,now)}</time></p>
+    {doughCheck&&<div className="dough-check"><p><strong>Check the dough before this turn.</strong>{doughCheck.readiness&&<> Ready when: {doughCheck.readiness}</>}</p><Button variant="outline" onClick={doughCheck.onReady}>Ready: preshape now</Button></div>}
     {next.note&&<p className="now-note">{next.note}</p>}
     {next.readiness&&<p className="readiness-cue"><strong>Ready when:</strong> {next.readiness}</p>}
     {shift!==0&&<p className="now-shift"><Clock3 size={16}/>{shiftText(shift)}</p>}
@@ -155,19 +173,33 @@ function App(){
   const definition=definitions[values.recipe],book=definition.method==='tartine',profile=values.recipes[values.recipe],calc=calculateRecipe(values);
   const total=calc?.total,hydration=totalHydration(profile.params),weight=profile.params.weight,count=profile.params.count,batches=Math.ceil(count/values.ovenCapacity);
   const now=useNow(),checks=profile.done,doneAt=profile.doneAt;
-  const planned=useMemo(()=>recipeSchedule(values),[values]),{steps,shift}=useMemo(()=>liveSchedule(planned,checks,doneAt),[planned,checks,doneAt]);
+  const readings=profile.bulkTemps;
+  const planned=useMemo(()=>recipeSchedule(values),[values]),{steps,shift,estimate,turns,bulkMinutes,checkFrom}=useMemo(()=>followDough(planned,checks,doneAt,profile.doughTemp,readings),[planned,checks,doneAt,profile.doughTemp,readings]);
   const doneStep=steps.find(s=>s.id==='done'),firstStep=steps[0];
   const skipped=skippedSteps(steps,checks),settled=[...checks,...skipped];
   const remaining=steps.filter(s=>!settled.includes(s.id)),completed=steps.filter(s=>checks.includes(s.id)).length,next=remaining[0],days=Array.from(new Set(steps.map(s=>dateString(s.at))));
   const stale=doneStep!==undefined&&+doneStep.at<now&&(completed===0||remaining.length===0);
-  const estimate=bulkEstimate(steps,profile.doughTemp),advice=estimate?bulkAdvice(estimate,at=>whenText(at,now)):undefined;
-  const setDoughTemp=(doughTemp:number|null)=>form.setFieldValue('recipes',previous=>({...previous,[values.recipe]:{...previous[values.recipe],doughTemp}}));
-  const bulkField=(id:string)=><DoughTemperature id={id} valueF={profile.doughTemp} unit={values.tempUnit} onChange={setDoughTemp} onUnit={u=>form.setFieldValue('tempUnit',u)} advice={advice}/>;
-  function planNext(){const tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);form.setFieldValue('date',dateString(tomorrow));}
+  const tempText=(f:number)=>`${round(fromF(f,values.tempUnit),values.tempUnit==='C'?1:0)}°${values.tempUnit}`;
+  const advice=bulkMinutes!==null?bulkDoneText(bulkMinutes,estimate):estimate?bulkAdvice(estimate,at=>whenText(at,now),{turns,hold:holdTemperature(estimate,now),temp:tempText}):undefined;
+  const setProfile=(change:Partial<Profile>)=>form.setFieldValue('recipes',previous=>({...previous,[values.recipe]:{...previous[values.recipe],...change}}));
+  const setDoughTemp=(doughTemp:number|null)=>setProfile({doughTemp});
+  const addReading=(f:number)=>setProfile({bulkTemps:withReading(readings,{at:stampNow(),f})});
+  const removeReading=(at:number)=>setProfile({bulkTemps:readings.filter(r=>r.at!==at)});
+  // Dough temperatures belong to one bake. A new bake (a new date or time before anything is checked, or Plan the next bake) starts without them.
+  const clearTemps=()=>{if(profile.doughTemp!==null||readings.length)setProfile({doughTemp:null,bulkTemps:[]});};
+  const changeWhen=(field:{handleChange:(v:string)=>void},value:string)=>{field.handleChange(value);if(!checks.length)clearTemps();};
+  const onUnit=(u:TempUnit)=>form.setFieldValue('tempUnit',u);
+  const afterMixField=(id:string)=><DoughTemperature id={id} valueF={profile.doughTemp} unit={values.tempUnit} onChange={setDoughTemp} onUnit={onUnit} advice={advice}/>;
+  const nowBulk=(id:string)=>{const during=id==='shape'||turnNumber(id)>0;
+    if(during&&profile.doughTemp!==null)return <Remeasure id="now-dough-temp" unit={values.tempUnit} onUnit={onUnit} onAdd={addReading} advice={advice}/>;
+    if(during||id==='rest')return afterMixField('now-dough-temp');};
+  const shapeStep=steps.find(s=>s.id==='shape');
+  const doughCheck=next&&turnNumber(next.id)>0&&shapeStep&&checkFrom&&now>=+checkFrom?{readiness:shapeStep.readiness,onReady:()=>toggle('shape',true)}:undefined;
+  function planNext(){const tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);form.setFieldValue('date',dateString(tomorrow));clearTemps();}
   const gaps=stepGaps(steps);
   const nightActions=quietHourActions(steps,settled),nightIds=new Set(nightActions.map(({step})=>step.id));
   const proofWindow=coldProofWindow(steps);
-  const setProgress=(done:string[],times:Record<string,number>)=>form.setFieldValue('recipes',previous=>({...previous,[values.recipe]:{...previous[values.recipe],done,doneAt:times}}));
+  const setProgress=(done:string[],times:Record<string,number>)=>setProfile({done,doneAt:times});
   const toggle=(id:string,checked:boolean)=>{const times={...doneAt};if(checked)times[id]=stampNow();else delete times[id];setProgress(checked?[...checks.filter(x=>x!==id),id]:checks.filter(x=>x!==id),times);};
   const retimeStep=(id:string,date:string,hhmm:string)=>{const t=retime(date,hhmm);if(t!==null)setProgress(checks,{...doneAt,[id]:t});};
   function changeAnchor(anchor:'leaven'|'done'){const step=planned.find(s=>s.id===anchor);if(step){form.setFieldValue('date',dateString(step.at));form.setFieldValue('time',`${String(step.at.getHours()).padStart(2,'0')}:${String(step.at.getMinutes()).padStart(2,'0')}`);}form.setFieldValue('anchor',anchor);}
@@ -175,21 +207,21 @@ function App(){
   return <TooltipProvider><FormContext.Provider value={form}><div className="app-shell">
     <Tabs value={tab} onValueChange={setTab} className="main-tabs"><div className="nav-row"><TabsList className="nav-tabs"><TabsTrigger value="schedule"><CalendarDays/> Schedule</TabsTrigger><TabsTrigger value="formula"><Scale/> Ingredients</TabsTrigger></TabsList></div>
       <div className="recipe-switch"><div><Label htmlFor="recipe-choice">Recipe</Label><Select value={values.recipe} onValueChange={v=>form.setFieldValue('recipe',v)}><SelectTrigger id="recipe-choice" aria-label="Recipe"><SelectValue/></SelectTrigger><SelectContent>{values.order.map(id=><SelectItem value={id} key={id}>{definitions[id].name}</SelectItem>)}</SelectContent></Select></div><p>{definition.description}</p></div>
-      <TabsContent value="schedule">{next&&!stale&&<NowCard next={next} then={remaining[1]} shift={shift} now={now} onDone={()=>toggle(next.id,true)} bulk={next.id==='rest'||next.id==='shape'||/^turn\d+$/.test(next.id)?bulkField('now-dough-temp'):undefined}/>}{nightActions.length>0&&<section className="quiet-warning" role="region" aria-label="Quiet hours warning"><Moon size={22}/><div><h2>{nightActions.length} {nightActions.length===1?'action needs':'actions need'} you during quiet hours</h2><p>Hands-on work is scheduled after 10:30 PM or before 7:00 AM. Try an earlier start or a different finish time. Overnight rests are fine.</p><Accordion type="single" collapsible className="quiet-details"><AccordionItem value="actions"><AccordionTrigger>View affected steps</AccordionTrigger><AccordionContent><ul>{nightActions.map(({step,continues})=><li key={step.id}><time dateTime={step.at.toISOString()}>{calendarText(step.at)} at {timeText(step.at)}</time><span>{step.title}{continues&&<small>Continues past 10:30 PM</small>}</span></li>)}</ul></AccordionContent></AccordionItem></Accordion></div></section>}<div className={`schedule-layout${checks.length>0&&!stale?' is-underway':''}`}><aside className="schedule-sidebar">
+      <TabsContent value="schedule">{next&&!stale&&<NowCard next={next} then={remaining[1]} shift={shift} now={now} onDone={()=>toggle(next.id,true)} bulk={nowBulk(next.id)} doughCheck={doughCheck}/>}{nightActions.length>0&&<section className="quiet-warning" role="region" aria-label="Quiet hours warning"><Moon size={22}/><div><h2>{nightActions.length} {nightActions.length===1?'action needs':'actions need'} you during quiet hours</h2><p>Hands-on work is scheduled after 10:30 PM or before 7:00 AM. Try an earlier start or a different finish time. Overnight rests are fine.</p><Accordion type="single" collapsible className="quiet-details"><AccordionItem value="actions"><AccordionTrigger>View affected steps</AccordionTrigger><AccordionContent><ul>{nightActions.map(({step,continues})=><li key={step.id}><time dateTime={step.at.toISOString()}>{calendarText(step.at)} at {timeText(step.at)}</time><span>{step.title}{continues&&<small>Continues past 10:30 PM</small>}</span></li>)}</ul></AccordionContent></AccordionItem></Accordion></div></section>}<div className={`schedule-layout${checks.length>0&&!stale?' is-underway':''}`}><div className="schedule-sidebar">
         <Card className="plan-card"><CardHeader><CardTitle>When are we baking?</CardTitle></CardHeader><CardContent>
           <Label>Plan around</Label><Select value={values.anchor} onValueChange={v=>changeAnchor(v as 'leaven'|'done')}><SelectTrigger className="anchor-select" aria-label="Plan around"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="leaven">Starting the leaven</SelectItem><SelectItem value="done">All loaves out of the oven</SelectItem></SelectContent></Select>
-          <div className="date-time-fields"><form.Field name="date">{f=><div><Label htmlFor="plan-date">{values.anchor==='leaven'?'Leaven date':'Last batch date'}</Label><Input id="plan-date" type="date" value={f.state.value} onChange={e=>f.handleChange(e.target.value)} onBlur={f.handleBlur}/></div>}</form.Field><form.Field name="time">{f=><div><Label htmlFor="plan-time">Time</Label><Input id="plan-time" type="time" value={f.state.value} onChange={e=>f.handleChange(e.target.value)} onBlur={f.handleBlur}/></div>}</form.Field></div>
+          <div className="date-time-fields"><form.Field name="date">{f=><div><Label htmlFor="plan-date">{values.anchor==='leaven'?'Leaven date':'Last batch date'}</Label><Input id="plan-date" type="date" value={f.state.value} onChange={e=>changeWhen(f,e.target.value)} onBlur={f.handleBlur}/></div>}</form.Field><form.Field name="time">{f=><div><Label htmlFor="plan-time">Time</Label><Input id="plan-time" type="time" value={f.state.value} onChange={e=>changeWhen(f,e.target.value)} onBlur={f.handleBlur}/></div>}</form.Field></div>
           {doneStep&&<div className="finish-summary"><Flame size={19}/><div><span>Baking complete</span><strong>{timeText(doneStep.at)}</strong><small>{calendarText(doneStep.at)}</small></div></div>}
         </CardContent></Card>
         <Panel title="Your batch" icon={<Wheat size={18}/>} className="setup-card"><NumberField spec={spec('count','Number of loaves','loaves',1,1)}/><div className="batch-facts"><span><strong>{g(weight)} g</strong> per loaf</span><span><strong>{total===undefined?'—':g(total)} g</strong> total dough</span><span><strong>{Math.round(hydration)}%</strong> total hydration</span></div><Button variant="link" className="text-link" onClick={()=>setTab('formula')}>View ingredients</Button></Panel>
         <Panel title="Oven and proof" className="setup-card"><div className="field-grid"><div className="number-field"><Label htmlFor="oven-capacity">Loaves baked at once</Label><Select value={String(values.ovenCapacity)} onValueChange={v=>form.setFieldValue('ovenCapacity',Number(v))}><SelectTrigger id="oven-capacity"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="1">1 loaf</SelectItem><SelectItem value="2">2 loaves</SelectItem></SelectContent></Select></div>{batches>1&&<NumberField spec={{key:'reheat',cell:'reheat',label:'Reheat between batches',value:30,unit:'min',step:1}}/>}</div><p className="field-note"><strong>{batches} {batches===1?'batch':'batches'}</strong> for {loafText(count)}.</p>{!book&&proofWindow&&<div className="cold-proof-summary"><div><Snowflake size={18}/><strong>Cold proof, {durationText(proofWindow.minutes)}</strong></div><p><span>{calendarText(proofWindow.start)} at {timeText(proofWindow.start)}</span><span>to {calendarText(proofWindow.end)} at {timeText(proofWindow.end)}</span></p><span className="cold-proof-status">{proofWindow.overnight?'Overnight cold ferment':'Daytime proof with this start time'}</span></div>}{book&&<><Label className="proof-label">Final proof</Label><Select value={values.proof} onValueChange={v=>form.setFieldValue('proof',v as 'cold'|'warm')}><SelectTrigger aria-label="Final proof"><SelectValue/></SelectTrigger><SelectContent><SelectItem value="cold">Refrigerated, 10 to 12 hours</SelectItem><SelectItem value="warm">Warm, 3 to 4 hours</SelectItem></SelectContent></Select><p className="field-note">{values.proof==='cold'?'Allows 60 minutes to warm each batch.':'Later batches wait longer during serial baking. Judge their condition before loading.'}</p></>}</Panel>
         <div className="sidebar-note"><Info size={17}/><p>Readiness comes before the clock. Wait until the dough is ready, then check the step. Later steps move to match.</p></div>
-      </aside><section className="timeline-section" aria-labelledby="schedule-heading"><div className="section-heading"><div><h2 id="schedule-heading">Bake schedule</h2></div></div>
-        <div className="timeline-meta"><span><Clock3 size={14}/>{firstStep&&doneStep?durationText((+doneStep.at-(+firstStep.at))/60000):'Set a date and time'} total</span><span>{completed} of {steps.length} steps checked</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" aria-label="Clear checklist" disabled={!completed} onClick={()=>{setProgress([],{});setDoughTemp(null);}}><RotateCcw size={14}/></Button></TooltipTrigger><TooltipContent>Clear this recipe's checklist</TooltipContent></Tooltip></div>
+      </div><section className="timeline-section" aria-labelledby="schedule-heading"><div className="section-heading"><div><h2 id="schedule-heading">Bake schedule</h2></div></div>
+        <div className="timeline-meta"><span><Clock3 size={14}/>{firstStep&&doneStep?durationText((+doneStep.at-(+firstStep.at))/60000):'Set a date and time'} total</span><span>{completed} of {steps.length} steps checked</span><Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon-sm" aria-label="Clear checklist" disabled={!completed} onClick={()=>{setProgress([],{});clearTemps();}}><RotateCcw size={14}/></Button></TooltipTrigger><TooltipContent>Clear this recipe's checklist</TooltipContent></Tooltip></div>
         {!book&&proofWindow&&!proofWindow.overnight&&<p className="notice overnight-warning" role="status">This cold proof falls within one calendar day. For an overnight ferment, shift your start or finish time so this rest spans the night. The dates below show your current plan.</p>}
         {stale&&doneStep&&<p className="notice" role="status"><span>This plan ended {calendarText(doneStep.at)}. <Button variant="link" className="inline-link" onClick={planNext}>Plan the next bake</Button> to move it to tomorrow and keep every setting.</span></p>}
         {!steps.length&&<p className="notice" role="alert">Choose a valid date, time, positive whole loaf count and oven capacity. A time skipped by daylight saving cannot be used.</p>}
-        {days.map((day,dayIndex)=><div className="day-group" key={day}><div className="day-heading"><span className="day-number">Day {dayIndex+1}</span><h3>{calendarText(steps.find(s=>dateString(s.at)===day)!.at)}</h3><span className="day-rule"/></div><div className="step-list">{steps.filter(s=>dateString(s.at)===day).map(step=>{const done=checks.includes(step.id),skip=skipped.includes(step.id);return <div key={step.id} className={`timeline-step phase-${stepPhase(step.id)} ${done?'is-done':''} ${skip?'is-skipped':''} ${!stale&&next?.id===step.id?'is-next':''}`}><div className="step-check"><Checkbox id={`step-${step.id}`} checked={done} onCheckedChange={v=>toggle(step.id,v===true)} aria-label={`Complete ${step.title}`}/></div><time dateTime={step.at.toISOString()}>{timeText(step.at)}</time><div className="step-details"><Label htmlFor={`step-${step.id}`}>{step.title}{step.id==='fridge'&&<Snowflake size={14}/>} {!stale&&next?.id===step.id&&<Badge variant="secondary" className="next-badge">Up next</Badge>}{skip&&<Badge variant="outline" className="skipped-badge">Skipped</Badge>}{nightIds.has(step.id)&&<Badge variant="outline" className="quiet-badge"><Moon size={12}/> Quiet hours</Badge>}</Label>{done&&step.actual&&<div className="done-at" role="group" aria-labelledby={`done-at-label-${step.id}`}><span className="done-at-label" id={`done-at-label-${step.id}`}>Done at</span><Input type="date" aria-label={`Date ${step.title} was done`} value={dateString(step.actual)} onChange={e=>retimeStep(step.id,e.target.value,clockText(step.actual!))}/><Input type="time" aria-label={`Time ${step.title} was done`} value={clockText(step.actual)} onChange={e=>retimeStep(step.id,dateString(step.actual!),e.target.value)}/></div>}{step.note&&<p>{step.note}</p>}{step.readiness&&<p className="readiness-cue"><strong>Ready when:</strong> {step.readiness}</p>}{step.id==='rest'&&bulkField('timeline-dough-temp')}</div>{(gaps.get(step.id)??0)>0&&<span className="step-gap"><span className="sr-only">Next step in </span>{durationText(gaps.get(step.id)!)}</span>}</div>;})}</div></div>)}
+        {days.map((day,dayIndex)=><div className="day-group" key={day}><div className="day-heading"><span className="day-number">Day {dayIndex+1}</span><h3>{calendarText(steps.find(s=>dateString(s.at)===day)!.at)}</h3><span className="day-rule"/></div><div className="step-list">{steps.filter(s=>dateString(s.at)===day).map(step=>{const done=checks.includes(step.id),skip=skipped.includes(step.id);return <div key={step.id} className={`timeline-step phase-${stepPhase(step.id)} ${done?'is-done':''} ${skip?'is-skipped':''} ${!stale&&next?.id===step.id?'is-next':''}`}><div className="step-check"><Checkbox id={`step-${step.id}`} checked={done} onCheckedChange={v=>toggle(step.id,v===true)} aria-label={`Complete ${step.title}`}/></div><time dateTime={step.at.toISOString()}>{timeText(step.at)}</time><div className="step-details"><Label htmlFor={`step-${step.id}`}>{step.title}{step.id==='fridge'&&<Snowflake size={14}/>} {!stale&&next?.id===step.id&&<Badge variant="secondary" className="next-badge">Up next</Badge>}{skip&&<Badge variant="outline" className="skipped-badge">Skipped</Badge>}{nightIds.has(step.id)&&<Badge variant="outline" className="quiet-badge"><Moon size={12}/> Quiet hours</Badge>}</Label>{done&&step.actual&&<div className="done-at" role="group" aria-labelledby={`done-at-label-${step.id}`}><span className="done-at-label" id={`done-at-label-${step.id}`}>Done at</span><Input type="date" aria-label={`Date ${step.title} was done`} value={dateString(step.actual)} onChange={e=>retimeStep(step.id,e.target.value,clockText(step.actual!))}/><Input type="time" aria-label={`Time ${step.title} was done`} value={clockText(step.actual)} onChange={e=>retimeStep(step.id,dateString(step.actual!),e.target.value)}/></div>}{step.note&&<p>{step.note}</p>}{step.readiness&&<p className="readiness-cue"><strong>Ready when:</strong> {step.readiness}</p>}{step.id==='rest'&&<>{afterMixField('timeline-dough-temp')}{readings.length>0&&<ul className="bulk-readings" aria-label="Later dough temperatures">{readings.map(r=><li key={r.at}><span><strong>{tempText(r.f)}</strong> at {timeText(new Date(r.at))}</span><Button variant="ghost" size="icon-sm" aria-label={`Remove the ${tempText(r.f)} reading from ${timeText(new Date(r.at))}`} onClick={()=>removeReading(r.at)}><X size={14}/></Button></li>)}</ul>}</>}</div>{(gaps.get(step.id)??0)>0&&<span className="step-gap"><span className="sr-only">Next step in </span>{durationText(gaps.get(step.id)!)}</span>}</div>;})}</div></div>)}
         {remaining.length===0&&steps.length>0&&<div className="bake-complete"><Wheat/> All batches done. Enjoy your bread.</div>}
       </section></div></TabsContent>
       <TabsContent value="formula"><RecipeFormula values={values} onReset={resetRecipe}/></TabsContent>
