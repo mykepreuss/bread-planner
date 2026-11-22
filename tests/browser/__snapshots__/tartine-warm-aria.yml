@@ -34,6 +34,8 @@
     - strong: 5:20 AM
     - text: Monday, Nov 23 Your batch Number of loaves
     - spinbutton "Number of loaves": "1"
+    - text: loaves Loaves per mix
+    - spinbutton "Loaves per mix": "2"
     - text: loaves
     - strong: 985 g
     - text: per loaf
@@ -41,6 +43,8 @@
     - text: total dough
     - strong: 77%
     - text: total hydration
+    - strong: 1 bowl
+    - text: to mix in
     - button "View ingredients"
     - text: Oven and proof Loaves baked at once
     - combobox "Loaves baked at once": 1 loaf

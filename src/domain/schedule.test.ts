@@ -298,8 +298,8 @@ test('the House final mix lists rye flour, leaven, salt and water as separate ti
     steps.filter((s) => s.additions).map((s) => s.id),
     ['mix'],
   );
-  // Three loaves weigh half as much again, to the gram.
-  const three = find(schedule(plan('house', {}, { count: 3 })), 'mix').additions!;
+  // Three loaves in one bowl weigh half as much again, to the gram.
+  const three = find(schedule(plan('house', { mixCapacity: 3 }, { count: 3 })), 'mix').additions!;
   assert.deepEqual(
     three.map((a) => [a.id, Math.round(a.grams * 1e6) / 1e6]),
     [
@@ -347,5 +347,96 @@ test("Tartine's second addition lists its salt and water as tick-offs, for every
       steps.filter((s) => s.additions).map((s) => s.id),
       ['mix'],
     );
+  }
+});
+
+test('a doubled batch is mixed in 2 bowls and a tripled one in 3, each with its own weights and tick-offs, then combined for bulk (Michael, November 22, 2026)', () => {
+  const four = schedule(plan('house', {}, { count: 4 })),
+    step = (id: string) => find(four, id);
+  // The autolyse lists one bowl's weights: the default batch's, since 4 loaves at 2 per mix is two default batches.
+  assert.equal(
+    step('autolyse').note,
+    "In each of 2 bowls, mix Anita's all-purpose flour (800 g), whole-wheat flour (100 g), water (680 g). Cover. Keep the remaining ingredients for the final mix.",
+  );
+  assert.equal(step('mix').note, 'Add these to each bowl after the autolyse. Mix until incorporated.');
+  assert.deepEqual(
+    step('mix').additions!.map((a) => `${a.bowl} ${a.id} ${a.name} ${Math.round(a.grams * 1e6) / 1e6}`),
+    [
+      '1 mix:1:rye-flour Rye flour 100',
+      '1 mix:1:leaven Leaven 200',
+      '1 mix:1:salt Salt 20',
+      '1 mix:1:water Water 100',
+      '2 mix:2:rye-flour Rye flour 100',
+      '2 mix:2:leaven Leaven 200',
+      '2 mix:2:salt Salt 20',
+      '2 mix:2:water Water 100',
+    ],
+  );
+  assert.equal(
+    step('rest').note,
+    'Combine both bowls in one container. Keep covered in a warm place, about 75°F to 80°F / 24°C to 27°C.',
+  );
+  assert.match(step('leaven').note, / That is 200 g for each of the 2 bowls\.$/);
+  // Six loaves make three bowls, each the default batch again.
+  const six = schedule(plan('house', {}, { count: 6 }));
+  assert.match(find(six, 'autolyse').note, /^In each of 3 bowls, mix Anita's all-purpose flour \(800 g\)/);
+  assert.equal(new Set(find(six, 'mix').additions!.map((a) => a.bowl)).size, 3);
+  assert.match(find(six, 'rest').note, /^Combine all 3 bowls in one container\. /);
+  // Mixing in bowls changes no step's time, and nothing after the start of bulk.
+  const oneBowl = schedule(plan('house', { mixCapacity: 4 }, { count: 4 }));
+  assert.deepEqual(
+    four.map((s) => [s.id, +s.at, s.minutes]),
+    oneBowl.map((s) => [s.id, +s.at, s.minutes]),
+  );
+  const after = (steps: Step[]) => steps.slice(steps.findIndex((s) => s.id === 'turn1'));
+  assert.deepEqual(after(four), after(oneBowl));
+});
+
+test('the loaves split equally between bowls, and a bowl that holds them all is one mix as before', () => {
+  // Three loaves at 2 per mix: two equal bowls of 1.5 loaves.
+  const three = find(schedule(plan('house', {}, { count: 3 })), 'mix').additions!;
+  assert.deepEqual(
+    three.filter((a) => a.name === 'Salt').map((a) => [a.id, Math.round(a.grams * 1e6) / 1e6]),
+    [
+      ['mix:1:salt', 15],
+      ['mix:2:salt', 15],
+    ],
+  );
+  // Two loaves, or any count up to the bowl's size, keep the single list and wording.
+  for (const [count, mixCapacity] of [
+    [1, 2],
+    [2, 2],
+    [4, 4],
+    [5, 8],
+  ]) {
+    const steps = schedule(plan('house', { mixCapacity }, { count }));
+    assert.ok(
+      find(steps, 'mix').additions!.every((a) => a.bowl === undefined && /^mix:[a-z-]+$/.test(a.id)),
+      `${count} at ${mixCapacity}`,
+    );
+    assert.match(find(steps, 'autolyse').note, /^Mix /);
+    assert.match(find(steps, 'rest').note, /^Keep covered/);
+  }
+  // A plan that doesn't say mixes 2 loaves per bowl.
+  assert.equal(find(schedule(plan('house', {}, { count: 4 })), 'mix').additions!.length, 8);
+});
+
+test('Tartine recipes split the initial mix and the salt step between bowls, and combine them for bulk', () => {
+  for (const id of ['tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye']) {
+    const steps = schedule(plan(id, {}, { count: 4 }));
+    assert.match(
+      find(steps, 'autolyse').note,
+      /^Split this mix between 2 bowls, with an equal share of everything in each\. /,
+      id,
+    );
+    assert.equal(
+      find(steps, 'mix').note,
+      'Work the salt and reserved water into each bowl. Keep mixing if the dough separates; it should come together again.',
+    );
+    assert.deepEqual(
+      find(steps, 'mix').additions!.map((a) => a.id),
+      ['mix:1:salt', 'mix:1:water', 'mix:2:salt', 'mix:2:water'],
+    );
+    assert.match(find(steps, 'rest').note, /^Combine both bowls in one container\. Cover and keep/);
   }
 });

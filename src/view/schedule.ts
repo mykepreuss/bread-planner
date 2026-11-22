@@ -1,5 +1,5 @@
 import { formula, totalHydration } from '../domain/formula.ts';
-import { schedule, coldProofWindow } from '../domain/schedule.ts';
+import { schedule, coldProofWindow, mixingBowls } from '../domain/schedule.ts';
 import {
   followDough,
   skippedSteps,
@@ -96,6 +96,7 @@ export function scheduleView(state: PlannerState, now: number, when: (d: Date) =
     days: Array.from(new Set(steps.map((s) => dateString(s.at)))),
     count,
     batches: Math.ceil(count / state.ovenCapacity),
+    bowls: mixingBowls(count, state.mixCapacity),
     total: calc?.total,
     hydration: totalHydration(settings),
     weight: settings.weight,

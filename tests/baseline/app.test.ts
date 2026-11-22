@@ -55,21 +55,23 @@ const ms = (stamp: string) => {
 
 /** A mixing step's tick-offs as rendered: whether each is ticked, its id, name and weight. Null when there is no list. */
 function ticks(html: string) {
-  const list = /<ul class="additions"[^>]*>([\s\S]*?)<\/ul>/.exec(html)?.[1];
-  return list === undefined
+  const lists = [...html.matchAll(/<ul class="additions"[^>]*>([\s\S]*?)<\/ul>/g)].map((m) => m[1]);
+  return lists.length === 0
     ? null
-    : list
-        .split('<li>')
-        .slice(1)
-        .map(
-          (li) =>
-            `${/aria-checked="true"/.test(li) ? 'ticked' : 'not ticked'} ${first(li, /id="[a-z]+-add-([^"]+)"/)}: ${first(li, /<label[^>]*>([^<]*)</)} ${first(li, /class="addition-weight">([^<]*)</)}`,
-        );
+    : lists.flatMap((list) =>
+        list
+          .split('<li>')
+          .slice(1)
+          .map(
+            (li) =>
+              `${/aria-checked="true"/.test(li) ? 'ticked' : 'not ticked'} ${first(li, /id="[a-z]+-add-([^"]+)"/)}: ${first(li, /<label[^>]*>([^<]*)</)} ${first(li, /class="addition-weight">([^<]*)</)}`,
+          ),
+      );
 }
 /** The same for a recorded step. */
 const recordedTicks = (s: Recorded['steps'][number]) =>
   s.additions?.map(
-    (a) => `${a.ticked ? 'ticked' : 'not ticked'} ${a.id.replace(':', '-')}: ${a.name} ${g(a.grams)} g`,
+    (a) => `${a.ticked ? 'ticked' : 'not ticked'} ${a.id.replaceAll(':', '-')}: ${a.name} ${g(a.grams)} g`,
   ) ?? null;
 
 /** What the rendered Schedule tab shows. */

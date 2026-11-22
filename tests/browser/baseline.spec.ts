@@ -444,6 +444,39 @@ test.describe('flows', () => {
     expect(await saved(), 'Clear checklist clears the ticks').toEqual([]);
   });
 
+  test('Doubling the loaves mixes in two bowls, each with its own weights and tick-offs; Loaves per mix is saved', async ({
+    page,
+  }) => {
+    await open(page, 'leaven-done-late');
+    await upNext(page).getByRole('button', { name: 'Done' }).click();
+    await page.getByLabel('Number of loaves').fill('4');
+    await expect(page.getByText('2 bowls', { exact: true })).toBeVisible();
+    const bowl = (n: number) => upNext(page).getByRole('list', { name: `Add to bowl ${n}` });
+    for (const n of [1, 2])
+      for (const name of ['Rye flour 100 g', 'Leaven 200 g', 'Salt 20 g', 'Water 100 g'])
+        await expect(bowl(n).getByRole('checkbox', { name })).toBeVisible();
+    await expect(upNext(page)).toContainText('Add these to each bowl after the autolyse.');
+    await expect(page.locator('.timeline-step', { has: page.locator('#step-rest') })).toContainText(
+      'Combine both bowls in one container.',
+    );
+    // Bowl 2's salt is its own tick.
+    await bowl(2).getByRole('checkbox', { name: 'Salt 20 g' }).check();
+    await expect(bowl(1).getByRole('checkbox', { name: 'Salt 20 g' })).not.toBeChecked();
+    expect(await aria(page)).toMatchSnapshot('flow-two-bowls.aria.yml');
+    await expectSameAfterReload(page);
+    // A bowl that holds all four loaves mixes once, with the whole batch's weights.
+    await page.getByLabel('Loaves per mix').fill('4');
+    await expect(page.getByText('1 bowl', { exact: true })).toBeVisible();
+    await expect(
+      upNext(page).getByRole('list', { name: 'Add to the dough' }).getByRole('checkbox', { name: 'Salt 40 g' }),
+    ).toBeVisible();
+    await page.reload();
+    await ready(page);
+    await expect(page.getByLabel('Loaves per mix')).toHaveValue('4');
+    await page.getByRole('tab', { name: 'Ingredients' }).click();
+    await expect(page.getByText('Weights for each of')).toHaveCount(0);
+  });
+
   test('Clear checklist clears the checks and the dough temperatures', async ({ page }) => {
     await open(page, 'mid-bulk');
     await page.getByRole('button', { name: 'Clear checklist' }).click();

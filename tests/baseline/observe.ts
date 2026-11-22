@@ -95,6 +95,8 @@ export type PlanInput = {
   anchor?: 'leaven' | 'done';
   proof?: 'cold' | 'warm';
   ovenCapacity?: number;
+  /** Loaves per mix; 2 when not given. */
+  mixCapacity?: number;
   reheat?: number;
   tempUnit?: 'F' | 'C';
   params?: Record<string, number>;
@@ -154,6 +156,7 @@ export function plannerState(i: PlanInput | (FormulaInput & { date?: string; tim
     anchor: full.anchor ?? 'leaven',
     proof: full.proof ?? 'cold',
     ovenCapacity: full.ovenCapacity ?? 2,
+    mixCapacity: full.mixCapacity ?? 2,
     reheat: full.reheat ?? 30,
     tempUnit: full.tempUnit ?? 'F',
     recipes: {
@@ -200,6 +203,7 @@ export function observePlan(i: PlanInput) {
           id: a.id,
           name: a.name,
           grams: a.grams,
+          ...(a.bowl !== undefined && { bowl: a.bowl }),
           ticked: v.bake.added.includes(a.id),
         })),
       }),
@@ -216,6 +220,7 @@ export function observePlan(i: PlanInput) {
     })),
     view: {
       batches: v.batches,
+      bowls: v.bowls,
       finish: doneStep ? stamp(doneStep.at) : null,
       totalTime: v.totalMinutes !== null ? durationText(v.totalMinutes) : null,
       checked: v.completed,
@@ -306,6 +311,7 @@ export function observeRestore(saved: unknown) {
     anchor: s.anchor,
     proof: s.proof,
     ovenCapacity: s.ovenCapacity,
+    mixCapacity: s.mixCapacity,
     reheat: s.reheat,
     tempUnit: s.tempUnit,
     recipes: Object.fromEntries(

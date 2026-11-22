@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { FLOUR_NAMES } from '@/domain/recipes';
 import { addInLines } from '@/domain/addins';
+import { mixingBowls } from '@/domain/schedule';
 import { formula, totalHydration } from '@/domain/formula';
 import { selected } from '@/state/schema';
 import { restoreDefaults, setTotalHydration } from '@/state/actions';
@@ -84,6 +85,10 @@ export function IngredientsTab() {
     r = formula(d, p),
     book = d.method === 'tartine';
   const buildFlour = FLOUR_NAMES[d.buildFlour];
+  // Mixed in several bowls, each stage lists one bowl's weights; see `mixingBowls`.
+  const bowls = mixingBowls(p.count, state.mixCapacity),
+    eachBowl = bowls > 1 ? ` Weights for each of ${bowls} bowls.` : '',
+    inBowl = (rows: [string, number][]): [string, number][] => rows.map(([name, n]) => [name, n / bowls]);
   return (
     <>
       <div className="formula-layout">
@@ -216,23 +221,23 @@ export function IngredientsTab() {
               )}
               <Panel
                 title={book ? '01 / Initial mix and rest' : '01 / Autolyse'}
-                description={
+                description={`${
                   book
                     ? 'Leaven goes into this mix before the initial rest.'
                     : 'Mix the flour and first water addition. Keep the final-mix ingredients separate.'
-                }
+                }${eachBowl}`}
               >
-                <Weights rows={r.initial} />
+                <Weights rows={inBowl(r.initial)} />
               </Panel>
               <Panel
                 title={book ? '02 / Salt and remaining water' : '02 / Final mix'}
-                description={
+                description={`${
                   book
                     ? 'Add after the initial rest, then begin bulk fermentation.'
                     : 'Add after the autolyse, once the leaven is ready.'
-                }
+                }${eachBowl}`}
               >
-                <Weights rows={r.final} />
+                <Weights rows={inBowl(r.final)} />
               </Panel>
               {d.addIns && (
                 <Panel

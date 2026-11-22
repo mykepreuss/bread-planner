@@ -31,6 +31,8 @@
     - strong: 8:00 AM
     - text: Sunday, Nov 22 Your batch Number of loaves
     - spinbutton "Number of loaves": "5"
+    - text: loaves Loaves per mix
+    - spinbutton "Loaves per mix": "2"
     - text: loaves
     - strong: 1,000 g
     - text: per loaf
@@ -38,6 +40,8 @@
     - text: total dough
     - strong: 80%
     - text: total hydration
+    - strong: 3 bowls
+    - text: to mix in
     - button "View ingredients"
     - text: Oven and proof Loaves baked at once
     - combobox "Loaves baked at once": 2 loaves
@@ -66,7 +70,7 @@
       - checkbox "Complete Start leaven"
       - time: 5:01 AM
       - text: Start leaven Quiet hours
-      - paragraph: Mix 70 g mature starter, 177.5 g Anita's all-purpose flour, 177.5 g whole-wheat flour and 355 g water. Keep it separate from the autolyse and cover. You use 500 g in the dough and keep 280 g.
+      - paragraph: Mix 70 g mature starter, 177.5 g Anita's all-purpose flour, 177.5 g whole-wheat flour and 355 g water. Keep it separate from the autolyse and cover. You use 500 g in the dough and keep 280 g. That is 166.7 g for each of the 3 bowls.
       - paragraph:
         - strong: "Ready when:"
         - text: Use when aerated and puffy, and a spoonful floats in room-temperature water. If it sinks, allow more fermentation before mixing.
@@ -74,30 +78,59 @@
       - checkbox "Complete Start autolyse"
       - time: 5:31 AM
       - text: Start autolyse Quiet hours
-      - paragraph: Mix Anita's all-purpose flour (2000 g), whole-wheat flour (250 g), water (1700 g). Cover. Keep the remaining ingredients for the final mix.
+      - paragraph: In each of 3 bowls, mix Anita's all-purpose flour (666.7 g), whole-wheat flour (83.3 g), water (566.7 g). Cover. Keep the remaining ingredients for the final mix.
       - text: Next step in 4h 30m
       - checkbox "Complete Mix final dough"
       - time: 10:01 AM
       - text: Mix final dough
-      - paragraph: Add these after the autolyse. Mix until incorporated.
-      - list "Add to the dough":
+      - paragraph: Add these to each bowl after the autolyse. Mix until incorporated.
+      - paragraph: Bowl 1
+      - list "Add to bowl 1":
         - listitem:
-          - checkbox "Rye flour 250 g"
-          - text: Rye flour 250 g
+          - checkbox "Rye flour 83.3 g"
+          - text: Rye flour 83.3 g
         - listitem:
-          - checkbox "Leaven 500 g"
-          - text: Leaven 500 g
+          - checkbox "Leaven 166.7 g"
+          - text: Leaven 166.7 g
         - listitem:
-          - checkbox "Salt 50 g"
-          - text: Salt 50 g
+          - checkbox "Salt 16.7 g"
+          - text: Salt 16.7 g
         - listitem:
-          - checkbox "Water 250 g"
-          - text: Water 250 g
+          - checkbox "Water 83.3 g"
+          - text: Water 83.3 g
+      - paragraph: Bowl 2
+      - list "Add to bowl 2":
+        - listitem:
+          - checkbox "Rye flour 83.3 g"
+          - text: Rye flour 83.3 g
+        - listitem:
+          - checkbox "Leaven 166.7 g"
+          - text: Leaven 166.7 g
+        - listitem:
+          - checkbox "Salt 16.7 g"
+          - text: Salt 16.7 g
+        - listitem:
+          - checkbox "Water 83.3 g"
+          - text: Water 83.3 g
+      - paragraph: Bowl 3
+      - list "Add to bowl 3":
+        - listitem:
+          - checkbox "Rye flour 83.3 g"
+          - text: Rye flour 83.3 g
+        - listitem:
+          - checkbox "Leaven 166.7 g"
+          - text: Leaven 166.7 g
+        - listitem:
+          - checkbox "Salt 16.7 g"
+          - text: Salt 16.7 g
+        - listitem:
+          - checkbox "Water 83.3 g"
+          - text: Water 83.3 g
       - text: Next step in 15 min
       - checkbox "Complete Start bulk fermentation"
       - time: 10:16 AM
       - text: Start bulk fermentation
-      - paragraph: Keep covered in a warm place, about 75°F to 80°F / 24°C to 27°C.
+      - paragraph: Combine all 3 bowls in one container. Keep covered in a warm place, about 75°F to 80°F / 24°C to 27°C.
       - text: Dough temperature after mixing
       - spinbutton "Dough temperature after mixing"
       - combobox "Temperature unit": °F
