@@ -58,7 +58,6 @@ test('with both loaves in the oven together, every step keeps its original time'
     covered: '2026-10-22 08:50',
     uncovered: '2026-10-22 09:10',
     done: '2026-10-22 09:33',
-    cooled: '2026-10-22 09:48',
   });
 });
 
@@ -109,7 +108,7 @@ test('elapsed durations survive daylight-saving changes', () => {
   assert.equal(crossed > 0, daylightSaving, `${crossed} plans cross a clock change`);
 });
 
-test('one loaf at a time bakes two serial batches, each with its own cooling mark', () => {
+test('one loaf at a time bakes two serial batches', () => {
   const s = schedule(plan('house')),
     at = timeOf(s);
   assert.equal(s.filter((x) => x.kind === 'covered').length, 2);
@@ -117,22 +116,14 @@ test('one loaf at a time bakes two serial batches, each with its own cooling mar
   assert.equal(at('reheat-2'), '2026-10-22 09:33');
   assert.equal(at('covered-2'), '2026-10-22 10:03');
   assert.equal(at('done'), '2026-10-22 10:46');
-  assert.equal(at('cooled-1'), '2026-10-22 09:48');
-  assert.equal(at('cooled'), '2026-10-22 11:01');
 });
 
 test('one batch drops batch numbers, while serial batches keep them', () => {
   const titles = (s: Step[], ids: string[]) => ids.map((id) => find(s, id).title);
   for (const id of ['house']) {
     assert.deepEqual(
-      titles(schedule(plan(id, { ovenCapacity: 2 })), ['warmup', 'covered', 'uncovered', 'done', 'cooled']),
-      [
-        'Take both loaves out of the fridge',
-        'Bake covered (both loaves)',
-        'Remove lid',
-        'All loaves out of the oven',
-        '15-minute cooling mark',
-      ],
+      titles(schedule(plan(id, { ovenCapacity: 2 })), ['warmup', 'covered', 'uncovered', 'done']),
+      ['Take both loaves out of the fridge', 'Bake covered (both loaves)', 'Remove lid', 'All loaves out of the oven'],
       id,
     );
     assert.deepEqual(
@@ -272,4 +263,22 @@ test('a year before 1000 gives a schedule, with its dates written in four digits
     assert.equal(dateString(steps.find((s) => s.id === 'leaven')!.at), date);
   }
   assert.equal(dateString(new Date(2026, 10, 22)), '2026-11-22');
+});
+
+test('no plan has a cooling mark: each batch ends when it comes out of the oven (Michael, November 22, 2026)', () => {
+  for (const id of ['house', 'tartine'])
+    for (const proof of ['cold', 'warm'] as const)
+      for (const [count, ovenCapacity] of [
+        [1, 1],
+        [2, 2],
+        [3, 1],
+        [5, 2],
+      ]) {
+        const s = schedule(plan(id, { proof, ovenCapacity }, { count })),
+          label = `${id} ${proof} ${count} loaves, ${ovenCapacity} at once`;
+        assert.ok(s.length > 0, label);
+        assert.ok(!s.some((x) => x.id.startsWith('cooled') || /cooling mark/.test(x.title)), label);
+        assert.equal(s.at(-1)!.id, 'done', `${label}: the last loaf out is the last step`);
+        assert.match(s.at(-1)!.note, /Cool each loaf at least 15 minutes before slicing\./, label);
+      }
 });

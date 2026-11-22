@@ -546,13 +546,7 @@ test('a group of three steps the plan starts together stays open when the last o
     before = ids.slice(0, ids.indexOf('out-1'));
   assert.equal(before.at(-1), 'uncovered');
   assert.deepEqual(skippedSteps(steps, ['covered-2'], steps), before, 'batch 1 out and the reheat stay open');
-  assert.deepEqual(skippedSteps(steps, ['uncovered-2'], steps), [
-    ...before,
-    'out-1',
-    'reheat-2',
-    'covered-2',
-    'cooled-1',
-  ]);
+  assert.deepEqual(skippedSteps(steps, ['uncovered-2'], steps), [...before, 'out-1', 'reheat-2', 'covered-2']);
 });
 
 test('each step is coloured by its temperature: only the cold proof is cold, and preheat through the last loaf out is oven', () => {
@@ -583,7 +577,6 @@ test('each step is coloured by its temperature: only the cold proof is cold, and
     'basket',
     'warmup',
     'warmup-2',
-    'cooled',
   ])
     assert.equal(phases[id], 'room', id);
   assert.equal(

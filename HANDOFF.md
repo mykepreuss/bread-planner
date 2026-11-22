@@ -9,7 +9,7 @@ Production branch: main
 Project: prj_oaBadxUrg76MQyvwFsY68FvfuM8r (bread-planner)
 Team: team_U2Fu7jNsQEgGylxpq9YR7M2f (mpmba)
 
-Each dated release section below ends with its delivery state, newest last. The last one marked "verified live" is what production runs. When this header was last edited, that was keeping only Preuss House and Original Tartine: `main` at `b45583d06c2e88fd887c9d4724036f398eb0a9a3`, production deployment `dpl_5p3djbnay3ZJPsPop51mQvpMkV29` (READY). Michael is the planner's only user.
+Each dated release section below ends with its delivery state, newest last. The last one marked "verified live" is what production runs. When this header was last edited, that was the four Tartine Bread recipes: `main` at `34ad1ffe5dd9f569a9fcfc27cca362a8558482f5`, production deployment `dpl_3ui9Cnw11wMfkXsxxo7XvebvV8ag` (READY). Michael is the planner's only user.
 
 ## Scope and decisions
 
@@ -924,7 +924,7 @@ Release: merged as pull request #32 at `b45583d`, with Michael's approval once t
 - A fresh planner shows only Preuss House and Original Tartine on the menu.
 - A version 6 save from before the removal, with Red Spring & Rye selected and Tartine at 4 loaves with its leaven checked, opened on Preuss House with the same two-recipe menu. Tartine showed 4 loaves and "1 of 25 steps checked". The next save held only `house` and `tartine`, and no version 5 save was written.
 
-## Four recipes from Tartine Bread, November 22, 2026: committed, pull request open
+## Four recipes from Tartine Bread, November 22, 2026: merged and verified live
 
 Michael's requests: add the book's Olive (page 88) and Sesame (page 90) variations, using two agents, then its Whole-Wheat Bread (page 114) and Country Rye (page 118). Branch `tartine-recipes`, rebased onto `main` at `b45583d` once pull request #32 merged.
 
@@ -982,3 +982,27 @@ Independent check (the verifier, on `9668641`): every criterion passed on the ev
   - Country Rye's flour reads "Rye flour", the House rye, rather than "medium-fine whole rye".
 
 Not verified: how the add-ins and toast step read on Michael's iPhone, and whether the book's whole-wheat and rye pages intend 50 g of water to wait for the salt.
+
+Release: merged as pull request #33 at `34ad1ff`, with Michael's approval once the verifier passed. Production deployment `dpl_3ui9Cnw11wMfkXsxxo7XvebvV8ag` is READY for that commit and holds the `bread.assemblydigital.com` alias. On November 22 after the merge, at 390 px with no console errors and nothing wider than the screen:
+- `verify-deployment.mjs` passed 9 checks and 7 assets, and the live smoke passed.
+- A version 6 save with a two-recipe menu and Tartine at 3 loaves with its leaven checked showed all six recipes, and still showed Tartine with "1 of 25 steps checked".
+- Olive: "Add the olive mixture" at 10:00 PM with Turn 1, and the four add-ins at the book's amounts. Sesame: "Toast the sesame seeds" at 9:00 PM and its add-in step at 10:00 PM. Whole Wheat and Country Rye: 2,020 g of dough, salt at 9:50 PM and Turn 1 at 10:20 PM.
+
+## No cooling mark, November 22, 2026: committed, pull request open
+
+Michael's request: remove the 15-minute cooling mark from the process. Branch `remove-cooling-mark`, from `main` at `34ad1ff`. Under the lighter verification Michael asked for after the rebuild went live: one verifier pass, about four breaks.
+
+Change: `src/domain/schedule.ts` no longer adds a cooling-mark step after each batch, and the `cooled` step kind is gone. The out-of-the-oven step keeps its note, which says to cool each loaf at least 15 minutes before slicing, and its 15-minute length. The quiet-hours comment no longer mentions the mark. docs/BEHAVIOUR.md records it as decision 11.
+
+Tests:
+- New, failing before the change: for House and Tartine, cold and warm proofs and four loaf and oven combinations, no step is a cooling mark, the last step is "All loaves out of the oven" (`done`), and its note keeps the cooling advice.
+- Tests that named the marks now don't: their times, titles, notes and skip lists lose the cooling-mark entries, and the note tests check the out-of-the-oven note's cooling advice instead. The last-step question now taps "All loaves out of the oven" and counts 21 earlier steps, not 22, and step counts go from 23 to 22.
+
+Record changes, checked by a script against `main`:
+- 256 cooling-mark steps left the 154 plans. Every other step is unchanged in every field, and each "next step in" gap matches its new neighbour.
+- One input changed: "every step checked: the bake is complete" now checks up to the last loaf out, since the cooling mark no longer exists.
+- Four plans changed beyond losing steps, each because of a cooling mark:
+  - "five loaves, two at a time, into the second batch": Up next was batch 1's cooling mark and is now batch 2's bake.
+  - Three plans had a cooling mark checked, so their checked count drops by one. In random bake 19 that late check had also set how far behind the plan ran: 1h 55m, now 1h 57m from the last loaf out.
+- The saved-data cases' schedules lose their cooling marks, and nothing else changes. Recipe calculations and helpers are unchanged. A second `npm run baseline:update` left the record unchanged.
+- The browser record: 54 files rewritten. The text records only lose the cooling-mark steps and their labels, step counts go from 23 to 22, and every total time is unchanged. The layout records changed by deletions only.

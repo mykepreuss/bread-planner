@@ -25,8 +25,7 @@ export type Kind =
   | 'reheat'
   | 'covered'
   | 'uncovered'
-  | 'out'
-  | 'cooled';
+  | 'out';
 /** The temperature a step happens at. The page colours steps by it: neutral at room temperature, Fridge for the cold proof, Crust for the oven. */
 export type Phase = 'room' | 'cold' | 'oven';
 
@@ -77,7 +76,6 @@ const FACTS: Record<Kind, Pick<Step, 'phase' | 'handsOn' | 'movesPlan' | 'bulk'>
   covered: { phase: 'oven', handsOn: true, movesPlan: true, bulk: false },
   uncovered: { phase: 'oven', handsOn: true, movesPlan: true, bulk: false },
   out: { phase: 'oven', handsOn: true, movesPlan: true, bulk: false },
-  cooled: { phase: 'room', handsOn: false, movesPlan: true, bulk: false },
 };
 
 /** A step on the plan before it has a date: minutes from the leaven start. */
@@ -145,7 +143,7 @@ function houseTurnNote(n: number) {
 }
 
 /**
- * The plan for one bake, from the feed or leaven to the last loaf cooled, at local dates and times. Empty when the
+ * The plan for one bake, from the feed or leaven to the last loaf out of the oven, at local dates and times. Empty when the
  * recipe has no flour, the loaf count or oven capacity is not a whole number of 1 or more, the loaves need more than
  * 1,000 batches, or the date and time are not a real local time.
  */
@@ -453,22 +451,6 @@ export function schedule(input: PlanInput): Step[] {
       out,
       COOLING,
       'Transfer to a wire rack. The base should sound hollow when tapped. Cool each loaf at least 15 minutes before slicing.',
-    );
-    push(
-      last ? 'cooled' : `cooled-${n}`,
-      'cooled',
-      last
-        ? single
-          ? '15-minute cooling mark'
-          : 'Last batch: 15-minute cooling mark'
-        : `Batch ${n}: 15-minute cooling mark`,
-      out + COOLING,
-      0,
-      last && single
-        ? count === 1
-          ? 'The loaf is ready to slice.'
-          : 'The loaves are ready to slice.'
-        : 'This batch is ready to slice.',
     );
   }
   const chosen = new Date(`${input.date}T${input.time}:00`);

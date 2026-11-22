@@ -266,7 +266,7 @@ test.describe('flows', () => {
       'Turn 3',
     ])
       await page.getByRole('checkbox', { name: `Complete ${title}` }).click();
-    await expect(page.getByText('7 of 23 steps checked')).toBeVisible();
+    await expect(page.getByText('7 of 22 steps checked')).toBeVisible();
     await expect(upNext(page).getByRole('heading', { level: 2 })).toHaveText('Turn 4');
     const feed = page.locator('.timeline-step', { has: page.getByRole('checkbox', { name: 'Complete Feed starter' }) });
     await expect(feed.getByText('Skipped', { exact: true })).toBeVisible();
@@ -285,31 +285,32 @@ test.describe('flows', () => {
     expect(names[fridge + 1]).toBe('Complete Preheat oven and Dutch oven');
     for (const name of names.slice(0, fridge)) await page.getByRole('checkbox', { name, exact: true }).click();
     await page.getByRole('checkbox', { name: 'Complete Preheat oven and Dutch oven' }).click();
-    await expect(page.getByText(`${fridge + 1} of 23 steps checked`)).toBeVisible();
+    await expect(page.getByText(`${fridge + 1} of 22 steps checked`)).toBeVisible();
     await expect(upNext(page).getByRole('heading', { level: 2 })).toHaveText('Take both loaves out of the fridge');
     await expect(page.getByText('Skipped', { exact: true })).toHaveCount(0);
     await expectSameAfterReload(page);
   });
 
   test('Checking the last step on a fresh plan asks before skipping the whole bake', async ({ page }) => {
+    // The last step is the last loaf out, since the cooling mark was removed on November 22, 2026.
     await open(page, 'fresh');
-    const last = page.getByRole('checkbox', { name: 'Complete 15-minute cooling mark' }),
+    const last = page.getByRole('checkbox', { name: 'Complete All loaves out of the oven' }),
       dialog = page.getByRole('alertdialog');
     await last.click();
-    await expect(dialog.getByRole('heading')).toHaveText('Skip 22 earlier steps?');
-    await expect(dialog).toContainText('Checking "15-minute cooling mark" marks 22 earlier steps as Skipped.');
+    await expect(dialog.getByRole('heading')).toHaveText('Skip 21 earlier steps?');
+    await expect(dialog).toContainText('Checking "All loaves out of the oven" marks 21 earlier steps as Skipped.');
     await dialog.getByRole('button', { name: "Don't check it" }).click();
     await expect(dialog).toHaveCount(0);
     await expect(last, 'focus goes back to the check box').toBeFocused();
-    await expect(page.getByText('0 of 23 steps checked')).toBeVisible();
+    await expect(page.getByText('0 of 22 steps checked')).toBeVisible();
     await expect(last).not.toBeChecked();
     await expect(upNext(page).getByRole('heading', { level: 2 })).toHaveText('Feed starter');
     await last.click();
     await dialog.getByRole('button', { name: 'Check and skip' }).click();
     await expect(dialog).toHaveCount(0);
     await expect(last).toBeFocused();
-    await expect(page.getByText('1 of 23 steps checked')).toBeVisible();
-    await expect(page.getByText('Skipped', { exact: true })).toHaveCount(22);
+    await expect(page.getByText('1 of 22 steps checked')).toBeVisible();
+    await expect(page.getByText('Skipped', { exact: true })).toHaveCount(21);
     await expect(page.getByText('All batches done. Enjoy your bread.')).toBeVisible();
     await expectSameAfterReload(page);
   });
@@ -419,7 +420,7 @@ test.describe('flows', () => {
     await open(page, 'complete');
     await page.getByRole('button', { name: 'Plan the next bake' }).click();
     await expect(page.locator('#plan-date')).toHaveValue('2026-11-22');
-    await expect(page.getByText('0 of 23 steps checked')).toBeVisible();
+    await expect(page.getByText('0 of 22 steps checked')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Plan the next bake' })).toHaveCount(0);
     expect(await aria(page)).toMatchSnapshot('flow-plan-next-bake.aria.yml');
     await expectSameAfterReload(page);
@@ -501,11 +502,11 @@ test.describe('flows', () => {
   test('Each recipe keeps its own checklist', async ({ page }) => {
     await open(page, 'fresh');
     await page.getByRole('checkbox', { name: 'Complete Feed starter' }).click();
-    await expect(page.getByText('1 of 23 steps checked')).toBeVisible();
+    await expect(page.getByText('1 of 22 steps checked')).toBeVisible();
     await choose(page, 'Recipe', 'Original Tartine');
     await expect(page.getByText(/^0 of \d+ steps checked$/)).toBeVisible();
     await choose(page, 'Recipe', 'Preuss House');
-    await expect(page.getByText('1 of 23 steps checked')).toBeVisible();
+    await expect(page.getByText('1 of 22 steps checked')).toBeVisible();
     expect(await aria(page)).toMatchSnapshot('flow-recipe-checklists.aria.yml');
     await expectSameAfterReload(page);
   });
@@ -666,8 +667,8 @@ test.describe('flows', () => {
     });
     await page.goto('/');
     await ready(page);
-    await expect(page.getByText('0 of 23 steps checked')).toBeVisible();
+    await expect(page.getByText('0 of 22 steps checked')).toBeVisible();
     await page.getByRole('checkbox', { name: 'Complete Feed starter' }).click();
-    await expect(page.getByText('1 of 23 steps checked')).toBeVisible();
+    await expect(page.getByText('1 of 22 steps checked')).toBeVisible();
   });
 });

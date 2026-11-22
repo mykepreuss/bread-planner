@@ -9,7 +9,7 @@ function isQuietTime(at: Date) {
 
 /**
  * Hands-on steps that start during quiet hours, and mixing or shaping that starts before the cutoff but runs past it
- * (`continues`). Rests and the cooling mark need no one, and steps already checked or skipped (`completed`) drop off.
+ * (`continues`). Rests need no one, and steps already checked or skipped (`completed`) drop off.
  */
 export function quietHourActions<T extends Step>(steps: T[], completed: string[] = []) {
   const checked = new Set(completed);

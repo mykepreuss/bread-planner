@@ -48,7 +48,7 @@
     - paragraph: Readiness comes before the clock. Wait until the dough is ready, then check the step. Later steps move to match.
     - region "Bake schedule":
       - heading "Bake schedule" [level=2]
-      - text: 37h 59m total 0 of 35 steps checked
+      - text: 37h 59m total 0 of 32 steps checked
       - button "Clear checklist" [disabled]
       - text: Day 1
       - heading "Saturday, Nov 21" [level=3]
@@ -187,12 +187,7 @@
       - time: 9:33 AM
       - text: Reheat for batch 2
       - paragraph: Clean the pot, replace its lid and return the oven to 540°F / 282°C. Load the next batch once the pot and oven are hot.
-      - text: Next step in 15 min
-      - 'checkbox "Complete Batch 1: 15-minute cooling mark"'
-      - time: 9:48 AM
-      - text: "Batch 1: 15-minute cooling mark"
-      - paragraph: This batch is ready to slice.
-      - text: Next step in 15 min
+      - text: Next step in 30 min
       - 'checkbox "Complete Batch 2: bake covered (loaf 2)"'
       - time: 10:03 AM
       - text: "Batch 2: bake covered (loaf 2)"
@@ -222,12 +217,7 @@
       - time: 10:46 AM
       - text: Reheat for batch 3
       - paragraph: Clean the pot, replace its lid and return the oven to 540°F / 282°C. Load the next batch once the pot and oven are hot.
-      - text: Next step in 15 min
-      - 'checkbox "Complete Batch 2: 15-minute cooling mark"'
-      - time: 11:01 AM
-      - text: "Batch 2: 15-minute cooling mark"
-      - paragraph: This batch is ready to slice.
-      - text: Next step in 15 min
+      - text: Next step in 30 min
       - 'checkbox "Complete Batch 3: bake covered (loaf 3)"'
       - time: 11:16 AM
       - text: "Batch 3: bake covered (loaf 3)"
@@ -245,11 +235,6 @@
       - time: 11:59 AM
       - text: All loaves out of the oven
       - paragraph: Transfer to a wire rack. The base should sound hollow when tapped. Cool each loaf at least 15 minutes before slicing.
-      - text: Next step in 15 min
-      - 'checkbox "Complete Last batch: 15-minute cooling mark"'
-      - time: 12:14 PM
-      - text: "Last batch: 15-minute cooling mark"
-      - paragraph: This batch is ready to slice.
   - heading "Mature starter and readiness guide" [level=3]:
     - button "Mature starter and readiness guide"
   - heading "Establishing a starter from scratch" [level=3]:

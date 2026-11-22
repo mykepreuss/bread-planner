@@ -352,10 +352,10 @@ test('step notes speak to the baker, and mention later batches only when there a
         assert.ok(!/supplied recipe|default is/i.test(s.note ?? ''), `${id} ${s.id}: ${s.note}`);
   const house = plan('house');
   assert.doesNotMatch(note(house, 'fridge'), /later batches/i);
-  assert.equal(note(house, 'cooled'), 'The loaves are ready to slice.');
+  assert.match(note(house, 'done'), /Cool each loaf at least 15 minutes before slicing\./);
   house.settings.count = 4;
   assert.match(note(house, 'fridge'), /Keep later batches chilled until their own warm-up/);
-  assert.equal(note(house, 'cooled-1'), 'This batch is ready to slice.');
+  assert.match(note(house, 'out-1'), /Cool each loaf at least 15 minutes before slicing\./);
   const one = plan('tartine', (s) => {
     s.count = 1;
   });
