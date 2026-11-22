@@ -199,4 +199,21 @@ export const RECIPES: Recipe[] = [
   },
 ];
 
-export const RECIPE_BY_ID: Record<string, Recipe> = Object.fromEntries(RECIPES.map((r) => [r.id, r]));
+/** Freezes the recipes and everything in them, so code that uses a recipe or its defaults cannot change them. */
+function freeze<T>(value: T): T {
+  if (value && typeof value === 'object' && !Object.isFrozen(value)) {
+    for (const v of Object.values(value)) freeze(v);
+    Object.freeze(value);
+  }
+  return value;
+}
+freeze(RECIPES);
+
+const byId = new Map(RECIPES.map((r) => [r.id, r]));
+/**
+ * The recipe with this id, or undefined for any other id, such as one a corrupt save holds or the retired
+ * `manual-rye`. A Map, so an id like `constructor` finds nothing rather than a built-in.
+ */
+export const recipeById = (id: string): Recipe | undefined => byId.get(id);
+/** A recipe's default settings as a fresh copy, to start a plan from or restore, and change. */
+export const defaultSettings = (recipe: Recipe): Settings => structuredClone(recipe.defaults);

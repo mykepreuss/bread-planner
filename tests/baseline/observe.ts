@@ -1,7 +1,9 @@
 /**
- * What the planner shows, read through the current code. Step 0 of the rebuild records these observations in
- * baseline.json, and every later step must reproduce them. Inputs are plain data, so the record outlives the code it
- * was taken from: when the old core is replaced, this adapter is the only file that changes.
+ * What the planner shows, in the shape baseline.json records. Step 0 of the rebuild recorded these observations, and
+ * every later step must reproduce them. Plans, recipe settings and helpers are read through a core (cores.ts): the old
+ * one in src/lib or the new one in src/domain. Saved data is still read through src/lib (`observeRestore`), and
+ * `planner` builds inputs with it, until step 3 moves both to the new core. Inputs are plain data, so the record
+ * outlives the code it was taken from.
  *
  * Everything runs in America/Vancouver (`useBaselineTimeZone`). Times are written as local wall-clock time with the
  * UTC offset, such as `2026-11-22 09:00 -08`, so a daylight-saving change shows.

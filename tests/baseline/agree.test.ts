@@ -1,7 +1,26 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createPlanner, definitions, buildFlourName, recipeSchedule } from '../../src/lib/recipes.ts';
-import { RECIPES, FLOUR_NAMES } from '../../src/domain/recipes.ts';
+import {
+  createPlanner,
+  definitions,
+  buildFlourName,
+  recipeSchedule,
+  totalHydration as oldTotalHydration,
+  addedHydration as oldAddedHydration,
+} from '../../src/lib/recipes.ts';
+import {
+  dateString as oldDateString,
+  durationText as oldDurationText,
+  round as oldRound,
+} from '../../src/lib/model.ts';
+import {
+  clockText as oldClockText,
+  untilText as oldUntilText,
+  shiftText as oldShiftText,
+} from '../../src/lib/bakeday.ts';
+import { RECIPES, FLOUR_NAMES, recipeById, defaultSettings } from '../../src/domain/recipes.ts';
+import { totalHydration, addedHydration } from '../../src/domain/formula.ts';
+import * as text from '../../src/domain/text.ts';
 import { difference } from './format.ts';
 import {
   observePlan,
@@ -149,4 +168,76 @@ test('2,000 random recipe settings show the same Ingredients tab through both co
   });
   const differ = disagreements(formulas, observeFormula);
   assert.equal(differ.length, 0, `${differ.length} recipe settings differ:\n${differ.slice(0, 5).join('\n')}`);
+});
+
+test('a recipe is found only by its own id, and its defaults cannot be changed in place', () => {
+  for (const r of RECIPES) assert.equal(recipeById(r.id), r);
+  for (const id of ['constructor', 'toString', '__proto__', 'hasOwnProperty', 'manual-rye', ''])
+    assert.equal(recipeById(id), undefined, id);
+  const house = recipeById('house')!;
+  assert.throws(() => {
+    (house.defaults.flours as Record<string, number>).rye = 0;
+  }, TypeError);
+  assert.throws(() => {
+    (house.defaults.build as { starter: number }).starter = 1;
+  }, TypeError);
+  assert.throws(() => {
+    (house.flours as string[]).push('red');
+  }, TypeError);
+  const copy = defaultSettings(house);
+  copy.flours.rye = 0;
+  copy.build.starter = 1;
+  assert.equal(house.defaults.flours.rye, 10, 'changing a copy leaves the defaults alone');
+  assert.equal(house.defaults.build.starter, 28);
+  assert.notEqual(defaultSettings(house), defaultSettings(house), 'each copy is new');
+});
+
+test('total and added hydration convert as the old core does, and round-trip, on 2,000 random settings', () => {
+  const close = (a: number, b: number, what: string) =>
+    assert.ok(Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(a)), `${what}: ${a} vs ${b}`);
+  const cases = Array.from({ length: 2000 }, () => {
+    const recipe = pick(recipes);
+    return planner({ recipe, params: params(recipe) });
+  });
+  // The edges: no leaven, an empty build, a build of only water, and only starter.
+  for (const build of [
+    { buildSeed: 0, buildBread: 0, buildWheat: 0, buildWater: 0 },
+    { buildSeed: 0, buildBread: 0, buildWheat: 0, buildWater: 200 },
+    { buildSeed: 50, buildBread: 0, buildWheat: 0, buildWater: 0 },
+  ])
+    for (const leaven of [0, 20]) cases.push(planner({ recipe: 'house', params: { ...build, leaven } }));
+  for (const plan of cases) {
+    const v5 = plan.recipes[plan.recipe].params,
+      s = settingsOf(plan),
+      what = `${plan.recipe} ${JSON.stringify(v5)}`;
+    close(totalHydration(s), oldTotalHydration(v5), `total, ${what}`);
+    for (const total of [0, 55, 80, 100 * r(), 140]) {
+      const added = addedHydration(total, s);
+      close(added, oldAddedHydration(total, v5), `added for ${total}, ${what}`);
+      close(totalHydration({ ...s, hydration: added }), total, `round trip for ${total}, ${what}`);
+    }
+  }
+});
+
+test('dates, clock times, rounding and durations are written as the old core writes them', () => {
+  // Every 7 minutes through 2026 and the start of 2030, daylight-saving changes included.
+  for (let t = Date.UTC(2026, 0, 1); t < Date.UTC(2027, 0, 1); t += 7 * 60000) {
+    const d = new Date(t);
+    assert.equal(text.dateString(d), oldDateString(d), d.toISOString());
+    assert.equal(text.clockText(d), oldClockText(d), d.toISOString());
+  }
+  for (let t = Date.UTC(2029, 11, 31); t < Date.UTC(2030, 0, 3); t += 7 * 60000)
+    assert.equal(text.clockText(new Date(t)), oldClockText(new Date(t)));
+  for (let k = 0; k < 20000; k++) {
+    const n = (r() - 0.5) * 10 ** int(0, 5),
+      half = int(-500, 500) / 2,
+      places = int(0, 3);
+    assert.equal(text.round(n, places), oldRound(n, places), `${n}, ${places}`);
+    assert.equal(text.round(half), oldRound(half), `${half}`);
+    const minutes = pick([n, Math.abs(n), int(0, 3000), int(0, 3000) + r()]);
+    assert.equal(text.durationText(minutes), oldDurationText(minutes), `${minutes}`);
+    assert.equal(text.untilText(n * 60000), oldUntilText(n * 60000), `${n}`);
+    const shift = int(-3000, 3000);
+    assert.equal(text.shiftText(shift), oldShiftText(shift), `${shift}`);
+  }
 });

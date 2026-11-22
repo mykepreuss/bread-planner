@@ -334,7 +334,7 @@ Michael asked to merge step 1 and start step 2: build the new core beside the ol
 `src/domain/` is the new core:
 - `recipes.ts`: the six recipes as data, in menu order. Each default is the sum it came from, such as `share(100, 780)` for House's water held back, or Red Spring & Rye's 724 g of water over 944 g of flour. Settings are named (`flours`, `build.starter`) instead of v5's `flour_x` and `buildSeed` keys.
 - `formula.ts`: the weights, the mixing stages, the leaven balance, and total and added hydration.
-- `methods.ts`: the House and Tartine timings as named constants, replacing the spreadsheet cells each save carried.
+- `methods.ts`: the House and Tartine timings as named constants. They will replace the spreadsheet cells each save carries once step 3 switches the app over.
 - `schedule.ts`: the steps for a bake, notes included.
   - Every step carries its facts: kind, phase, hands-on and active minutes, moves the plan, part of bulk, turn number. Step ids are unchanged, because saved checklists use them.
   - Red Spring & Rye's different cold-proof wording is a recipe field, `overnightProof: false` (decision 2 in BEHAVIOUR.md).
@@ -349,6 +349,15 @@ Evidence (this session, on `rebuild-new-core`):
 - `npm test` passed 126 of 126 with the host zone and with `BASELINE_ZONE=rule`, in about 6 seconds. The new core reproduced all 214 recorded plans, 45 recipe calculations and 53 helper results, and agreed with the old core on every random case.
 - Three deliberate breaks in the new core were each caught by both the comparison and the record: a turn margin of 14 instead of 15 minutes (13 random plans and 2 recorded plans), one word of a note, and the bench rest made not hands-on. The new core was restored byte for byte.
 - `npm run build` had 0 errors, 0 warnings and the 4 existing hints. The browser record passed 38 of 38, and Prettier is clean.
+
+Code review fixes, same day (Michael asked for the six findings from a code review at extra-high effort):
+- Recipes are found with `recipeById`, a Map, so an id such as `constructor` from a corrupt save finds nothing instead of a built-in. The new core has no `manual-rye`.
+- The recipes and their defaults are frozen. `defaultSettings(recipe)` returns a fresh copy to start or restore a plan from, so no code can change the defaults in place.
+- `agree.test.ts` now also compares the new `totalHydration` and `addedHydration` with the old ones, and checks the round trip, on 2,000 random settings plus the edge builds. Before, every test converted with the old function.
+- It also compares the new `dateString`, `clockText`, `round`, `durationText`, `untilText` and `shiftText` with the old ones, every 7 minutes through 2026 and on 20,000 random values. Before, every check formatted times with the old helpers.
+- Each new check failed on a deliberate break, which was then restored: wrong brackets in `addedHydration`, and minutes without padding in `clockText`.
+- The header of `observe.ts` and the `methods.ts` line above were corrected.
+- Not done: the 38°C defect stays in both cores until Michael decides (decision 5).
 
 Not verified: nothing in the app runs the new core yet; step 3 switches it over.
 

@@ -12,7 +12,7 @@ import {
 } from '../../src/lib/recipes.ts';
 import { coldProofWindow, durationText } from '../../src/lib/model.ts';
 import * as old from '../../src/lib/bakeday.ts';
-import { RECIPE_BY_ID, type FlourKey, type Settings } from '../../src/domain/recipes.ts';
+import { recipeById, type FlourKey, type Recipe, type Settings } from '../../src/domain/recipes.ts';
 import { formula, totalHydration as domainTotalHydration } from '../../src/domain/formula.ts';
 import { schedule, coldProofWindow as domainColdProofWindow, type Step } from '../../src/domain/schedule.ts';
 import { quietHourActions as domainQuietHourActions } from '../../src/domain/quiet.ts';
@@ -126,11 +126,17 @@ export const oldCore: Core = {
   },
 };
 
+/** The new core's recipe for the selected id. The new core has no `manual-rye`, which no saved data can reach. */
+function recipeOf(plan: Planner): Recipe {
+  const recipe = recipeById(plan.recipe);
+  if (!recipe) throw new Error(`The new core has no recipe ${plan.recipe}`);
+  return recipe;
+}
+
 /** The new core's settings for the selected recipe, from its saved v5 parameters. */
 export function settingsOf(plan: Planner): Settings {
-  const recipe = RECIPE_BY_ID[plan.recipe],
+  const recipe = recipeOf(plan),
     q = plan.recipes[plan.recipe].params;
-  if (!recipe) throw new Error(`The new core has no recipe ${plan.recipe}`);
   return {
     count: q.count,
     weight: q.weight,
@@ -148,7 +154,7 @@ export const newCore: Core = {
   follow(plan) {
     const p = plan.recipes[plan.recipe];
     const planned = schedule({
-      recipe: RECIPE_BY_ID[plan.recipe],
+      recipe: recipeOf(plan),
       settings: settingsOf(plan),
       date: plan.date,
       time: plan.time,
@@ -168,7 +174,7 @@ export const newCore: Core = {
   hold: (e, now) => next.holdTemperature(own(e), now),
   bulkDone: (minutes, e) => next.bulkDoneText(minutes, own(e)),
   turnNumber: next.turnOf,
-  formula: (plan) => formula(RECIPE_BY_ID[plan.recipe], settingsOf(plan)),
+  formula: (plan) => formula(recipeOf(plan), settingsOf(plan)),
   hydrationFloor: (plan) => domainTotalHydration({ ...settingsOf(plan), hydration: 0 }),
   text: { duration: text.durationText, until: text.untilText, shift: text.shiftText },
   helpers: {
