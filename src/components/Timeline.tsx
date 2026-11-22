@@ -10,6 +10,7 @@ import { clockText, dateString, durationText } from '@/domain/text';
 import type { coldProofWindow } from '@/domain/schedule';
 import type { BulkReading, LiveStep } from '@/domain/bakeday';
 import { calendarText, timeText } from './text';
+import { Additions } from './Additions';
 
 /** What a step row needs: its state, and the actions it can take. */
 type StepActions = {
@@ -19,9 +20,11 @@ type StepActions = {
   afterMixField: (id: string) => ReactNode;
   readings: BulkReading[];
   tempText: (f: number) => string;
+  added: string[];
+  onAdded: (id: string, added: boolean) => void;
 };
 
-/** One step on the timeline: its check box, time, title and badges, Done at fields, note and cue, and the gap to the next step. Start of bulk also has the dough temperature. */
+/** One step on the timeline: its check box, time, title and badges, Done at fields, note and cue, and the gap to the next step. A mixing step lists what goes in, each with its own tick-off. Start of bulk also has the dough temperature. */
 function TimelineStep({
   step,
   done,
@@ -35,6 +38,8 @@ function TimelineStep({
   afterMixField,
   readings,
   tempText,
+  added,
+  onAdded,
 }: StepActions & {
   step: LiveStep;
   done: boolean;
@@ -96,6 +101,7 @@ function TimelineStep({
           </div>
         )}
         {step.note && <p>{step.note}</p>}
+        {step.additions && <Additions place="timeline" additions={step.additions} added={added} onAdded={onAdded} />}
         {step.readiness && (
           <p className="readiness-cue">
             <strong>Ready when:</strong> {step.readiness}
@@ -190,7 +196,13 @@ export function Timeline({
         </span>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon-sm" aria-label="Clear checklist" disabled={!completed} onClick={onClear}>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Clear checklist"
+              disabled={!completed && !actions.added.length}
+              onClick={onClear}
+            >
               <RotateCcw size={14} />
             </Button>
           </TooltipTrigger>

@@ -399,6 +399,51 @@ test.describe('flows', () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(widths.phone.width);
   });
 
+  test('The final mix lists each addition with its own tick-off; a tick is saved, outlasts the step and clears with the checklist', async ({
+    page,
+  }) => {
+    await open(page, 'leaven-done-late');
+    // The autolyse is up next; once it is done, the final mix is.
+    await upNext(page).getByRole('button', { name: 'Done' }).click();
+    await expect(upNext(page).getByRole('heading')).toHaveText('Mix final dough');
+    const inCard = upNext(page).getByRole('list', { name: 'Add to the dough' }),
+      inTimeline = page
+        .locator('.timeline-step', { has: page.locator('#step-mix') })
+        .getByRole('list', { name: 'Add to the dough' });
+    await expect(inCard.getByRole('checkbox')).toHaveCount(4);
+    await expect(upNext(page)).toContainText('Add these after the autolyse. Mix until incorporated.');
+    // A tick on the box or on its name, in the card, shows in the timeline's list too.
+    await inCard.getByRole('checkbox', { name: 'Salt 20 g' }).check();
+    await inCard.getByText('Rye flour').click();
+    await expect(inTimeline.getByRole('checkbox', { name: 'Salt 20 g' })).toBeChecked();
+    await expect(inTimeline.getByRole('checkbox', { name: 'Rye flour 100 g' })).toBeChecked();
+    await expect(inTimeline.getByRole('checkbox', { name: 'Leaven 200 g' })).not.toBeChecked();
+    await expect(inTimeline.getByRole('checkbox', { name: 'Water 100 g' })).not.toBeChecked();
+    expect(await aria(page)).toMatchSnapshot('flow-final-mix-ticks.aria.yml');
+    await expectSameAfterReload(page);
+    // Checking the step neither ticks nor unticks anything: what was not ticked still shows on the step.
+    await upNext(page).getByRole('button', { name: 'Done' }).click();
+    await expect(upNext(page).getByRole('heading')).toHaveText('Start bulk fermentation');
+    await expect(inTimeline.getByRole('checkbox', { name: 'Salt 20 g' })).toBeChecked();
+    await expect(inTimeline.getByRole('checkbox', { name: 'Leaven 200 g' })).not.toBeChecked();
+    // And it can still be ticked from there, with the step's name left struck through and the tick-off's not.
+    await inTimeline.getByRole('checkbox', { name: 'Leaven 200 g' }).check();
+    const saved = () =>
+      page.evaluate(() => JSON.parse(localStorage.getItem('bread-planner.v6')!).plan.recipes.house.bake.added);
+    expect(await saved(), 'the ticks are saved with the bake').toEqual(['mix:salt', 'mix:rye-flour', 'mix:leaven']);
+    expect(
+      await page.evaluate(() =>
+        ['label[for="step-mix"]', 'label[for="timeline-add-mix-water"]'].map(
+          (label) => getComputedStyle(document.querySelector(label)!).textDecorationLine,
+        ),
+      ),
+    ).toEqual(['line-through', 'none']);
+    expect(await aria(page)).toMatchSnapshot('flow-final-mix-done.aria.yml');
+    await page.getByRole('button', { name: 'Clear checklist' }).click();
+    await expect(inTimeline.getByRole('checkbox', { checked: true })).toHaveCount(0);
+    expect(await saved(), 'Clear checklist clears the ticks').toEqual([]);
+  });
+
   test('Clear checklist clears the checks and the dough temperatures', async ({ page }) => {
     await open(page, 'mid-bulk');
     await page.getByRole('button', { name: 'Clear checklist' }).click();

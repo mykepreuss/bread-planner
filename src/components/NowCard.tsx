@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button';
 import type { LiveStep } from '@/domain/bakeday';
 import { untilText, shiftText } from '@/domain/text';
 import { whenText } from './text';
+import { Additions } from './Additions';
 
 /**
- * The Up next card: the next step, its countdown, its note and cue, and a Done button. From 30 minutes before bulk
- * should end, a turn's card leads with the dough: check it, and preshape now if it is ready.
+ * The Up next card: the next step, its countdown, its note and cue, and a Done button. A mixing step lists what goes
+ * in, each with its own tick-off. From 30 minutes before bulk should end, a turn's card leads with the dough: check
+ * it, and preshape now if it is ready.
  */
 export function NowCard({
   next,
@@ -17,6 +19,8 @@ export function NowCard({
   onDone,
   bulk,
   doughCheck,
+  added,
+  onAdded,
 }: {
   next: LiveStep;
   then?: LiveStep;
@@ -24,6 +28,8 @@ export function NowCard({
   now: number;
   onDone: () => void;
   bulk?: ReactNode;
+  added: string[];
+  onAdded: (id: string, added: boolean) => void;
   doughCheck?: { readiness?: string; onReady: () => void };
 }) {
   const due = +next.at <= now;
@@ -49,6 +55,7 @@ export function NowCard({
         </div>
       )}
       {next.note && <p className="now-note">{next.note}</p>}
+      {next.additions && <Additions place="now" additions={next.additions} added={added} onAdded={onAdded} />}
       {next.readiness && (
         <p className="readiness-cue">
           <strong>Ready when:</strong> {next.readiness}

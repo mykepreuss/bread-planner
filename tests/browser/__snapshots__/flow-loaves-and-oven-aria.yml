@@ -74,7 +74,20 @@
       - checkbox "Complete Mix final dough"
       - time: 2:00 PM
       - text: Mix final dough
-      - paragraph: Add rye flour (150 g), leaven used (300 g), salt (30 g), water (150 g) after the autolyse. Mix until incorporated.
+      - paragraph: Add these after the autolyse. Mix until incorporated.
+      - list "Add to the dough":
+        - listitem:
+          - checkbox "Rye flour 150 g"
+          - text: Rye flour 150 g
+        - listitem:
+          - checkbox "Leaven 300 g"
+          - text: Leaven 300 g
+        - listitem:
+          - checkbox "Salt 30 g"
+          - text: Salt 30 g
+        - listitem:
+          - checkbox "Water 150 g"
+          - text: Water 150 g
       - text: Next step in 15 min
       - checkbox "Complete Start bulk fermentation"
       - time: 2:15 PM

@@ -25,8 +25,8 @@ import { Timeline } from './Timeline';
 
 /**
  * The Schedule tab. It shows the live schedule for the selected recipe (src/view/schedule.ts) and turns each bake-day
- * control into a planner action: checking a step, correcting when it was done, temperature readings, and starting the
- * next bake. A check that would skip many earlier steps asks first (see `skipsOnCheck`).
+ * control into a planner action: checking a step, correcting when it was done, ticking what went into a mix,
+ * temperature readings, and starting the next bake. A check that would skip many earlier steps asks first (see `skipsOnCheck`).
  */
 export function ScheduleTab({ onViewIngredients }: { onViewIngredients: () => void }) {
   const { state, update } = usePlanner(),
@@ -50,6 +50,7 @@ export function ScheduleTab({ onViewIngredients }: { onViewIngredients: () => vo
     update((s) => act.setChecked(s, id, checked, at));
   };
   const onUnit = (u: TempUnit) => update((s) => act.setTempUnit(s, u));
+  const onAdded = (id: string, added: boolean) => update((s) => act.setAdded(s, id, added));
   const afterMixField = (id: string) => (
     <DoughTemperature
       id={id}
@@ -86,6 +87,8 @@ export function ScheduleTab({ onViewIngredients }: { onViewIngredients: () => vo
           onDone={() => check(v.next!.id, true)}
           bulk={nowBulk}
           doughCheck={doughCheck}
+          added={v.bake.added}
+          onAdded={onAdded}
         />
       )}
       {v.night.length > 0 && <QuietWarning actions={v.night} />}
@@ -144,6 +147,8 @@ export function ScheduleTab({ onViewIngredients }: { onViewIngredients: () => vo
           afterMixField={afterMixField}
           readings={v.bake.bulkTemps}
           tempText={v.tempText}
+          added={v.bake.added}
+          onAdded={onAdded}
         />
       </div>
       <AlertDialog open={asking !== null} onOpenChange={(open) => !open && setAsking(null)}>

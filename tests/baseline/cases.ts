@@ -376,6 +376,27 @@ function bakeDays(): [string, PlanInput][] {
       'sesame with its toast step up next, beside the initial mix',
       { ...upTo(tartine({ recipe: 'sesame' }), 'autolyse'), now: '2026-11-22 21:05' },
     ],
+    // The final mix's tick-offs, added November 22, 2026.
+    [
+      'the final mix is up next with everything ticked but the salt',
+      {
+        ...upTo(house(), 'autolyse'),
+        added: ['mix:rye-flour', 'mix:leaven', 'mix:water'],
+        now: '2026-11-22 14:02',
+      },
+    ],
+    [
+      'the final mix was checked with the salt still not ticked',
+      {
+        ...upTo(house(), 'mix'),
+        added: ['mix:rye-flour', 'mix:leaven', 'mix:water'],
+        now: '2026-11-22 14:20',
+      },
+    ],
+    [
+      'tartine: the salt ticked and the water not, at the second addition',
+      { ...upTo(tartine(), 'autolyse'), added: ['mix:salt'], now: '2026-11-22 21:31' },
+    ],
   ];
 }
 

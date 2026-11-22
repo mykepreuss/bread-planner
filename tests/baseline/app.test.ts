@@ -10,14 +10,15 @@ import { plannerState, local, atMoment, useBaselineTimeZone, type PlanInput } fr
 import { dateString, durationText } from '../../src/domain/text.ts';
 import { recipeById } from '../../src/domain/recipes.ts';
 import { fromV6, serialize, STORAGE_V6 } from '../../src/state/load.ts';
+import { g } from '../../src/components/text.ts';
 
 /**
  * App.tsx itself against the record. `observePlan` reads the same view module the Schedule tab shows, so the baseline
  * test alone would pass even if a component showed it wrongly. This renders the real App.tsx on the server for every
  * recorded plan, saved in browser storage as the app saves it (version 6) and with the clock at the plan's moment, and
  * checks the Schedule tab
- * shows what the record says: each step's time, title, note, cue, gap, state and colour, the Up next card, the notices
- * and the bake summary. Times render as `HH:MM` and `YYYY-MM-DD` (see `atMoment`), so the check is the same on any machine.
+ * shows what the record says: each step's time, title, note, tick-offs, cue, gap, state and colour, the Up next card,
+ * the notices and the bake summary. Times render as `HH:MM` and `YYYY-MM-DD` (see `atMoment`), so the check is the same on any machine.
  */
 useBaselineTimeZone();
 const root = fileURLToPath(new URL('../../', import.meta.url));
@@ -52,6 +53,25 @@ const ms = (stamp: string) => {
   return Date.parse(`${d}T${t}:00${o}:00`);
 };
 
+/** A mixing step's tick-offs as rendered: whether each is ticked, its id, name and weight. Null when there is no list. */
+function ticks(html: string) {
+  const list = /<ul class="additions"[^>]*>([\s\S]*?)<\/ul>/.exec(html)?.[1];
+  return list === undefined
+    ? null
+    : list
+        .split('<li>')
+        .slice(1)
+        .map(
+          (li) =>
+            `${/aria-checked="true"/.test(li) ? 'ticked' : 'not ticked'} ${first(li, /id="[a-z]+-add-([^"]+)"/)}: ${first(li, /<label[^>]*>([^<]*)</)} ${first(li, /class="addition-weight">([^<]*)</)}`,
+        );
+}
+/** The same for a recorded step. */
+const recordedTicks = (s: Recorded['steps'][number]) =>
+  s.additions?.map(
+    (a) => `${a.ticked ? 'ticked' : 'not ticked'} ${a.id.replace(':', '-')}: ${a.name} ${g(a.grams)} g`,
+  ) ?? null;
+
 /** What the rendered Schedule tab shows. */
 function shown(html: string) {
   html = html.replace(/<svg[\s\S]*?<\/svg>/g, '').replace(/<!-- -->/g, '');
@@ -76,6 +96,7 @@ function shown(html: string) {
           ? `${first(part, /type="date"[^>]*value="([^"]*)"/)} ${first(part, /type="time"[^>]*value="([^"]*)"/)}`
           : null,
         note: first(part, /<\/label>(?:<div class="done-at"[\s\S]*?<\/div>)?<p>([^<]*)<\/p>/),
+        additions: ticks(part),
         ready: first(part, /<p class="readiness-cue"><strong>Ready when:<\/strong>([^<]*)<\/p>/),
         gap: first(part, /<span class="step-gap"><span class="sr-only">Next step in <\/span>([^<]*)<\/span>/),
         advice: first(part, /<p class="bulk-advice"[^>]*>([^<]*)<\/p>/),
@@ -92,6 +113,7 @@ function shown(html: string) {
             countdown: first(card, /<span class="now-countdown">([^<]*)<\/span>/),
             at: first(card, /<time dateTime="([^"]+)"/),
             doughCheck: card.includes('Check the dough before this turn'),
+            additions: ticks(card),
             field: first(card, /for="now-dough-temp">([^<]*)<\/label>/),
             shift: first(card, /<p class="now-shift">([^<]*)<\/p>/),
             then: first(card, /<p>(Then: [^<]*)<\/p>/),
@@ -154,6 +176,7 @@ function expected(input: PlanInput, out: Recorded) {
       ],
       doneAt: s.state === 'done' && s.actual ? `${s.actual.slice(0, 10)} ${s.actual.slice(11, 16)}` : null,
       note: s.note ?? null,
+      additions: recordedTicks(s),
       ready: s.ready ?? null,
       gap: s.gap > 0 ? durationText(s.gap) : null,
       advice: s.id === 'rest' ? (advice ?? DEFAULT_ADVICE) : null,
@@ -166,6 +189,7 @@ function expected(input: PlanInput, out: Recorded) {
             countdown: v.upNext.countdown,
             at: new Date(ms(step(v.upNext.id).at)).toISOString(),
             doughCheck: v.upNext.doughCheck,
+            additions: recordedTicks(step(v.upNext.id)),
             field,
             shift: v.shift !== 0 ? v.shiftText : null,
             then:

@@ -1,4 +1,4 @@
-import { formula, type Formula } from './formula.ts';
+import { formula, type Formula, type Weighed } from './formula.ts';
 import { HOUSE, TARTINE, COOLING } from './methods.ts';
 import { FLOUR_NAMES, inSentence, type Recipe, type Settings } from './recipes.ts';
 import { addInLines, addInNote } from './addins.ts';
@@ -30,6 +30,12 @@ export type Kind =
 export type Phase = 'room' | 'cold' | 'oven';
 
 /**
+ * Something that goes into the dough at a mixing step, ticked off on its own so none is left out. A saved bake keeps
+ * the `id`, such as `mix:salt`.
+ */
+export type Addition = { id: string; name: string; grams: number };
+
+/**
  * A step and the facts about it:
  * - `handsOn`: someone has to do something then, so it counts for quiet hours; `activeMinutes` is how long that work
  *   lasts, for mixing and shaping that can run past the cutoff.
@@ -38,6 +44,7 @@ export type Phase = 'room' | 'cold' | 'oven';
  * - `bulk`: the start of bulk, a turn, or working in a Tartine recipe's add-ins. Bulk never ends before the latest of
  *   them that is checked.
  * - `turn`: the turn's number, from 1, or 0.
+ * - `additions`: what a mixing step adds to the dough, each with its own tick-off.
  */
 export type Step = {
   id: string;
@@ -47,6 +54,7 @@ export type Step = {
   minutes: number;
   note: string;
   readiness?: string;
+  additions?: Addition[];
   phase: Phase;
   handsOn: boolean;
   activeMinutes: number;
@@ -88,10 +96,37 @@ function row(
   minutes: number,
   note: string,
   readiness?: string,
+  additions: Addition[] = [],
 ): Row {
   const { active, ...facts } = FACTS[kind];
   const turn = kind === 'turn' ? Number(id.slice(4)) : 0;
-  return { id, kind, title, offset, minutes, note, readiness, ...facts, activeMinutes: active ? minutes : 0, turn };
+  return {
+    id,
+    kind,
+    title,
+    offset,
+    minutes,
+    note,
+    readiness,
+    ...(additions.length > 0 && { additions }),
+    ...facts,
+    activeMinutes: active ? minutes : 0,
+    turn,
+  };
+}
+
+/**
+ * A mixing stage's ingredients as tick-offs for the step `step`. Added at Michael's request on November 22, 2026,
+ * after a bake went into the oven without its salt: the step's note listed everything in one sentence. An ingredient
+ * the recipe has none of is left out, and the dough's share of the leaven reads "Leaven".
+ */
+function additionsFor(step: string, stage: Weighed[]): Addition[] {
+  return stage
+    .filter(([, grams]) => grams > 0)
+    .map(([label, grams]) => {
+      const name = label === 'Leaven used' ? 'Leaven' : label;
+      return { id: `${step}:${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`, name, grams };
+    });
 }
 
 export type PlanInput = {
@@ -176,6 +211,8 @@ export function schedule(input: PlanInput): Step[] {
       at,
       0,
       'Work in the salt and reserved water. Keep mixing if the dough separates; it should come together again.',
+      undefined,
+      additionsFor('mix', r.final),
     );
     push(
       'rest',
@@ -304,13 +341,17 @@ export function schedule(input: PlanInput): Step[] {
       `Mix ${listed(r.initial)}. Cover. Keep the remaining ingredients for the final mix.`,
     );
     let at = h.leaven;
+    const added = additionsFor('mix', r.final);
     push(
       'mix',
       'mix',
       'Mix final dough',
       at,
       h.mix,
-      `Add ${listed(r.final)} after the autolyse. Mix until incorporated.`,
+      // The tick-offs under the note name each ingredient and its weight.
+      added.length ? 'Add these after the autolyse. Mix until incorporated.' : 'Mix until incorporated.',
+      undefined,
+      added,
     );
     at += h.mix;
     push(

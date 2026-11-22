@@ -43,7 +43,7 @@ test('a fresh planner opens Preuss House tomorrow at 9:00 AM, with every recipe 
   for (const r of RECIPES) {
     assert.deepEqual(s.recipes[r.id].settings, r.defaults, r.id);
     assert.notEqual(s.recipes[r.id].settings, r.defaults, `${r.id} has its own copy`);
-    assert.deepEqual(s.recipes[r.id].bake, { done: [], doneAt: {}, doughTemp: null, bulkTemps: [] });
+    assert.deepEqual(s.recipes[r.id].bake, { done: [], doneAt: {}, doughTemp: null, bulkTemps: [], added: [] });
   }
   assert.equal(tomorrow(at(2026, 12, 31, 23, 59)), '2027-01-01');
 });
@@ -82,11 +82,15 @@ test('loading prefers version 6, falls back to version 5, and starts fresh from 
   for (const nothing of nothings) assert.deepEqual(loadState(storage(nothing), NOW), freshState(NOW));
 });
 
-test('a saved planner loads back exactly, whatever was checked, timed or measured', () => {
-  const s = act.addReading(
-    act.setDoughTemp(act.setChecked(act.setChecked(plan(), 'leaven', true, NOW), 'turn9', true, NOW + 3600000), 81.5),
-    84,
-    NOW + 7200000,
+test('a saved planner loads back exactly, whatever was checked, timed, ticked or measured', () => {
+  const s = act.setAdded(
+    act.addReading(
+      act.setDoughTemp(act.setChecked(act.setChecked(plan(), 'leaven', true, NOW), 'turn9', true, NOW + 3600000), 81.5),
+      84,
+      NOW + 7200000,
+    ),
+    'mix:salt',
+    true,
   );
   const edited = act.setSetting(act.setSetting(act.selectRecipe(s, 'tartine'), 'flour:wheat', 0), 'build:starter', 40);
   for (const state of [
@@ -111,6 +115,7 @@ test('version 6 saves are checked as version 5 ones were', () => {
       { at: 5, f: 82 },
       { at: 'x', f: 80 },
     ],
+    added: ['mix:salt', 3, 'mix:salt', null],
   };
   Object.assign(s.plan, {
     order: ['bogus', 'tartine', 'tartine'],
@@ -137,6 +142,7 @@ test('version 6 saves are checked as version 5 ones were', () => {
     doneAt: { leaven: 1 },
     doughTemp: null,
     bulkTemps: [{ at: 5, f: 82 }],
+    added: ['mix:salt'],
   });
   // The menu keeps Tartine first and gains the rest, so the saved House stays selected. Before November 22, 2026 a
   // menu without House left it out, and Tartine was selected instead.
@@ -298,30 +304,83 @@ test('a new date or time clears the dough temperatures only while nothing is che
   assert.equal(act.setTime(temps, '10:00').time, '10:00');
 });
 
-test('Plan the next bake moves the date to tomorrow and starts afresh: no checks, times or temperatures (decision 1)', () => {
-  const s = act.addReading(
-      act.setDoughTemp(act.setChecked(act.setChecked(plan(), 'feed', true, NOW), 'leaven', true, NOW), 80),
-      82,
-      NOW,
+test('Plan the next bake moves the date to tomorrow and starts afresh: no checks, times, ticks or temperatures (decision 1)', () => {
+  const s = act.setAdded(
+      act.addReading(
+        act.setDoughTemp(act.setChecked(act.setChecked(plan(), 'feed', true, NOW), 'leaven', true, NOW), 80),
+        82,
+        NOW,
+      ),
+      'mix:salt',
+      true,
     ),
     next = act.planNextBake(s, NOW);
   assert.equal(next.date, '2026-11-22');
-  assert.deepEqual(selected(next).bake, { done: [], doneAt: {}, doughTemp: null, bulkTemps: [] });
+  assert.deepEqual(selected(next).bake, { done: [], doneAt: {}, doughTemp: null, bulkTemps: [], added: [] });
   // Other recipes' bakes are their own.
   const other = act.setChecked(act.selectRecipe(s, 'tartine'), 'leaven', true, NOW);
   assert.deepEqual(act.planNextBake(other, NOW).recipes.house.bake, s.recipes.house.bake);
 });
 
-test('Clear checklist clears the checks, their times and the temperatures of the selected recipe only', () => {
-  const other = act.setChecked(act.selectRecipe(plan(), 'tartine'), 'leaven', true, NOW);
-  const s = act.addReading(
-    act.setDoughTemp(act.setChecked(act.selectRecipe(other, 'house'), 'mix', true, NOW), 82),
-    84,
-    NOW,
+test('Clear checklist clears the checks, their times, the ticks and the temperatures of the selected recipe only', () => {
+  const other = act.setAdded(
+    act.setChecked(act.selectRecipe(plan(), 'tartine'), 'leaven', true, NOW),
+    'mix:salt',
+    true,
   );
+  const s = act.setAdded(
+    act.addReading(act.setDoughTemp(act.setChecked(act.selectRecipe(other, 'house'), 'mix', true, NOW), 82), 84, NOW),
+    'mix:leaven',
+    true,
+  );
+  assert.deepEqual(selected(s).bake.added, ['mix:leaven']);
   const cleared = act.clearChecklist(s);
-  assert.deepEqual(selected(cleared).bake, { done: [], doneAt: {}, doughTemp: null, bulkTemps: [] });
+  assert.deepEqual(selected(cleared).bake, { done: [], doneAt: {}, doughTemp: null, bulkTemps: [], added: [] });
   assert.deepEqual(cleared.recipes.tartine.bake.done, ['leaven']);
+  assert.deepEqual(cleared.recipes.tartine.bake.added, ['mix:salt']);
+});
+
+test('ticking an addition is kept for the selected recipe, unticking removes it, and neither checks or moves a step', () => {
+  const start = act.setChecked(plan(), 'leaven', true, NOW),
+    salted = act.setAdded(act.setAdded(start, 'mix:salt', true), 'mix:water', true);
+  assert.deepEqual(selected(salted).bake.added, ['mix:salt', 'mix:water']);
+  // A second tick of the same addition counts once.
+  assert.deepEqual(selected(act.setAdded(salted, 'mix:salt', true)).bake.added, ['mix:water', 'mix:salt']);
+  assert.deepEqual(selected(act.setAdded(salted, 'mix:salt', false)).bake.added, ['mix:water']);
+  // Unticking one that was never ticked changes nothing.
+  assert.deepEqual(selected(act.setAdded(start, 'mix:salt', false)).bake.added, []);
+  // The checklist and its times are as they were, and every other recipe has nothing ticked.
+  assert.deepEqual(selected(salted).bake.done, ['leaven']);
+  assert.deepEqual(selected(salted).bake.doneAt, selected(start).bake.doneAt);
+  assert.deepEqual(salted.recipes.tartine.bake.added, []);
+  // Restore defaults starts the recipe's bake over, ticks included.
+  assert.deepEqual(selected(act.restoreDefaults(salted)).bake.added, []);
+});
+
+test('a new date or time clears the final-mix ticks while nothing is checked, as it does the temperatures', () => {
+  const ticked = act.setAdded(plan(), 'mix:salt', true);
+  assert.deepEqual(selected(act.setDate(ticked, '2026-11-23')).bake.added, []);
+  assert.deepEqual(selected(act.setTime(ticked, '10:00')).bake.added, []);
+  // Once a step is checked it is the same bake, so the ticks stay.
+  const underway = act.setAdded(act.setChecked(plan(), 'leaven', true, NOW), 'mix:salt', true);
+  assert.deepEqual(selected(act.setDate(underway, '2026-11-23')).bake.added, ['mix:salt']);
+  // Clear checklist clears ticks even when nothing is checked.
+  assert.deepEqual(selected(act.clearChecklist(ticked)).bake.added, []);
+});
+
+test('a save from before the tick-offs loads with nothing ticked, from version 5 or version 6', () => {
+  const six = JSON.parse(serialize(act.setChecked(plan(), 'mix', true, NOW)));
+  delete six.plan.recipes.house.bake.added;
+  const loaded = fromV6(six, NOW)!;
+  assert.deepEqual(loaded.recipes.house.bake.added, []);
+  assert.deepEqual(loaded.recipes.house.bake.done, ['mix']);
+  const five = { version: 5, plan: { recipe: 'house', recipes: { house: { params: {}, done: ['mix'] } } } };
+  assert.deepEqual(fromV5(five, NOW).recipes.house.bake.added, []);
+  // Anything that is not a list of ids loads as nothing ticked.
+  for (const bad of ['mix:salt', { 'mix:salt': true }, 7, null]) {
+    six.plan.recipes.house.bake.added = bad;
+    assert.deepEqual(fromV6(six, NOW)!.recipes.house.bake.added, []);
+  }
 });
 
 test('readings in the same minute replace each other, stay in time order, and can be removed', () => {
@@ -436,7 +495,7 @@ test('every temperature the °C field accepts is kept on reload, from 10°C to 3
 
 test('a save with one of the four removed recipes selected opens on Preuss House, keeps House and Tartine as saved, and starts the new Tartine recipes at their defaults', () => {
   const six = ['house', 'tartine', 'white-wheat', 'red-rye', 'five-flour', 'four-flour'];
-  const checked = { done: ['leaven'], doneAt: { leaven: NOW }, doughTemp: 78, bulkTemps: [] };
+  const checked = { done: ['leaven'], doneAt: { leaven: NOW }, doughTemp: 78, bulkTemps: [], added: [] };
   const recipes = Object.fromEntries(
     six.map((id) => [id, { settings: { count: 3 }, bake: id === 'red-rye' || id === 'tartine' ? checked : {} }]),
   );
@@ -462,13 +521,16 @@ test('a save with one of the four removed recipes selected opens on Preuss House
       s.recipes.olive,
       {
         settings: defaultSettings(recipeById('olive')!),
-        bake: { done: [], doneAt: {}, doughTemp: null, bulkTemps: [] },
+        bake: { done: [], doneAt: {}, doughTemp: null, bulkTemps: [], added: [] },
       },
       `${name}: Tartine Olive, which the save doesn't hold, starts at its defaults`,
     );
     assert.deepEqual(
       s.recipes.sesame,
-      { settings: recipeById('sesame')!.defaults, bake: { done: [], doneAt: {}, doughTemp: null, bulkTemps: [] } },
+      {
+        settings: recipeById('sesame')!.defaults,
+        bake: { done: [], doneAt: {}, doughTemp: null, bulkTemps: [], added: [] },
+      },
       `${name}: Tartine Sesame, which the save doesn't hold, starts at its defaults`,
     );
     // `white-wheat` was White & Whole Wheat, not Tartine Whole Wheat (`whole-wheat`): nothing saved for it carries over.
@@ -476,7 +538,7 @@ test('a save with one of the four removed recipes selected opens on Preuss House
       s.recipes['whole-wheat'],
       {
         settings: defaultSettings(recipeById('whole-wheat')!),
-        bake: { done: [], doneAt: {}, doughTemp: null, bulkTemps: [] },
+        bake: { done: [], doneAt: {}, doughTemp: null, bulkTemps: [], added: [] },
       },
       `${name}: Tartine Whole Wheat is at its defaults`,
     );

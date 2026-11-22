@@ -88,9 +88,13 @@ function fromV6Settings(settings: unknown) {
     field.startsWith('flour:') ? flours[field.slice(6)] : field.startsWith('build:') ? build[field.slice(6)] : s[field];
 }
 
-/** The checked steps and their times, and dough temperatures between 50 and 100°F. A time is kept only for a checked step. */
+/**
+ * The checked steps and their times, the ticked additions, and dough temperatures between 50 and 100°F. A time is
+ * kept only for a checked step. A save from before the tick-offs has no additions ticked.
+ */
 function bakeFrom(source: Raw): Bake {
-  const done = Array.isArray(source.done) ? source.done.filter((x): x is string => typeof x === 'string') : [];
+  const strings = (x: unknown) => (Array.isArray(x) ? x.filter((v): v is string => typeof v === 'string') : []);
+  const done = strings(source.done);
   const times = isObject(source.doneAt) ? Object.entries(source.doneAt) : [];
   const temp = (t: unknown): t is number => typeof t === 'number' && inTempRange(t, 'F');
   const readings = Array.isArray(source.bulkTemps) ? source.bulkTemps : [];
@@ -103,6 +107,7 @@ function bakeFrom(source: Raw): Bake {
       .filter((r): r is BulkReading => isObject(r) && isFinite(r.at) && temp(r.f))
       .map((r) => ({ at: r.at, f: r.f }))
       .reduce(withReading, [] as BulkReading[]),
+    added: [...new Set(strings(source.added))],
   };
 }
 

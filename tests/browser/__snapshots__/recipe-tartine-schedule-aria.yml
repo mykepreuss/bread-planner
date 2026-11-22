@@ -74,6 +74,13 @@
       - time: 9:30 PM
       - text: Add salt and final water
       - paragraph: Work in the salt and reserved water. Keep mixing if the dough separates; it should come together again.
+      - list "Add to the dough":
+        - listitem:
+          - checkbox "Salt 20 g"
+          - text: Salt 20 g
+        - listitem:
+          - checkbox "Water 50 g"
+          - text: Water 50 g
       - checkbox "Complete Begin warm bulk fermentation"
       - time: 9:30 PM
       - text: Begin warm bulk fermentation
