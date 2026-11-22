@@ -4,7 +4,8 @@ import type { AddIns } from './addins.ts';
  * The recipes, as data. Each default is written as the sum it came from in the source spreadsheet or the book, so it
  * equals the value the app has always started with. White & Whole Wheat, Red Spring & Rye, Five-Flour and Four-Flour
  * Sourdough were removed at Michael's request on November 22, 2026, with the flours only they used; they are in git
- * history. The same day he asked for three more from Tartine Bread: Tartine Olive, Tartine Sesame and Tartine Whole Wheat.
+ * history. The same day he asked for four more from Tartine Bread: Tartine Olive, Tartine Sesame, Tartine Whole Wheat
+ * and Tartine Country Rye.
  */
 
 export type FlourKey = 'anita' | 'white' | 'wheat' | 'rye' | 'ap';
@@ -151,11 +152,12 @@ export const RECIPES: Recipe[] = [
       title: 'Add the toasted sesame seeds',
       note: 'Scatter over the dough {list}. Wet them with a splash of water, then work them in by hand, pinching the dough through your fingers and slicing through it with the side of your hand until the seeds are evenly spread. Bulk then carries on as planned.',
       items: [{ amount: 1, unit: ['cup', 'cups'], what: 'unhulled sesame seeds, toasted and cooled' }],
-      // 10 minutes, a stir, 10 to 15 minutes more, then 20 minutes to cool: ready by Turn 1.
+      // About 15 minutes to heat the oven, 10 minutes, a stir, 10 to 15 minutes more, then 20 minutes to cool: an hour,
+      // so the seeds are cool by Turn 1. It starts with the initial mix.
       prep: {
         title: 'Toast the sesame seeds',
         note: 'Heat the oven to 400°F / 204°C. Give the seeds 10 minutes on a rimmed baking sheet in a single layer, then stir them so the darker ones at the edges move to the middle. Return them for another 10 to 15 minutes, until thoroughly toasted, and let them cool for 20 minutes. They go into the dough at Turn 1.',
-        minutesBefore: 45,
+        minutesBefore: 60,
       },
     },
     // Original Tartine's defaults, copied: 900 g white, 100 g whole wheat; 750 g water with 50 g held back; 200 g
@@ -196,6 +198,33 @@ export const RECIPES: Recipe[] = [
       salt: 2,
       reserve: share(50, 800),
       flours: { wheat: 70, ap: 30 },
+      build: { starter: 15, flour: 100, wheat: 100, water: 200 },
+    },
+  },
+  {
+    id: 'country-rye',
+    name: 'Tartine Country Rye',
+    description:
+      'The book’s country rye: just enough medium-fine whole rye with white bread flour for a sweet rye flavour without much sourness. Cooler water and a longer rest after mixing, as for whole wheat.',
+    method: 'tartine',
+    flours: ['rye', 'white'],
+    late: [],
+    buildFlour: 'white',
+    initialMix: {
+      rest: 50,
+      note: 'Stir the leaven used into the initial water, about 75°F / 24°C, until it disperses. Add the rye and white-bread flour and mix by hand until no dry flour is left. Cover and rest for 40 to 60 minutes.',
+    },
+    // Tartine Bread, page 118: 170 g medium-fine whole rye, 830 g white bread flour; 800 g water; 200 g leaven, built
+    // as for Original Tartine; 20 g salt, added after the rest. As for Tartine Whole Wheat, 50 g of the water is
+    // assumed to wait for the salt, as in the Basic Country Bread. Added at Michael's request on November 22, 2026.
+    defaults: {
+      count: 2,
+      weight: 1010,
+      hydration: 80,
+      leaven: 20,
+      salt: 2,
+      reserve: share(50, 800),
+      flours: { rye: 17, white: 83 },
       build: { starter: 15, flour: 100, wheat: 100, water: 200 },
     },
   },

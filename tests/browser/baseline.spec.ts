@@ -107,7 +107,7 @@ async function openIngredients(page: Page) {
   }
 }
 
-const RECIPES = ['house', 'tartine'];
+const RECIPES = ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye'];
 /** Screens recorded as a whole page too, at these widths. Kept to a few: whole pages are large. */
 const wholePage: Record<string, string[]> = {
   'mid-bulk': ['phone', 'desktop'],
@@ -454,10 +454,17 @@ test.describe('flows', () => {
     await expectSameAfterReload(page);
   });
 
-  test('The recipe menu offers only Preuss House and Original Tartine', async ({ page }) => {
+  test('The recipe menu offers Preuss House and the five Tartine recipes', async ({ page }) => {
     await open(page, 'fresh');
     await page.getByRole('combobox', { name: 'Recipe' }).click();
-    await expect(page.getByRole('option')).toHaveText(['Preuss House', 'Original Tartine']);
+    await expect(page.getByRole('option')).toHaveText([
+      'Preuss House',
+      'Original Tartine',
+      'Tartine Olive',
+      'Tartine Sesame',
+      'Tartine Whole Wheat',
+      'Tartine Country Rye',
+    ]);
   });
 
   test('Each recipe keeps its own checklist', async ({ page }) => {

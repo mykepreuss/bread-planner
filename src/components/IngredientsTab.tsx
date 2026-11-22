@@ -240,8 +240,8 @@ export function IngredientsTab() {
                   description="Work in after the first turn. The book's measures, scaled to your batch."
                 >
                   <ul className="add-ins">
-                    {addInLines(d.addIns, p, d.defaults).map((line) => (
-                      <li key={line}>{line}</li>
+                    {addInLines(d.addIns, p, d.defaults).map((line, i) => (
+                      <li key={i}>{line}</li>
                     ))}
                   </ul>
                 </Panel>

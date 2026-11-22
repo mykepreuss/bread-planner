@@ -52,11 +52,12 @@ const clock = (d: Date) => `${String(d.getHours()).padStart(2, '0')}:${String(d.
 const day = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-test('Tartine Sesame is on the menu right after Original Tartine, with its method, flours, leaven build and defaults', () => {
+test('Tartine Sesame is on the menu right after Tartine Olive, with its method, flours, leaven build and defaults', () => {
   const ids = RECIPES.map((r) => r.id),
     sesame = recipe('sesame'),
     tartine = recipe('tartine');
-  assert.equal(ids.indexOf('sesame'), ids.indexOf('tartine') + 1);
+  assert.equal(ids.indexOf('sesame'), ids.indexOf('olive') + 1);
+  assert.equal(ids.indexOf('olive'), ids.indexOf('tartine') + 1);
   assert.equal(sesame.name, 'Tartine Sesame');
   assert.deepEqual(
     [sesame.method, sesame.flours, sesame.late, sesame.buildFlour],
@@ -107,7 +108,7 @@ test('its formula, the weights on the Ingredients tab, is Original Tartine’s',
   }
 });
 
-test('its schedule is Original Tartine’s with the toast step 45 minutes before Turn 1 and the add-in step at Turn 1', () => {
+test('its schedule is Original Tartine’s with the toast step an hour before Turn 1 and the add-in step at Turn 1', () => {
   const amounts: Record<number, string> = { 1: '½ cup', 2: '1 cup', 3: '1½ cups', 5: '2½ cups' };
   for (const proof of ['cold', 'warm'] as const)
     for (const [count, ovenCapacity] of [
@@ -138,7 +139,7 @@ test('its schedule is Original Tartine’s with the toast step 45 minutes before
         const toast = find(steps, 'toast'),
           turn1 = find(steps, 'turn1'),
           addins = find(steps, 'addins');
-        assert.equal(+turn1.at - +toast.at, 45 * MINUTE, `${label}: toast 45 minutes before Turn 1`);
+        assert.equal(+turn1.at - +toast.at, 60 * MINUTE, `${label}: toast an hour before Turn 1`);
         assert.deepEqual(
           ids.slice(ids.indexOf('autolyse'), ids.indexOf('autolyse') + 3),
           ['autolyse', 'toast', 'mix'],
@@ -166,7 +167,7 @@ test('its schedule is Original Tartine’s with the toast step 45 minutes before
           ['prep', 'Toast the sesame seeds', TOAST_NOTE, undefined, 'oven', true, 0, false, false, 0],
           label,
         );
-        assert.equal(toast.minutes, 15, `${label}: it lasts until the salt and final water`);
+        assert.equal(toast.minutes, 30, `${label}: it lasts until the salt and final water`);
         assert.equal(+find(steps, 'mix').at - +toast.at, toast.minutes * MINUTE, label);
         assert.deepEqual(
           [
@@ -204,11 +205,11 @@ test('planning back from the finish puts every step, the toast step included, wh
   assert.equal(toastAt(act.setAnchor(finish, 'leaven')), toastAt(s));
 });
 
-test('the toast step keeps its 45 minutes across a daylight-saving change, and every note is a complete sentence', () => {
+test('the toast step keeps its hour across a daylight-saving change, and every note is a complete sentence', () => {
   // The clocks go back at 2:00 AM on November 1, 2026, between this leaven start and the toast step.
   const steps = schedule(plan('sesame', { date: '2026-10-31', time: '20:00' }));
-  assert.equal(+find(steps, 'turn1').at - +find(steps, 'toast').at, 45 * MINUTE);
-  assert.equal(+find(steps, 'toast').at - +find(steps, 'leaven').at, 735 * MINUTE);
+  assert.equal(+find(steps, 'turn1').at - +find(steps, 'toast').at, 60 * MINUTE);
+  assert.equal(+find(steps, 'toast').at - +find(steps, 'leaven').at, 720 * MINUTE);
   for (const proof of ['cold', 'warm'] as const)
     for (const step of schedule(plan('sesame', { proof })))
       assert.match(step.note, /[.!?]$/, `${proof} ${step.id}: ${step.note}`);
@@ -279,12 +280,13 @@ test('on bake day the toast step is hands-on oven work that moves nothing, and c
 
 test('quiet hours list the toast step when it starts after 10:30 PM, until it is checked', () => {
   const quiet = (steps: Step[], done: string[] = []) => quietHourActions(steps, done).map((a) => a.step.id);
-  // Leaven at 9:00 AM: the seeds go in at 9:15 PM.
+  // Leaven at 9:00 AM: the seeds go in at 9:00 PM, with the initial mix.
   const usual = schedule(plan('sesame'));
-  assert.equal(clock(find(usual, 'toast').at), '21:15');
+  assert.equal(clock(find(usual, 'toast').at), '21:00');
   assert.ok(!quiet(usual).includes('toast'));
-  // Leaven at 10:30 AM: at 10:45 PM.
-  const later = schedule(plan('sesame', { time: '10:30' }));
+  // Leaven at 10:30 AM: at 10:30 PM, not yet quiet; at 10:45 AM: at 10:45 PM.
+  assert.ok(!quiet(schedule(plan('sesame', { time: '10:30' }))).includes('toast'));
+  const later = schedule(plan('sesame', { time: '10:45' }));
   assert.equal(clock(find(later, 'toast').at), '22:45');
   const listed = quietHourActions(later).find((a) => a.step.id === 'toast');
   assert.deepEqual([listed?.continues], [false]);

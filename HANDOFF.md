@@ -916,3 +916,26 @@ Independent check (the verifier, on `2267301`): FAIL on criterion 6 only, three 
   - Rolling back to `0b92450` after the new build has saved won't bring the four recipes back, except at their defaults after clearing storage.
   - A hand-made saved order can leave a recipe off the menu.
 - Not part of this pull request: the Tartine recipes change, branch `tartine-recipes` at `66d29e8` and not yet merged, makes `src/state/load.ts` add every recipe a saved order doesn't name, which also closes that gap.
+
+## Four recipes from Tartine Bread, November 22, 2026: committed, pull request open
+
+Michael's requests: add the book's Olive (page 88) and Sesame (page 90) variations, using two agents, then its Whole-Wheat Bread (page 114) and Country Rye (page 118). Branch `tartine-recipes`, from `remove-four-recipes`.
+
+How it was built:
+- I wrote the shared support first, on `tartine-add-ins`: `src/domain/addins.ts`, an `addIns` field on a recipe, the add-in step in the Tartine schedule, and the "03 / Add-ins" panel. Then three agents worked in parallel, each in its own worktree on that base: Olive (`tartine-olive`), Sesame (`tartine-sesame`, which also added the toast step) and Whole Wheat (`tartine-whole-wheat`, which added the `initialMix` override and the all-purpose flour back). They were told to write in their own words, write tests first, leave the record inputs, browser tests and docs to me, and not use the browser test port.
+- I combined the branches here, resolving the conflicts in the recipe list, the tests that list recipes, and the record, and added Country Rye using the `initialMix` override.
+- Fixes on combining:
+  - All three agents found that a saved menu kept only the recipes it named, so new recipes would never show on a device with a save. `load.ts` now keeps the saved order and adds every recipe it doesn't name after it. Two older tests encoded the old rule and now expect the new one; one of them, a menu without House but House selected, now keeps House selected.
+  - The toast step starts an hour before Turn 1, not 45 minutes, because heating the oven to 400°F takes about 15 minutes (the Sesame agent's note). Its tests now expect an hour, with the quiet-hours case moved to a 10:45 AM leaven.
+  - The add-in list is keyed by position, so two identical lines can't clash (the Olive agent's note).
+  - `tests/baseline/app.test.ts` decided "the book's recipe" by the id `tartine`; it now uses the Tartine method, as the screen does.
+
+Record changes:
+- `cases.ts` adds the four recipes to its recipe list, plus two bake-day cases: Olive with its add-in step up next, and Sesame with its toast step up next. A script compared the new record with `remove-four-recipes`':
+  - all 120 plans, 26 recipe calculations and 53 helper results are unchanged;
+  - the 34 new plans and 16 new calculations are all for the four recipes;
+  - each of the 24 saved-data cases gains the four recipes at their defaults, and its menu gains them too; no selected recipe changes.
+  A second `npm run baseline:update` left the record unchanged.
+- `tests/browser/saved-plans.json` gains four saves, copies of Original Tartine's with each recipe selected, added in the file's one-line format.
+
+Not verified: how the add-ins and toast step read on Michael's iPhone, and whether the book's whole-wheat and rye pages intend 50 g of water to wait for the salt.

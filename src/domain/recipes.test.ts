@@ -7,7 +7,7 @@ import { schedule, type PlanInput } from './schedule.ts';
 // Ported from src/lib/recipes.test.ts. Plans are for 9:00 AM local time on 21 October 2026, as there, and every time
 // is built and read in the local zone, so these tests hold in any time zone.
 const approx = (a: number, b: number, message?: string) => assert.ok(Math.abs(a - b) < 1e-7, message ?? `${a} != ${b}`);
-const IDS = ['house', 'tartine', 'olive', 'sesame', 'whole-wheat'];
+const IDS = ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye'];
 /**
  * Preuss House set to the numbers of the retired Red Spring & Rye (removed November 22, 2026): the spreadsheet's main
  * calculator, which puts all of a 312 g build into the dough. It keeps the floating-point cases that recipe covered.
@@ -73,6 +73,7 @@ test('total hydration includes only the used leaven while every recipe quantity 
     olive: (850 / 1100) * 100,
     sesame: (850 / 1100) * 100,
     'whole-wheat': (900 / 1100) * 100,
+    'country-rye': (900 / 1100) * 100,
   };
   const recipes = JSON.stringify(RECIPES);
   for (const id of IDS) {
@@ -154,7 +155,7 @@ test('a recipe keeps its added-water setting and shows the total hydration that 
   approx(r.totalHydration, 83 / 1.1);
 });
 
-test('the menu lists Preuss House, Original Tartine, Tartine Olive, Tartine Sesame, then Tartine Whole Wheat, House uses Anita’s flour, and the red-spring variation is not one of them', () => {
+test('the menu lists Preuss House, Original Tartine, Tartine Olive, Tartine Sesame, Tartine Whole Wheat, then Tartine Country Rye, House uses Anita’s flour, and the red-spring variation is not one of them', () => {
   assert.deepEqual(
     RECIPES.map((r) => r.id),
     IDS,
@@ -384,7 +385,7 @@ test('a recipe is found only by its own id, and its defaults cannot be changed i
   assert.notEqual(defaultSettings(house), defaultSettings(house), 'each copy is new');
 });
 
-test('only Preuss House, Original Tartine, Tartine Olive, Tartine Sesame and Tartine Whole Wheat are on the menu, and the four removed recipes stay gone (Michael, November 22, 2026)', () => {
+test('only Preuss House, Original Tartine, Tartine Olive, Tartine Sesame, Tartine Whole Wheat and Tartine Country Rye are on the menu, and the four removed recipes stay gone (Michael, November 22, 2026)', () => {
   assert.deepEqual(
     RECIPES.map((r) => [r.id, r.name]),
     [
@@ -393,6 +394,7 @@ test('only Preuss House, Original Tartine, Tartine Olive, Tartine Sesame and Tar
       ['olive', 'Tartine Olive'],
       ['sesame', 'Tartine Sesame'],
       ['whole-wheat', 'Tartine Whole Wheat'],
+      ['country-rye', 'Tartine Country Rye'],
     ],
   );
   for (const gone of ['white-wheat', 'red-rye', 'five-flour', 'four-flour']) assert.equal(recipeById(gone), undefined);

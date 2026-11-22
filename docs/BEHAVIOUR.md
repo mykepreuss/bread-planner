@@ -2,18 +2,22 @@
 
 This is the contract for the rebuild: what the app did at commit `34699a7`, written from the code and checked against the recorded outputs, and kept since except where Michael decided otherwise. His decisions are at the end; sections that changed say so.
 
-Two records back it up. `npm test` checks the code against `tests/baseline/baseline.json` (120 plans, 26 recipe calculations, 24 kinds of saved data), including `App.tsx` rendered for each plan. `npm run test:browser` checks the built site against 14 recorded screens, each at phone and desktop width, and 30 recorded actions.
+Two records back it up. `npm test` checks the code against `tests/baseline/baseline.json` (154 plans, 42 recipe calculations, 24 kinds of saved data), including `App.tsx` rendered for each plan. `npm run test:browser` checks the built site against 22 recorded screens, each at phone and desktop width, and 30 recorded actions.
 
 ## Recipes
 
-The recipe menu lists two recipes, in this order. Each keeps its own settings and checklist. Changed at Michael's request (decision 9): four more were listed until November 22, 2026.
+The recipe menu lists six recipes, in this order. Each keeps its own settings and checklist. Changed at Michael's request (decisions 9 and 10): four other recipes were listed until November 22, 2026, and the last four here came from Tartine Bread that day.
 
 | Recipe | Method | Flour parts | Loaves | Total hydration shown |
 | --- | --- | --- | --- | --- |
 | Preuss House (the default) | House | Anita's all-purpose 80, whole wheat 10, rye 10 | 2 × 1,000 g | 80% |
 | Original Tartine | Tartine | white-bread 90, whole wheat 10 | 2 × 985 g | 77% |
+| Tartine Olive | Tartine, with add-ins | white-bread 90, whole wheat 10 | 2 × 985 g | 77% |
+| Tartine Sesame | Tartine, with add-ins | white-bread 90, whole wheat 10 | 2 × 985 g | 77% |
+| Tartine Whole Wheat | Tartine, longer initial rest | whole wheat 70, all-purpose 30 | 2 × 1,010 g | 82% |
+| Tartine Country Rye | Tartine, longer initial rest | rye 17, white-bread 83 | 2 × 1,010 g | 82% |
 
-Rye is added at the final mix. A saved plan whose selected recipe was removed opens on Preuss House, and the removed recipes' settings and checklists are dropped the next time the planner saves.
+In Preuss House, rye is added at the final mix; in Country Rye it goes into the initial mix with the white-bread flour. A saved plan whose selected recipe was removed opens on Preuss House, and the removed recipes' settings and checklists are dropped the next time the planner saves. Tartine Whole Wheat and Country Rye hold back 50 g of their 800 g water for the salt, as the Basic Country Bread does; the book's pages for them don't say.
 
 ## Ingredients
 
@@ -25,6 +29,7 @@ Each recipe stores: loaf count and weight, added hydration, leaven used and salt
 - **Total hydration** counts the flour and water in the leaven used. Mature starter is taken as half flour and half water; an empty build is taken as 100% hydration. The field shows a whole number, and typing a value sets the added hydration that gives it, so the dough weight stays the same. Its lowest accepted value is the total hydration with no added water.
 - **Controls.** Hydration, leaven, salt and water held back have both a slider and a number field. The sliders run 50–100%, 0–50%, 0–5% and 0–100%, and widen to show a value typed outside that range. An invalid entry shows its allowed range and reverts when you leave the field. Loaf count must be a whole number of 1 or more.
 - **Tartine only:** rice flour for the baskets, 20% of added flour.
+- **Add-ins.** Tartine Olive and Tartine Sesame list their add-ins as a third stage, "03 / Add-ins", in the book's measures rather than grams, scaled by the dough's weight against the book's two loaves and written to the nearest quarter (3 loaves of olive bread: 4½ cups of olives). Olive: 3 cups pitted olives, 2 cups toasted walnuts or hazelnuts (optional), 2 teaspoons dried herbes de Provence and the grated zest of 1 lemon. Sesame: 1 cup unhulled sesame seeds, toasted and cooled.
 - "Restore recipe defaults" resets the selected recipe's settings and checklist after a confirmation. Other recipes, the dates and the oven settings are kept.
 
 ## Schedule
@@ -33,7 +38,9 @@ Times below are for a 9:00 AM leaven start with two loaves baked together. Durat
 
 **House method:** feed starter at 10:00 PM the evening before, start leaven 9:00, start autolyse 9:30, final mix 2:00 PM, start bulk 2:15, seven turns every 30 minutes from 2:45, preshape 6:15 (10 min), bench rest 6:25, final shape 6:55, basket rest 7:00, cold proof 7:20 PM for 12 h 30 min. Next morning: take the loaves out and preheat to 540°F at 7:50, bake covered at 460°F 8:50, remove lid 9:10, out 9:33, 15-minute cooling mark 9:48.
 
-**Tartine:** make leaven 9:00 AM, mix and rest 9:00 PM, salt, final water and start of warm bulk 9:30, five turns from 10:00, divide and preshape 12:30 AM (5 min), bench rest 12:35, final shape 1:05, then either refrigerate 1:10 for 12 h and warm 1 h, or a warm proof of 3 h 30 min. Preheat to 500°F 30 minutes before the bake, and bake at 450°F, 20 minutes covered and 20 uncovered.
+**Tartine** (Original Tartine, Olive and Sesame): make leaven 9:00 AM, mix and rest 9:00 PM, salt, final water and start of warm bulk 9:30, five turns from 10:00, divide and preshape 12:30 AM (5 min), bench rest 12:35, final shape 1:05, then either refrigerate 1:10 for 12 h and warm 1 h, or a warm proof of 3 h 30 min. Preheat to 500°F 30 minutes before the bake, and bake at 450°F, 20 minutes covered and 20 uncovered.
+
+**Tartine variations.** Olive and Sesame add a step at Turn 1's time, right after it, to work the add-ins in, with the scaled amounts in its note. It counts as part of bulk, like a turn, and its Up next card offers the dough temperature as a turn's does. Sesame also has "Toast the sesame seeds" an hour before Turn 1, at 9:00 PM with the initial mix: about 15 minutes to heat the oven to 400°F, 10 minutes, a stir, 10 to 15 more, and 20 minutes to cool. It is coloured as an oven step, is hands-on (so it shows in quiet hours when it starts after 10:30 PM), and moves nothing. Whole Wheat and Country Rye rest 50 minutes after the initial mix instead of 30, the middle of the book's 40 to 60, with water at 75°F instead of 80°F, so every later step is 20 minutes later than Original Tartine's.
 
 - **Turn wording.** House-method turns 1–3 say to go around all four sides twice, vigorously; turns 4–7 are one round. Tartine keeps the book's wording.
 - **Step notes** name the selected recipe's ingredients and grams: the leaven build and what is kept, the autolyse, and the final mix. Every step has a note. "Keep later batches chilled until their own warm-up" appears only with more than one batch.
@@ -71,7 +78,7 @@ Times below are for a 9:00 AM leaven start with two loaves baked together. Durat
 - On loading either version, a value that is missing or invalid falls back to its default:
   - Settings must be finite numbers of 0 or more. Loaf count and weight must be at least 1, the loaf count whole, and the water held back at most 100%. Unknown settings are dropped.
   - Check-off times are kept only for checked steps. Readings outside 50–100°F are dropped, and readings sort by time.
-  - The recipe order keeps known recipes once each, or becomes just Preuss House if empty. The selected recipe must be in the order; otherwise the first recipe is selected.
+  - The recipe order keeps known recipes once each, in the saved order, followed by every recipe it doesn't name in menu order, so a recipe added since the save is on the menu (decision 10; before, a recipe the save didn't name was left off, and an empty order became just Preuss House). The selected recipe must be in the order; otherwise the first recipe is selected.
   - Loaves at once is capped at 2.
   - A missing or invalid date falls back to tomorrow and a time to 9:00 AM, as for a new plan (decision 4). A date must be a real calendar date and a time must be from 00:00 to 23:59. Changed in step 4: before, any date shaped like `YYYY-MM-DD` and time shaped like `HH:MM` was kept, so a damaged save could open a plan with no steps. Until the decisions of November 21, 2026, the fallback was the date and time the plan was first made, which the save then also kept; an older save's creation date is now ignored.
   - A House blend saved with red spring flour carries its parts over to Anita's.
@@ -88,7 +95,7 @@ No saved data on this site can reach these, because every version of the app her
 
 ## Decisions for Michael
 
-The rebuild kept each of these as the app had them until Michael chose. He decided the first six on November 21, 2026, and asked for the seventh to ninth on November 22; the rules above follow his choices.
+The rebuild kept each of these as the app had them until Michael chose. He decided the first six on November 21, 2026, and asked for the seventh to tenth on November 22; the rules above follow his choices.
 
 1. **Next bake after a finished one.** On a plan with every step checked, "Plan the next bake" moved the date to tomorrow but kept the checklist, so the plan still showed as ended. **Decided: it now starts a fresh checklist**, so the next bake begins with nothing checked. The browser record's flow changed with it.
 2. **Cold proof name.** Red Spring & Rye called its cold proof "Refrigerated final proof" and left "overnight" out of its note; the other House-method recipes say "Overnight cold proof". **Decided: it uses the House wording**, including "Cold proof (daytime)" for a proof within one day. Superseded on November 22, 2026: Red Spring & Rye was removed (decision 9).
@@ -99,3 +106,4 @@ The rebuild kept each of these as the app had them until Michael chose. He decid
 7. **An unchecked early step held Up next back.** Only the start of bulk and the turns counted as skipped, so with Feed starter unchecked and every step through Turn 3 checked, Up next still showed Feed starter. **Decided November 22, 2026: any step left unchecked before a later checked step is skipped**, so Up next shows Turn 4. A forgotten early step also no longer keeps a finished plan from ending. A step the plan starts at the same time as the checked one stays open: Preheat checked first leaves "Take both loaves out of the fridge" as Up next. 32 of the record's 214 plans changed with it.
 8. **One mis-tap passed over the whole bake.** Checking the last step on a fresh plan marked the 22 steps before it Skipped, hid Up next and showed "All batches done". **Decided November 22, 2026: a check that would skip more than three earlier steps asks first**, not counting the start of bulk and the turns once bulk is due. The record didn't change; the browser record gained a flow for it.
 9. **Six recipes.** The menu listed Preuss House, Original Tartine, White & Whole Wheat, Red Spring & Rye, Five-Flour Sourdough and Four-Flour Sourdough. **Decided November 22, 2026: only Preuss House and Original Tartine remain.** The red spring, all-purpose and Red Fife flours went with them, and so did "Uses the House leaven, salt and overnight method.", which only Five-Flour and Four-Flour showed. The record dropped those recipes' 94 plans and 19 calculations; the other 120 plans, 26 calculations and 53 helper results are unchanged. Each of the 24 saved-data cases lost the four recipes, and the two that had one selected now open on Preuss House.
+10. **Four recipes from Tartine Bread.** **Decided November 22, 2026: Tartine Olive (page 88), Tartine Sesame (page 90), Tartine Whole Wheat (page 114) and Tartine Country Rye (page 118) are on the menu.** Their notes and descriptions are written for the app, not copied from the book. Choices made for him, each easy to change: add-ins stay in the book's cups and teaspoons; the toast step starts an hour before Turn 1 to allow for heating the oven; Whole Wheat and Country Rye rest 50 minutes and hold back 50 g of water for the salt. A saved menu now gains recipes it doesn't name, so the new ones show on a device with an older save.

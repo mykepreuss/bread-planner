@@ -1,0 +1,121 @@
+- banner:
+  - heading "Bread Planner" [level=1]
+- main:
+  - tablist:
+    - tab "Schedule"
+    - tab "Ingredients" [selected]
+  - text: Recipe
+  - combobox "Recipe": Tartine Olive
+  - paragraph: Original Tartine dough with olives, herbes de Provence, lemon zest and, if you like, toasted nuts, worked in after the first turn. A mix of green and oil-cured black olives works well.
+  - tabpanel "Ingredients":
+    - text: Your batch Each recipe remembers its own settings. Number of loaves
+    - spinbutton "Number of loaves": "2"
+    - text: loaves Dough weight per loaf
+    - spinbutton "Dough weight per loaf": "985"
+    - text: g Total hydration
+    - spinbutton "Total hydration": "77"
+    - text: "%"
+    - slider "Adjust total hydration"
+    - paragraph: Includes the flour and water in the leaven used.
+    - text: Flour blend Parts set the balance between flours. The gram weights scale to your batch.
+    - table:
+      - rowgroup:
+        - row "Flour Blend parts":
+          - columnheader "Flour"
+          - columnheader "Blend parts"
+      - rowgroup:
+        - row "White-bread flour 900 g in this batch · 90% 90 parts":
+          - cell "White-bread flour 900 g in this batch · 90%"
+          - cell "90 parts":
+            - spinbutton "White-bread flour proportion": "90"
+            - text: parts
+        - row "Whole-wheat flour 100 g in this batch · 10% 10 parts":
+          - cell "Whole-wheat flour 100 g in this batch · 10%"
+          - cell "10 parts":
+            - spinbutton "Whole-wheat flour proportion": "10"
+            - text: parts
+    - heading "Leaven, salt & water split" [level=3]:
+      - button "Leaven, salt & water split" [expanded]
+    - region "Leaven, salt & water split":
+      - text: Leaven / added flour
+      - spinbutton "Leaven / added flour": "20"
+      - text: "%"
+      - slider "Adjust leaven / added flour"
+      - text: Salt / added flour
+      - spinbutton "Salt / added flour": "2"
+      - text: "%"
+      - slider "Adjust salt / added flour"
+      - text: Water reserved for final mix
+      - spinbutton "Water reserved for final mix": "6.667"
+      - text: "%"
+      - slider "Adjust water reserved for final mix"
+      - paragraph: The water split is a percentage of total added water.
+    - heading "Leaven build" [level=3]:
+      - button "Leaven build" [expanded]
+    - region "Leaven build":
+      - paragraph: Build quantities per 1,000 g added flour. The amounts made scale with your batch. Mature starter is equal weights flour and water. If the build is empty, the leaven is treated as 100% hydration.
+      - text: Mature starter
+      - spinbutton "Mature starter": "15"
+      - text: g White-bread flour
+      - spinbutton "White-bread flour": "100"
+      - text: g Whole-wheat flour
+      - spinbutton "Whole-wheat flour": "100"
+      - text: g Water
+      - spinbutton "Water": "200"
+      - text: g
+      - term: Mature starter
+      - definition: 15 g
+      - term: White-bread flour
+      - definition: 100 g
+      - term: Whole-wheat flour
+      - definition: 100 g
+      - term: Water
+      - definition: 200 g
+      - term: Total
+      - definition: 415 g
+      - text: Made
+      - strong: 415 g
+      - text: Used in dough
+      - strong: 200 g
+      - text: Reserved
+      - strong: 215 g
+    - heading "Recipe defaults" [level=3]:
+      - button "Recipe defaults" [expanded]
+    - region "Recipe defaults":
+      - button "Restore recipe defaults"
+    - text: 1,970g
+    - paragraph: Total dough for 2 loaves
+    - text: 77% total hydration 985 g per loaf 01 / Initial mix and rest Leaven goes into this mix before the initial rest.
+    - term: Leaven used
+    - definition: 200 g
+    - term: White-bread flour
+    - definition: 900 g
+    - term: Whole-wheat flour
+    - definition: 100 g
+    - term: Water
+    - definition: 700 g
+    - text: 02 / Salt and remaining water Add after the initial rest, then begin bulk fermentation.
+    - term: Salt
+    - definition: 20 g
+    - term: Water
+    - definition: 50 g
+    - text: 03 / Add-ins Work in after the first turn. The book's measures, scaled to your batch.
+    - list:
+      - listitem: 3 cups pitted olives, coarsely chopped
+      - listitem: 2 cups toasted walnuts or hazelnuts, coarsely chopped (optional)
+      - listitem: 2 teaspoons dried herbes de Provence
+      - listitem: Grated zest of 1 lemon
+    - strong: 1,000 g
+    - text: added flour
+    - strong: 750 g
+    - text: added water
+    - strong: 200 g
+    - text: leaven used Basket and dusting flour Separate supplies, outside dough weight.
+    - term: Rice flour
+    - definition: 200 g
+  - heading "Mature starter and readiness guide" [level=3]:
+    - button "Mature starter and readiness guide"
+  - heading "Establishing a starter from scratch" [level=3]:
+    - button "Establishing a starter from scratch"
+  - heading "Shaping, basket preparation and baking" [level=3]:
+    - button "Shaping, basket preparation and baking"
