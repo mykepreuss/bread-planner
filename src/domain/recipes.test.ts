@@ -381,3 +381,26 @@ test('step notes speak to the baker, and mention later batches only when there a
   });
   assert.equal(note(one, 'fridge'), 'Cover the baskets and refrigerate for 10 to 12 hours.');
 });
+
+// Moved from tests/baseline/agree.test.ts in step 3c: it tests only the new code.
+test('a recipe is found only by its own id, and its defaults cannot be changed in place', () => {
+  for (const r of RECIPES) assert.equal(recipeById(r.id), r);
+  for (const id of ['constructor', 'toString', '__proto__', 'hasOwnProperty', 'manual-rye', ''])
+    assert.equal(recipeById(id), undefined, id);
+  const house = recipeById('house')!;
+  assert.throws(() => {
+    (house.defaults.flours as Record<string, number>).rye = 0;
+  }, TypeError);
+  assert.throws(() => {
+    (house.defaults.build as { starter: number }).starter = 1;
+  }, TypeError);
+  assert.throws(() => {
+    (house.flours as string[]).push('red');
+  }, TypeError);
+  const copy = defaultSettings(house);
+  copy.flours.rye = 0;
+  copy.build.starter = 1;
+  assert.equal(house.defaults.flours.rye, 10, 'changing a copy leaves the defaults alone');
+  assert.equal(house.defaults.build.starter, 28);
+  assert.notEqual(defaultSettings(house), defaultSettings(house), 'each copy is new');
+});

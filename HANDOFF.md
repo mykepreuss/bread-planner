@@ -478,8 +478,8 @@ Michael asked to merge step 3b once the verifier was clean, then do step 3c. Bra
 | `recipes.test.ts` | 32 | 25 | 3 | 4 |
 | `bakeday.test.ts` | 35 | 33 | 0 | 2 |
 
-- The carried tests are 89 new ones next to the code: `src/domain/formula.test.ts` (12), `schedule.test.ts` (17), `recipes.test.ts` (20), `quiet.test.ts` (5), `bakeday.test.ts` (34), and `src/components/text.test.ts` (1, the loaf wording).
-  - Each keeps the old expected values. Red Spring & Rye's weights now come from exact shares instead of whole grams, so those compare to within 1e-9.
+- The carried tests became 89 new tests next to the code (some old tests merged, one split): `src/domain/formula.test.ts` (12), `schedule.test.ts` (17), `recipes.test.ts` (20), `quiet.test.ts` (5), `bakeday.test.ts` (34), and `src/components/text.test.ts` (1, the loaf wording).
+  - Each keeps the old expected values. Where weights now come from exact shares instead of rounded grams (Red Spring & Rye, and House at 3 × 750 g), they compare to within 1e-9.
   - Every carried test passed on the new core first time, in America/Vancouver and in UTC.
 - Retired, because the rebuild does not carry what they test (docs/BEHAVIOUR.md):
   - Spreadsheet cells: "all 59 original numeric inputs plus B4 are represented once", "leaven build uses bread flour rather than all flour", "custom partial leaven deducts only used flour and water, retaining a real reserve", and "edited manual recipes and even the optional Red Fife row migrate without data loss".
@@ -489,7 +489,7 @@ Michael asked to merge step 3b once the verifier was clean, then do step 3c. Bra
   - Parts of carried tests were retired for the same reasons, for example the 100 g of dusting flour the app never showed, and the hidden `manual-rye` recipe.
 - The record's harness now runs on the new code alone.
   - `observe.ts` builds each recorded case as planner state and observes it through `src/domain`, `src/view` and `src/state`. `cores.ts` is deleted.
-  - `agree.test.ts` is retired: it compared the new core with the deleted one. Its last run, at `9d0dbbf`, passed 4,000 random plans and 2,000 random recipes.
+  - `agree.test.ts` is retired: it compared the new core with the deleted one. Its last run, at `9d0dbbf`, passed 4,000 random plans and 2,000 random recipes. Its one test of the new code alone, recipe lookup and frozen defaults, moved to `src/domain/recipes.test.ts` after the verifier found it had been dropped.
   - `load.test.ts` no longer compares loaders. It checks that every recorded save, every saved plan and 3,000 random corruptions, as version 5 and as version 6 saves, load into a valid planner that comes back the same from its own save.
   - `app.test.ts` saves each recorded plan as version 6 and decides which ones saved data can hold by a version 6 round trip. The same four can't.
   - The saved-data inputs in `baseline.json` and the saved plans in `tests/browser/saved-plans.json` are version 5 saves that only the deleted code could build, so they are kept as they are.
@@ -508,5 +508,18 @@ Evidence (this session, on `rebuild-retire-lib`):
 | Bulk reference of 77°F | 11 |
 | Loaves at once capped at 3 | 4 |
 | Loaf wording | 1 |
+
+Independent check (the verifier, on `ba3b5b9`): FAIL on criteria 5 and 8. Criteria 1 to 4, 6 and 7 were met.
+- It built both revisions: `dist/` is byte-identical. All 259 recorded plan and recipe inputs build the same planner as before. The regenerated `baseline.json` differs only by `manual-rye`, and the update is a no-op.
+- It accounted for all 111 old tests, and 101 of its first 107 breaks failed `npm test`. The carried unit tests passed in 7 time zones.
+- Finding A: with the old-loader comparison gone, a version 5 save's setting names were no longer pinned. Breaking the reading of water held back, loaf weight, salt, leaven or Red Fife parts passed every test. That reader runs the first time each browser opens this release.
+- Finding B: the recipe lookup test above had been deleted with `agree.test.ts`. Without it, looking recipes up in a plain object passed every test, and a damaged save naming the recipe `constructor` would then fail to load.
+- Docs: the `agree.test.ts` sentence, the 1e-9 note, and the README's list of test folders.
+
+Fixed on the same branch:
+- `src/state/state.test.ts`: every setting of every recipe, given a distinct valid value, loads exactly from a version 5 save and from a version 6 save. Each of the verifier's five breaks, and dropping the leaven build's water, now fails it.
+- The recipe lookup test is back, in `src/domain/recipes.test.ts`. The verifier's two breaks (recipes not frozen, a plain-object lookup) each fail it.
+- The three doc corrections.
+- After the fixes: `npm test` passed 119 of 119 in both zones, and the build and format check passed.
 
 Proposal, not done: a saved time such as `25:00` passes the HH:MM check and gives a plan with no steps, as it did before the rebuild. The time field can't produce one; only a damaged save can. Checking the hour and minute on load would close it.

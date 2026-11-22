@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { RECIPES, recipeById } from '../domain/recipes.ts';
+import { RECIPES, defaultSettings, recipeById, type Settings } from '../domain/recipes.ts';
 import { formula, totalHydration } from '../domain/formula.ts';
 import { schedule } from '../domain/schedule.ts';
 import { freshState, planOf, selected, tomorrow, type PlannerState } from './schema.ts';
@@ -146,6 +146,45 @@ test('version 6 saves are checked as version 5 ones were', () => {
     [['tartine'], 'tartine', 2, 30, 'F', '2026-11-22'],
   );
   assert.equal(recipeById('manual-rye'), undefined);
+});
+
+test('every setting a version 5 or version 6 save holds loads as saved, for every recipe', () => {
+  for (const recipe of RECIPES) {
+    const d = defaultSettings(recipe);
+    // A distinct valid value for every setting, none of them its default.
+    const want: Settings = {
+      count: d.count + 1,
+      weight: d.weight + 7,
+      hydration: d.hydration + 1.5,
+      leaven: d.leaven + 2.5,
+      salt: d.salt + 0.25,
+      reserve: d.reserve + 3,
+      flours: Object.fromEntries(recipe.flours.map((k, i) => [k, (d.flours[k] ?? 0) + 11 + i])),
+      build: {
+        starter: d.build.starter + 3,
+        flour: d.build.flour + 5,
+        wheat: d.build.wheat + 7,
+        water: d.build.water + 9,
+      },
+    };
+    const params = {
+      count: want.count,
+      weight: want.weight,
+      hydration: want.hydration,
+      leaven: want.leaven,
+      salt: want.salt,
+      reserve: want.reserve,
+      ...Object.fromEntries(recipe.flours.map((k) => [`flour_${k}`, want.flours[k]])),
+      buildSeed: want.build.starter,
+      buildBread: want.build.flour,
+      buildWheat: want.build.wheat,
+      buildWater: want.build.water,
+    };
+    const five = fromV5({ version: 5, plan: { recipe: recipe.id, recipes: { [recipe.id]: { params } } } }, NOW);
+    assert.deepEqual(five.recipes[recipe.id].settings, want, `${recipe.id} from version 5`);
+    const six = fromV6({ version: 6, plan: { recipe: recipe.id, recipes: { [recipe.id]: { settings: want } } } }, NOW)!;
+    assert.deepEqual(six.recipes[recipe.id].settings, want, `${recipe.id} from version 6`);
+  }
 });
 
 test("a House blend saved before Anita's flour keeps its red spring parts, and one with neither gets the default", () => {
