@@ -9,7 +9,7 @@ Production branch: main
 Project: prj_oaBadxUrg76MQyvwFsY68FvfuM8r (bread-planner)
 Team: team_U2Fu7jNsQEgGylxpq9YR7M2f (mpmba)
 
-Each dated release section below ends with its delivery state, newest last. The last one marked "verified live" is what production runs. When this header was last edited, that was rebuild step 3c: `main` at `e39c146972f6620d2fdf28b911d935e3529c4d0e`, production deployment `dpl_5JFY9yWnrExGSB7voohA6NAnXPXn` (READY). Michael is the planner's only user.
+Each dated release section below ends with its delivery state, newest last. The last one marked "verified live" is what production runs. When this header was last edited, that was rebuild step 4: `main` at `5e79d671282d15a03e430d8d5181cb2a177520a8`, production deployment `dpl_9V4VeDQ7fS1AqWiWnwg59QZQzcex` (READY). Michael is the planner's only user.
 
 ## Scope and decisions
 
@@ -526,14 +526,14 @@ Second check (the verifier, on `4bb0e3d`): PASS on all eight criteria. Every set
 
 Release: merged as pull request #25 at `e39c146`, after that PASS. Production deployment `dpl_5JFY9yWnrExGSB7voohA6NAnXPXn` is READY for that commit. On November 21 after the merge, `verify-deployment.mjs` passed 9 checks and 7 assets, the live smoke at phone width passed (23 steps, no console errors), and the live upgrade check passed again ("6 of 22 steps checked" before and after a reload, version 5 text unchanged).
 
-## Rebuild step 4: cleanup, November 21, 2026: committed, pull request open
+## Rebuild step 4: cleanup, November 21, 2026: merged and verified live
 
 Michael agreed to every item proposed after step 3c and asked for step 4. Branch `rebuild-cleanup`, from `main` at `e39c146`.
 - Removed the unused shadcn `dialog` and `separator` components and the unused `.dark` colour block. The `dark` variant line stays, with a note: without it, Tailwind would apply the components' `dark:` styles whenever the phone is in dark mode.
   - Removing them left the built JavaScript byte-identical; the app's bundle changes only through the new date and time checks below. In the CSS, the `.dark` block and the 7 utility classes only the deleted components used are gone, and the 51 effective `:root` properties are unchanged.
 - Loading now checks that a saved date is a real calendar date and a time is from 00:00 to 23:59. An impossible one falls back to the plan's creation date or time, as a malformed one already did, so an impossible date or time in a damaged save no longer opens a plan with no steps (docs/BEHAVIOUR.md, saved data). Two cases still give no steps, as before this step: a time skipped by daylight saving, which the screen itself allows, and a year before 1000 (a proposal below).
   - New state test: the last day of every month and the day after, in a common and a leap year, century leap years, the edges of the day, values with anything before or after them, and the creation date checked the same way.
-  - `load.test.ts` is tighter: every plan it loads must have steps unless its recipe has no flour, and it checks loaded dates as real ones through the Date object, independently of the loader's month table, and times by range.
+  - `load.test.ts` is tighter: every plan it loads must have steps unless its recipe has no flour (or, as corrected below, it needs more than 1,000 batches), and it checks loaded dates as real ones through the Date object, independently of the loader's month table, and times by range.
   - Two recorded plans, "an impossible date" (2026-02-31) and "an impossible time" (25:00), can no longer reach the screen through saved data, so `app.test.ts` lists them as unreachable. `baseline.json` is unchanged. (Before writing the code I had checked only the saved-data cases and expected no test to change; the recorded plans showed otherwise.)
 - The per-setting state test from step 3c now also loads every setting that may be 0 as 0, from both save versions. The verifier's two zero-value breaks now fail it.
 - The flaky Ingredients phone screenshots: `openIngredients` waits for each section to finish opening before the next click, so the final scroll position no longer depends on the machine's speed.
@@ -571,6 +571,44 @@ Fixed on the same branch:
 - The corrections above.
 - After the fixes: `npm test` passed 120 of 120 in both zones, and the build had 0 errors, 0 warnings and 0 hints.
 
-Proposal, not done: a year before 1000 gives a plan with no steps, because `dateString` in `src/domain/text.ts` doesn't pad the year, so the schedule's own date check fails. It was already so before the rebuild. The date field allows such a year, as in 0202. Padding the year to four digits would fix it. While a year is being typed, the field can also pass through five-digit years such as 60102, which show no schedule either; a reload then falls back to the creation date, as before step 4.
+Proposal, done with Michael's decisions (below): a year before 1000 gave a plan with no steps, because `dateString` in `src/domain/text.ts` doesn't pad the year, so the schedule's own date check fails. It was already so before the rebuild. The date field allows such a year, as in 0202. Padding the year to four digits would fix it. While a year is being typed, the field can also pass through five-digit years such as 60102, which show no schedule either; a reload then falls back to the creation date, as before step 4.
 
 Second check (the verifier, on `097426b`): PASS on all eight criteria. The five earlier survivors fail the date test, 55 of 56 new breaks fail a named test (the one survivor adds a multiline flag to the date pattern), and all 51 first-round breaks fail. Vercel built `097426b` with the narrowed check and passed. A last commit after that PASS changed only wording: these paragraphs, a load.test comment, and a line in docs/BEHAVIOUR.md.
+
+Release: merged as pull request #26 at `5e79d67`, with Michael's approval after that PASS. Production deployment `dpl_9V4VeDQ7fS1AqWiWnwg59QZQzcex` is READY for that commit. On November 21 after the merge:
+- `verify-deployment.mjs` passed 9 checks and 7 assets.
+- The live smoke at phone width passed: 23 steps, no console errors.
+- The live upgrade check passed again: "6 of 22 steps checked" before and after a reload, version 5 text unchanged.
+- A live check of the new rule: a version 6 save holding 2026-02-31 at 25:00, created 2026-11-23 at 08:30, opened on 2026-11-23 at 08:30 with "0 of 23 steps checked" and no console errors.
+
+Correction, found while making Michael's decisions: "every plan it loads must have steps unless its recipe has no flour" missed one case. The schedule also gives no steps for more than 1,000 batches, and a corruption with a loaf count of 1,000,000,000 showed it once the random sequence changed. `load.test.ts` now allows that case, and the schedule's comment and docs/BEHAVIOUR.md now name it.
+
+## Michael's decisions, November 21, 2026: committed, pull request open
+
+Michael chose all of the recommendations for decisions 1 to 5 in docs/BEHAVIOUR.md, plus the step 4 proposal about years before 1000. Branch `rebuild-decisions`, from `main` at `5e79d67`.
+1. "Plan the next bake" starts a fresh checklist: `planNextBake` clears the checks, their times and the dough temperatures as it moves the date. It is offered only once a plan has ended, when nothing or everything is checked.
+2. Red Spring & Rye uses the House cold-proof wording: "Overnight cold proof", "refrigerate overnight", and "Cold proof (daytime)" when the proof falls within one day. The recipe flag that set it apart is gone.
+3. Checklists stay per recipe.
+4. A missing or invalid saved date falls back to tomorrow, and a time to 9:00 AM. The planner no longer saves a creation date, and ignores one an earlier save holds.
+5. The °C field accepts 10–37.7°C, so every °C value it takes survives a reload; 38°C shows "Use 10 to 37.7°C".
+- Years before 1000: `dateString` writes the year in four digits, so a date such as 0202-11-22 gives a schedule.
+
+Record changes, each checked case by case against the committed record:
+- `baseline.json`, regenerated: 29 Red Spring & Rye plans differ only in the cold-proof step's title and note, now the wording House plans already had (no new text). The "an invalid date and time" saved-data case differs only in its date, now tomorrow, and the times that follow. The helper `inTempRange(38, "C")` is now false. Nothing else changed.
+- The browser record: only the Red Spring & Rye schedule's text snapshot changed, in the cold-proof step's three lines. The flow for a fully checked plan was rewritten: after "Plan the next bake" it must now match the ended plan's recorded result exactly, and its old snapshot is deleted.
+
+Evidence (this session, on `rebuild-decisions`):
+- `npm test` passed 122 of 122 with the host zone and with `BASELINE_ZONE=rule`. New or rewritten state tests cover decisions 1, 4 and 5, and a schedule test covers years before 1000.
+- A throwaway browser check typed 38°C (refused, with "Use 10 to 37.7°C") and 37.7°C (kept after a reload).
+- `npm run build` had 0 errors, 0 warnings and 0 hints, and `npm run test:browser` passed 43 of 43.
+- Deliberate breaks, each caught and then restored:
+
+| Break | Failing tests |
+|---|---|
+| "Plan the next bake" keeps the checklist | 1 |
+| Red Spring & Rye's old cold-proof wording | 2 |
+| A damaged time falls back to 10:00 | 3 |
+| A damaged date falls back to the day after tomorrow | 4 |
+| The °C field accepts 38 again | 2 |
+| Years not padded to four digits | 1 |
+

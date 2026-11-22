@@ -249,13 +249,15 @@ test.describe('flows', () => {
     await expectSameAfterReload(page);
   });
 
-  test('Plan the next bake on a fully checked plan moves the date but the plan stays ended', async ({ page }) => {
-    // Recorded as it is today: the checklist is not cleared, so every step keeps its past check-off time.
+  test('Plan the next bake on a fully checked plan moves the date and starts a fresh checklist', async ({ page }) => {
+    // Decision 1: the checklist clears, so a finished bake's next one looks just like an ended plan's next one.
     await open(page, 'complete');
     await page.getByRole('button', { name: 'Plan the next bake' }).click();
     await expect(page.locator('#plan-date')).toHaveValue('2026-11-22');
-    await expect(page.getByRole('button', { name: 'Plan the next bake' })).toBeVisible();
-    expect(await aria(page)).toMatchSnapshot('flow-plan-next-bake-when-complete.aria.yml');
+    await expect(page.getByText('0 of 23 steps checked')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Plan the next bake' })).toHaveCount(0);
+    expect(await aria(page)).toMatchSnapshot('flow-plan-next-bake.aria.yml');
+    await expectSameAfterReload(page);
   });
 
   test('A new date before anything is checked clears a planning temperature', async ({ page }) => {

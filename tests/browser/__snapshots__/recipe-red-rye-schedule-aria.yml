@@ -140,10 +140,10 @@
       - text: Basket rest
       - paragraph: Leave the baskets covered at room temperature.
       - text: Next step in 20 min
-      - checkbox "Complete Refrigerated final proof"
+      - checkbox "Complete Overnight cold proof"
       - time: 7:20 PM
-      - text: Refrigerated final proof
-      - paragraph: Cover the shaped loaves in their baskets and refrigerate.
+      - text: Overnight cold proof
+      - paragraph: Cover the shaped loaves in their baskets and refrigerate overnight.
       - text: Next step in 12h 30m Day 3
       - heading "Monday, Nov 23" [level=3]
       - checkbox "Complete Take both loaves out of the fridge"

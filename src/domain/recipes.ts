@@ -37,8 +37,7 @@ export type Settings = {
 
 /**
  * `method` is how the dough is mixed and timed (see methods.ts). `late` flours go into the final mix. `buildFlour`
- * is the flour in the leaven build besides whole wheat. `overnightProof` names the cold proof an overnight one and
- * renames it when it falls within a day; Red Spring & Rye has always called it a refrigerated final proof.
+ * is the flour in the leaven build besides whole wheat.
  */
 export type Recipe = {
   id: string;
@@ -48,7 +47,6 @@ export type Recipe = {
   flours: FlourKey[];
   late: FlourKey[];
   buildFlour: FlourKey;
-  overnightProof: boolean;
   houseCompletion: boolean;
   defaults: Settings;
 };
@@ -69,7 +67,6 @@ export const RECIPES: Recipe[] = [
     flours: ['anita', 'wheat', 'rye'],
     late: ['rye'],
     buildFlour: 'anita',
-    overnightProof: true,
     houseCompletion: false,
     // 800 g Anita's, 100 g whole wheat, 100 g rye; 780 g water with 100 g held back; 200 g leaven; 20 g salt.
     defaults: {
@@ -92,7 +89,6 @@ export const RECIPES: Recipe[] = [
     flours: ['white', 'wheat'],
     late: [],
     buildFlour: 'white',
-    overnightProof: false,
     houseCompletion: false,
     // 900 g white, 100 g whole wheat; 750 g water with 50 g held back; 200 g leaven; 20 g salt; 1 tbsp (15 g) starter.
     defaults: {
@@ -114,7 +110,6 @@ export const RECIPES: Recipe[] = [
     flours: ['white', 'wheat'],
     late: [],
     buildFlour: 'white',
-    overnightProof: true,
     houseCompletion: false,
     // 800 g white, 200 g whole wheat; 800 g water with 50 g held back; 200 g leaven; 20 g salt.
     defaults: {
@@ -136,7 +131,6 @@ export const RECIPES: Recipe[] = [
     flours: ['red', 'wheat', 'rye'],
     late: ['rye'],
     buildFlour: 'red',
-    overnightProof: false,
     houseCompletion: false,
     // The spreadsheet's main calculator: 758 g red spring, 83 g whole wheat, 103 g rye (944 g); 724 g water with 72 g
     // held back; all 312 g of a 28/71/71/142 g build; 22 g salt; 2,002 g of dough.
@@ -159,7 +153,6 @@ export const RECIPES: Recipe[] = [
     flours: ['ap', 'red', 'fife', 'wheat', 'rye'],
     late: ['rye'],
     buildFlour: 'red',
-    overnightProof: true,
     houseCompletion: true,
     // The spreadsheet's first blend, 350/350/100/100/100 g with 800 g water (50 g held back), completed with the
     // House leaven and salt.
@@ -182,7 +175,6 @@ export const RECIPES: Recipe[] = [
     flours: ['ap', 'red', 'fife', 'wheat', 'rye'],
     late: ['rye'],
     buildFlour: 'red',
-    overnightProof: true,
     houseCompletion: true,
     // The spreadsheet's second blend, 500/600/0/250/150 g (1,500 g) with 1,200 g water (75 g held back), completed
     // with the House leaven and salt; three loaves.
