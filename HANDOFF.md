@@ -571,7 +571,7 @@ Fixed on the same branch:
 - The corrections above.
 - After the fixes: `npm test` passed 120 of 120 in both zones, and the build had 0 errors, 0 warnings and 0 hints.
 
-Proposal, done with Michael's decisions (below): a year before 1000 gave a plan with no steps, because `dateString` in `src/domain/text.ts` doesn't pad the year, so the schedule's own date check fails. It was already so before the rebuild. The date field allows such a year, as in 0202. Padding the year to four digits would fix it. While a year is being typed, the field can also pass through five-digit years such as 60102, which show no schedule either; a reload then falls back to the creation date, as before step 4.
+Proposal, done with Michael's decisions (below): a year before 1000 gave a plan with no steps, because `dateString` in `src/domain/text.ts` doesn't pad the year, so the schedule's own date check fails. It was already so before the rebuild. The date field allows such a year, as in 0202. Padding the year to four digits would fix it. While a year is being typed, the field can also pass through five-digit years such as 60102, which show no schedule either; a reload then fell back to the creation date, as before step 4; since Michael's decisions it falls back to tomorrow.
 
 Second check (the verifier, on `097426b`): PASS on all eight criteria. The five earlier survivors fail the date test, 55 of 56 new breaks fail a named test (the one survivor adds a multiline flag to the date pattern), and all 51 first-round breaks fail. Vercel built `097426b` with the narrowed check and passed. A last commit after that PASS changed only wording: these paragraphs, a load.test comment, and a line in docs/BEHAVIOUR.md.
 
@@ -586,7 +586,7 @@ Correction, found while making Michael's decisions: "every plan it loads must ha
 ## Michael's decisions, November 21, 2026: committed, pull request open
 
 Michael chose all of the recommendations for decisions 1 to 5 in docs/BEHAVIOUR.md, plus the step 4 proposal about years before 1000. Branch `rebuild-decisions`, from `main` at `5e79d67`.
-1. "Plan the next bake" starts a fresh checklist: `planNextBake` clears the checks, their times and the dough temperatures as it moves the date. It is offered only once a plan has ended, when nothing or everything is checked.
+1. "Plan the next bake" starts a fresh checklist: `planNextBake` clears the checks, their times and the dough temperatures as it moves the date. It is offered only once a plan has ended, when nothing is checked or every step is checked or skipped.
 2. Red Spring & Rye uses the House cold-proof wording: "Overnight cold proof", "refrigerate overnight", and "Cold proof (daytime)" when the proof falls within one day. The recipe flag that set it apart is gone.
 3. Checklists stay per recipe.
 4. A missing or invalid saved date falls back to tomorrow, and a time to 9:00 AM. The planner no longer saves a creation date, and ignores one an earlier save holds.
@@ -594,7 +594,7 @@ Michael chose all of the recommendations for decisions 1 to 5 in docs/BEHAVIOUR.
 - Years before 1000: `dateString` writes the year in four digits, so a date such as 0202-11-22 gives a schedule.
 
 Record changes, each checked case by case against the committed record:
-- `baseline.json`, regenerated: 29 Red Spring & Rye plans differ only in the cold-proof step's title and note, now the wording House plans already had (no new text). The "an invalid date and time" saved-data case differs only in its date, now tomorrow, and the times that follow. The helper `inTempRange(38, "C")` is now false. Nothing else changed.
+- `baseline.json`, regenerated: 29 Red Spring & Rye plans differ only in the cold-proof step's title and note, now the wording House plans already had (no new text). The "an invalid date and time" saved-data case differs only in its date, now tomorrow, and the times that follow. The helper `inTempRange(38, "C")` is now false. Otherwise only the `recordedFrom` line changed, and two texts no case uses any more left the text table: the old cold-proof title and note.
 - The browser record: only the Red Spring & Rye schedule's text snapshot changed, in the cold-proof step's three lines. The flow for a fully checked plan was rewritten: after "Plan the next bake" it must now match the ended plan's recorded result exactly, and its old snapshot is deleted.
 
 Evidence (this session, on `rebuild-decisions`):
@@ -611,4 +611,18 @@ Evidence (this session, on `rebuild-decisions`):
 | A damaged date falls back to the day after tomorrow | 4 |
 | The °C field accepts 38 again | 2 |
 | Years not padded to four digits | 1 |
+
+Independent check (the verifier, on `efebe0a`): FAIL on criteria 1 (one sub-check) and 7.
+- It drove the built app for every decision. Decisions 1, 2 and 4, the after-mixing °C field, and the year 0202 behaved as BEHAVIOUR.md says, and a version 6 save from production, with its creation date, loads the same and drops it. The record changes are exactly the listed ones, decoded leaf by leaf. All six break counts above reproduced.
+- Not met: a later reading of 37.7°C could not be added, because the browser enforced the field's half-degree step on the form (26.3°C and 78.2°F failed too, already before this PR). So "10–37.7°C" was untrue for later readings.
+- New in this PR: a saved 100°F shown in °C read "37.8" with "Use 10 to 37.7°C" beside it.
+- A survivor: a version 6 time falling back to the old creation time again passed every test.
+- Docs: Red Spring & Rye's method row, the five-digit-year sentence, and the °C range; also the `app.test.ts` comment, two rules that did not say they changed, and smaller wording.
+
+Fixed on the same branch:
+- The later-reading form has `noValidate`: the planner already checks the range, and the step only sets what the field's arrows do. A new browser flow adds a 37.7°C reading.
+- The after-mixing field never flags a saved value exactly as shown. A new browser flow shows a saved 100°F as 37.8°C without an error, through a reload.
+- The decision 4 state test now damages the time of a save that holds a creation time, and expects 9:00 AM.
+- The docs above.
+- After the fixes: `npm test` passed 122 of 122 in both zones and `npm run test:browser` 45 of 45. Undoing either temperature fix fails its new flow, and the creation-time fallback fails the state test.
 

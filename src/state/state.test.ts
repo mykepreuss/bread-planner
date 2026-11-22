@@ -350,9 +350,10 @@ test('a missing or invalid saved date or time falls back to tomorrow at 9:00 AM,
   const six = JSON.parse(serialize(act.setDate(act.setTime(plan(), '06:45'), '')));
   const reloaded = fromV6(six, NOW)!;
   assert.deepEqual([reloaded.date, reloaded.time], ['2026-11-22', '06:45']);
-  // A creation date saved by an earlier release is ignored, and no longer saved.
+  // A creation date and time saved by an earlier release are ignored, and no longer saved.
   six.plan.created = { date: '2026-10-20', time: '07:30' };
-  assert.equal(fromV6(six, NOW)!.date, '2026-11-22');
+  six.plan.time = '25:00';
+  assert.deepEqual([fromV6(six, NOW)!.date, fromV6(six, NOW)!.time], ['2026-11-22', '09:00']);
   assert.equal('created' in JSON.parse(serialize(fromV6(six, NOW)!)).plan, false);
 });
 

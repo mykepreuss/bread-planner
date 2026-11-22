@@ -93,7 +93,7 @@ export function setAnchor(state: PlannerState, anchor: 'leaven' | 'done'): Plann
 
 /**
  * Moves the plan to tomorrow and starts the next bake: the checklist, its times and the dough temperatures clear
- * (decision 1 in docs/BEHAVIOUR.md). It is offered only once a plan has ended, when nothing or everything is checked.
+ * (decision 1 in docs/BEHAVIOUR.md). It is offered only once a plan has ended, when nothing is checked or every step is checked or skipped.
  */
 export function planNextBake(state: PlannerState, now: number): PlannerState {
   return clearChecklist({ ...state, date: tomorrow(now) });

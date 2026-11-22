@@ -87,7 +87,8 @@ export function DoughTemperature({
   useEffect(() => {
     if (!focused) setDraft(shown);
   }, [shown, focused]);
-  const invalid = draft.trim() !== '' && !inTempRange(Number(draft), unit);
+  // A saved value as shown is never flagged: 100°F shows as 37.8°C, just past what the °C field accepts.
+  const invalid = draft.trim() !== '' && draft !== shown && !inTempRange(Number(draft), unit);
   const change = (v: string) => {
     setDraft(v);
     if (v.trim() === '') onChange(null);
@@ -134,8 +135,11 @@ export function Remeasure({
     entered = draft.trim() !== '',
     valid = entered && inTempRange(Number(draft), unit);
   return (
+    // The planner checks the range itself. The field's half-degree step only sets what its arrows do, so the browser
+    // must not refuse a reading such as 37.7°C or 78.2°F.
     <form
       className="dough-temp"
+      noValidate
       onSubmit={(e) => {
         e.preventDefault();
         if (valid) {
