@@ -402,6 +402,19 @@ test.describe('flows', () => {
     await expect(build.getByRole('spinbutton', { name: 'Water', exact: true })).toHaveValue('150');
   });
 
+  test('The reheat time between batches is saved as typed', async ({ page }) => {
+    await open(page, 'fresh');
+    await page.getByLabel('Number of loaves').fill('3');
+    await choose(page, 'Loaves baked at once', '1 loaf');
+    const reheat = page.getByLabel('Reheat between batches'),
+      total = page.getByText(/^\d+h \d+m total/);
+    const before = await total.textContent();
+    await reheat.fill('45');
+    await expect(total).not.toHaveText(before!);
+    await expectSameAfterReload(page);
+    await expect(reheat).toHaveValue('45');
+  });
+
   test('Total hydration refuses less than the leaven brings, and its slider stops there', async ({ page }) => {
     await open(page, 'fresh');
     await openIngredients(page);

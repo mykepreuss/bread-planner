@@ -443,16 +443,18 @@ Independent check (the verifier, on `fda25ac`): criteria 1 to 7 met, criterion 8
 - It built the old and new apps side by side and drove both with the same scripts: 21 saved plans on both tabs, 14 scenarios and 165 step snapshots, all identical. After each scenario, the new app's version 6 save held the same planner as the old app's version 5 save.
 - Storage failures, decision 4 across reloads, a clean `npm ci` without TanStack, and every claim above reproduced.
 - Not met: the README said the bulk estimate "does not change the planned steps"; it moves preshape and every later step. That sentence predates step 3b.
-- It also found eight deliberate breaks that no test caught (the behaviour was right in each), Timeline still working out the total time and "All batches done" itself, the TanStack mention in this file's scope section, and an unwritten consequence of a rollback.
+- It also found deliberate breaks that no test caught (the behaviour was right in each): eight in its first report and two more in its re-check, which a flaky screenshot had hidden. It also found Timeline still working out the total time and "All batches done" itself, the TanStack mention in this file's scope section, and an unwritten consequence of a rollback.
 
 Fixed on the same branch:
 - The README sentence, and the scope section above.
 - `Timeline.tsx` shows the view's `totalMinutes` and `allDone`, so the record tests what the screen shows. Breaking either in the view now fails 3 tests.
 - New checks for each surviving break, all of which now fail the build or the browser record:
   - four browser flows: the plan time, each leaven build field and Restore defaults on a recipe other than House, the hydration minimum and its slider, and storage that cannot be read or written;
-  - `src/view/schedule.test.ts`: the checked count leaves out checks for steps no longer on the schedule.
+  - `src/view/schedule.test.ts`: the checked count leaves out checks for steps no longer on the schedule, while the bake still counts as underway;
+  - after the re-check, a fifth flow: the reheat time between batches is saved as typed.
 - `docs/BEHAVIOUR.md` notes that edits made after a rollback stay in version 5, as decision 6.
 - Two nits: an unused blur handler in `NumberField.tsx`, and a repeated import in `src/view/schedule.ts`.
-- After the fixes: `npm test` passed 148 of 148 in both zones, the browser record 42 of 42 with no record file changed, and the build and format check passed.
+- After the fixes and the re-check: `npm test` passed 148 of 148 in both zones, the browser record 43 of 43 with no record file changed, and the build and format check passed. The ten breaks each fail a named test.
+- Proposal from the re-check, not done: the phone screenshots of the Ingredients screens sometimes fail with the page scrolled about 370 px further, because the scroll position after opening the three sections depends on timing. Waiting for the sections to finish opening before the screenshot would steady it. It failed 1 in 3 and 2 in 5 runs in the verifier's copies, and in none of this session's runs in the worktree.
 
 Not done here: step 3c deletes `src/lib/`. The old core still runs in the tests, and `app.test.ts` still uses the old loader to decide which recorded plans saved data can hold.
