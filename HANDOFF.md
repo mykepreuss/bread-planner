@@ -533,14 +533,14 @@ Michael agreed to every item proposed after step 3c and asked for step 4. Branch
   - Removing them left the built JavaScript byte-identical; the app's bundle changes only through the new date and time checks below. In the CSS, the `.dark` block and the 7 utility classes only the deleted components used are gone, and the 51 effective `:root` properties are unchanged.
 - Loading now checks that a saved date is a real calendar date and a time is from 00:00 to 23:59. An impossible one falls back to the plan's creation date or time, as a malformed one already did, so an impossible date or time in a damaged save no longer opens a plan with no steps (docs/BEHAVIOUR.md, saved data). Two cases still give no steps, as before this step: a time skipped by daylight saving, which the screen itself allows, and a year before 1000 (a proposal below).
   - New state test: the last day of every month and the day after, in a common and a leap year, century leap years, the edges of the day, values with anything before or after them, and the creation date checked the same way.
-  - `load.test.ts` is tighter: every plan it loads must have steps unless its recipe has no flour, and it checks loaded dates and times as real ones through the Date object, independently of the loader's month table.
+  - `load.test.ts` is tighter: every plan it loads must have steps unless its recipe has no flour, and it checks loaded dates as real ones through the Date object, independently of the loader's month table, and times by range.
   - Two recorded plans, "an impossible date" (2026-02-31) and "an impossible time" (25:00), can no longer reach the screen through saved data, so `app.test.ts` lists them as unreachable. `baseline.json` is unchanged. (Before writing the code I had checked only the saved-data cases and expected no test to change; the recorded plans showed otherwise.)
 - The per-setting state test from step 3c now also loads every setting that may be 0 as 0, from both save versions. The verifier's two zero-value breaks now fail it.
 - The flaky Ingredients phone screenshots: `openIngredients` waits for each section to finish opening before the next click, so the final scroll position no longer depends on the machine's speed.
   - Under heavy load (16 workers on 8 cores, each Ingredients screen 12 times), it went from 58 of 84 failing (54 in the verifier's run) to 84 of 84 passing. It also passed 70 of 70 at normal load.
   - The seven phone first-screen images of the Ingredients screens were re-recorded. A full-page screenshot of each screen contains both the old and the new image, about 368 px apart. Where they overlap they differ by at most 14 pixels, each by one colour level, along the card's two edges. Only the scroll position changed. Every other record file, desktop and whole-page images included, is unchanged.
-- `npm run build` now runs `prettier --check .` first, so a badly formatted file fails the Vercel build. A deliberately misformatted file made the build exit 1.
-  - The first Vercel build of this branch failed on `vercel.json` alone. A diagnostic build on a throwaway branch printed the file: on Vercel's build machine it is rewritten as one minified line of 382 bytes, which is what `JSON.stringify` gives for the committed file. The build now checks `prettier --check . '!vercel.json'`, so only the build leaves that file out; `npm run format:check` still covers it.
+- `npm run build` now runs Prettier's check first (leaving out `vercel.json`, as below), so a badly formatted file fails the Vercel build. A deliberately misformatted file made the build exit 1.
+  - The first Vercel build of this branch failed on `vercel.json` alone. A diagnostic build on a throwaway branch printed the file: on Vercel's build machine it is rewritten as one minified line of 382 bytes: `JSON.stringify` of the committed file plus a newline. The build now checks `prettier --check . '!vercel.json'`, so only the build leaves that file out; `npm run format:check` still covers it.
 - Decision 6 is closed as kept: Michael is the planner's only user.
 - This file's header now points to the newest section marked verified live instead of naming an old release.
 - Step 3c's release, and its verifier's second check, are recorded in its section above. Two of its proposals are marked done here.
@@ -560,15 +560,17 @@ Evidence (this session, on `rebuild-cleanup`):
 
 Independent check (the verifier, on `bfa8586` and `c87066a`): FAIL on criteria 5 and 8; criteria 1 to 4, 6 (at `c87066a`) and 7 were met.
 - It confirmed the code: 10,626 dates from year 0000 to 9999 and all 10,000 `HH:MM` strings agree with an independent check, on both save versions. Nothing a person can enter is newly refused, both daylight-saving days included. The record changes are only the intended ones, the flake fix held through three heavy-load runs, and the wait fails at the timeout instead of hanging.
-- Five of its 50 breaks survived every test: January given 30 days, June or September given 31, and either date or time pattern without its anchors.
+- Five of its 51 breaks survived every test: January given 30 days, June or September given 31, and either date or time pattern without its anchors.
 - Docs: "the built JavaScript is byte-identical" held only for the component removal; "a damaged save can no longer open a plan with no steps" was too broad; and some figures and wording were wrong.
 - It suggested leaving `vercel.json` out of the build's check only.
 
 Fixed on the same branch:
 - The state test above now covers every month's last day, in a common and a leap year, and values with anything before or after them. Each of the five breaks now fails it.
-- `load.test.ts` checks loaded dates and times as real ones, and its comment names the two cases that still give no steps.
+- `load.test.ts` checks loaded dates through the Date object and times by range, and its comment names the two kinds of plan that still give no steps.
 - The build alone leaves `vercel.json` out; the README says so.
 - The corrections above.
 - After the fixes: `npm test` passed 120 of 120 in both zones, and the build had 0 errors, 0 warnings and 0 hints.
 
-Proposal, not done: a year before 1000 gives a plan with no steps, because `dateString` in `src/domain/text.ts` doesn't pad the year, so the schedule's own date check fails. It was already so before the rebuild. The date field allows such a year, as in 0202. Padding the year to four digits would fix it.
+Proposal, not done: a year before 1000 gives a plan with no steps, because `dateString` in `src/domain/text.ts` doesn't pad the year, so the schedule's own date check fails. It was already so before the rebuild. The date field allows such a year, as in 0202. Padding the year to four digits would fix it. While a year is being typed, the field can also pass through five-digit years such as 60102, which show no schedule either; a reload then falls back to the creation date, as before step 4.
+
+Second check (the verifier, on `097426b`): PASS on all eight criteria. The five earlier survivors fail the date test, 55 of 56 new breaks fail a named test (the one survivor adds a multiline flag to the date pattern), and all 51 first-round breaks fail. Vercel built `097426b` with the narrowed check and passed. A last commit after that PASS changed only wording: these paragraphs, a load.test comment, and a line in docs/BEHAVIOUR.md.

@@ -83,7 +83,7 @@ function problems(s: PlannerState): string[] {
   if (out.length) return out;
   const selected = recipeById(s.recipe)!;
   // Every plan loaded here has steps, all at real times, unless its recipe has no flour, which the screen shows as
-  // such. Two plans could still have none, though no save here holds one: a time skipped by daylight saving, which the
+  // such. Two kinds of plan could still have none, though no save here holds one: a time skipped by daylight saving, which the
   // screen itself allows, and a year before 1000 (see the proposal in HANDOFF.md, step 4).
   const steps = schedule(planOf(s)),
     flourless = Object.values(s.recipes[s.recipe].settings.flours).every((v) => v === 0);
