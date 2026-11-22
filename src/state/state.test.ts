@@ -54,9 +54,10 @@ test('loading prefers version 6, falls back to version 5, and starts fresh from 
     plan: { recipe: 'tartine', order: ['house', 'tartine'], date: '2026-11-13', time: '08:00' },
   };
   const fromFive = loadState(storage({ [STORAGE_V5]: JSON.stringify(v5) }), NOW);
+  // A saved menu gains the recipes it doesn't name, after its own (since November 22, 2026).
   assert.deepEqual(
     [fromFive.recipe, fromFive.order, fromFive.date, fromFive.time],
-    ['tartine', ['house', 'tartine'], '2026-11-13', '08:00'],
+    ['tartine', ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye'], '2026-11-13', '08:00'],
   );
   const six = { ...freshState(NOW), recipe: 'tartine', date: '2026-12-01' };
   const both = storage({ [STORAGE_V5]: JSON.stringify(v5), [STORAGE_V6]: serialize(six) });
@@ -137,9 +138,11 @@ test('version 6 saves are checked as version 5 ones were', () => {
     doughTemp: null,
     bulkTemps: [{ at: 5, f: 82 }],
   });
+  // The menu keeps Tartine first and gains the rest, so the saved House stays selected. Before November 22, 2026 a
+  // menu without House left it out, and Tartine was selected instead.
   assert.deepEqual(
     [loaded.order, loaded.recipe, loaded.ovenCapacity, loaded.reheat, loaded.tempUnit, loaded.date],
-    [['tartine'], 'tartine', 2, 30, 'F', '2026-11-22'],
+    [['tartine', 'house', 'olive', 'sesame', 'whole-wheat', 'country-rye'], 'house', 2, 30, 'F', '2026-11-22'],
   );
   assert.equal(recipeById('manual-rye'), undefined);
 });
@@ -431,7 +434,7 @@ test('every temperature the °C field accepts is kept on reload, from 10°C to 3
   }
 });
 
-test('a save with one of the four removed recipes selected opens on Preuss House and keeps House and Tartine as saved', () => {
+test('a save with one of the four removed recipes selected opens on Preuss House, keeps House and Tartine as saved, and starts the new Tartine recipes at their defaults', () => {
   const six = ['house', 'tartine', 'white-wheat', 'red-rye', 'five-flour', 'four-flour'];
   const checked = { done: ['leaven'], doneAt: { leaven: NOW }, doughTemp: 78, bulkTemps: [] };
   const recipes = Object.fromEntries(
@@ -450,12 +453,53 @@ test('a save with one of the four removed recipes selected opens on Preuss House
     ],
   ] as const) {
     const s = loadState(storage(saved), NOW);
-    assert.deepEqual(
-      [s.recipe, s.order, Object.keys(s.recipes)],
-      ['house', ['house', 'tartine'], ['house', 'tartine']],
-      name,
-    );
+    // The saved menu names none of the three Tartine recipes added the same day; the loader adds them after it.
+    const all = ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye'];
+    assert.deepEqual([s.recipe, s.order, Object.keys(s.recipes)], ['house', all, all], name);
     assert.equal(s.recipes.tartine.settings.count, 3, `${name}: Tartine keeps its settings`);
     assert.deepEqual(s.recipes.tartine.bake.done, ['leaven'], `${name}: and its checklist`);
+    assert.deepEqual(
+      s.recipes.olive,
+      {
+        settings: defaultSettings(recipeById('olive')!),
+        bake: { done: [], doneAt: {}, doughTemp: null, bulkTemps: [] },
+      },
+      `${name}: Tartine Olive, which the save doesn't hold, starts at its defaults`,
+    );
+    assert.deepEqual(
+      s.recipes.sesame,
+      { settings: recipeById('sesame')!.defaults, bake: { done: [], doneAt: {}, doughTemp: null, bulkTemps: [] } },
+      `${name}: Tartine Sesame, which the save doesn't hold, starts at its defaults`,
+    );
+    // `white-wheat` was White & Whole Wheat, not Tartine Whole Wheat (`whole-wheat`): nothing saved for it carries over.
+    assert.deepEqual(
+      s.recipes['whole-wheat'],
+      {
+        settings: defaultSettings(recipeById('whole-wheat')!),
+        bake: { done: [], doneAt: {}, doughTemp: null, bulkTemps: [] },
+      },
+      `${name}: Tartine Whole Wheat is at its defaults`,
+    );
   }
+});
+
+test('a saved menu keeps its own order and gains, at the end, every recipe it does not name', () => {
+  const load = (order: unknown) =>
+    loadState(storage({ [STORAGE_V6]: JSON.stringify({ version: 6, plan: { order } }) }), NOW).order;
+  assert.deepEqual(load(['tartine', 'house']), ['tartine', 'house', 'olive', 'sesame', 'whole-wheat', 'country-rye']);
+  assert.deepEqual(load(['sesame', 'red-rye', 'sesame']), [
+    'sesame',
+    'house',
+    'tartine',
+    'olive',
+    'whole-wheat',
+    'country-rye',
+  ]);
+  assert.deepEqual(load(['four-flour']), ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye']);
+  assert.deepEqual(load('house'), ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye']);
+  const s = loadState(
+    storage({ [STORAGE_V6]: JSON.stringify({ version: 6, plan: { recipe: 'tartine', order: ['tartine'] } }) }),
+    NOW,
+  );
+  assert.equal(act.selectRecipe(s, 'whole-wheat').recipe, 'whole-wheat', 'a recipe added since the save can be chosen');
 });

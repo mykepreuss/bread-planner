@@ -8,7 +8,8 @@
  * step 3b of the rebuild.
  *
  * On November 22, 2026 Michael removed four recipes (White & Whole Wheat, Red Spring & Rye, Five-Flour and Four-Flour
- * Sourdough). Their cases left the record and every other case stayed as it was; see `randomBakes`.
+ * Sourdough). Their cases left the record and every other case stayed as it was; see `randomBakes`. The same day he
+ * added Tartine Olive, Sesame, Whole Wheat and Country Rye, whose cases were added after the others.
  */
 import { readFileSync } from 'node:fs';
 import { schedule } from '../../src/domain/schedule.ts';
@@ -16,7 +17,7 @@ import { planOf } from '../../src/state/schema.ts';
 import { decode } from './format.ts';
 import { plannerState, stamp, local, type PlanInput, type FormulaInput, type HelperCall } from './observe.ts';
 
-export const RECIPES = ['house', 'tartine'];
+export const RECIPES = ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye'];
 const DAY = '2026-11-22',
   BEFORE = '2026-11-21 15:20';
 const minutes = (t: string, n: number) => stamp(local(t) + n * 60000).slice(0, 16);
@@ -366,6 +367,14 @@ function bakeDays(): [string, PlanInput][] {
         ...upTo(tartine({ proof: 'warm', params: { count: 1 }, ovenCapacity: 1 }), 'covered'),
         now: '2026-11-23 06:00',
       },
+    ],
+    [
+      'olive with its add-in step up next, after Turn 1',
+      { ...upTo(tartine({ recipe: 'olive' }), 'turn1'), now: '2026-11-22 22:05' },
+    ],
+    [
+      'sesame with its toast step up next, beside the initial mix',
+      { ...upTo(tartine({ recipe: 'sesame' }), 'autolyse'), now: '2026-11-22 21:05' },
     ],
   ];
 }

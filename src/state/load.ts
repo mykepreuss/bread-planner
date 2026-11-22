@@ -125,10 +125,11 @@ function assemble(
         : [r.id, { settings: defaultSettings(r), bake: emptyBake() }];
     }),
   );
-  const order = Array.isArray(p.order)
+  const named = Array.isArray(p.order)
     ? [...new Set(p.order.filter((id): id is string => typeof id === 'string' && recipeById(id) !== undefined))]
-    : RECIPES.map((r) => r.id);
-  if (!order.length) order.push('house');
+    : [];
+  // The saved menu keeps its order; a recipe it doesn't name, such as one added since, follows in menu order.
+  const order = [...named, ...RECIPES.map((r) => r.id).filter((id) => !named.includes(id))];
   const capacity = p.ovenCapacity;
   return {
     recipe: typeof p.recipe === 'string' && order.includes(p.recipe) ? p.recipe : order[0],

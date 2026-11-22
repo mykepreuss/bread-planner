@@ -14,6 +14,7 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 import { FLOUR_NAMES } from '@/domain/recipes';
+import { addInLines } from '@/domain/addins';
 import { formula, totalHydration } from '@/domain/formula';
 import { selected } from '@/state/schema';
 import { restoreDefaults, setTotalHydration } from '@/state/actions';
@@ -233,6 +234,18 @@ export function IngredientsTab() {
               >
                 <Weights rows={r.final} />
               </Panel>
+              {d.addIns && (
+                <Panel
+                  title="03 / Add-ins"
+                  description="Work in after the first turn. The book's measures, scaled to your batch."
+                >
+                  <ul className="add-ins">
+                    {addInLines(d.addIns, p, d.defaults).map((line, i) => (
+                      <li key={i}>{line}</li>
+                    ))}
+                  </ul>
+                </Panel>
+              )}
               <div className="recipe-totals">
                 <span>
                   <strong>{g(r.flour)} g</strong> added flour

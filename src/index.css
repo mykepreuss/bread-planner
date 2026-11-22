@@ -1924,6 +1924,15 @@ h2 {
 .build-description {
   margin: 0 0 22px;
 }
+/* A Tartine variation's add-ins, in the book's own measures. */
+.add-ins {
+  margin: 0;
+  padding-left: 1.2em;
+  display: grid;
+  gap: 8px;
+  font-size: 15px;
+  line-height: 1.5;
+}
 .recipe-totals {
   display: flex;
   flex-wrap: wrap;

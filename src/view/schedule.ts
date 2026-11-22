@@ -53,7 +53,7 @@ export function scheduleView(state: PlannerState, now: number, when: (d: Date) =
   const doughCheck =
     next !== undefined && next.turn > 0 && shape !== undefined && checkFrom !== null && now >= checkFrom.getTime();
   // Bulk steps offer the dough temperature: after mixing until there is one, then later readings.
-  const during = next !== undefined && (next.kind === 'preshape' || next.turn > 0);
+  const during = next !== undefined && (next.kind === 'preshape' || next.kind === 'addin' || next.turn > 0);
   const temperatureField: 'now' | 'after mixing' | null =
     next === undefined
       ? null

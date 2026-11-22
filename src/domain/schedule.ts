@@ -1,6 +1,7 @@
 import { formula, type Formula } from './formula.ts';
 import { HOUSE, TARTINE, COOLING } from './methods.ts';
 import { FLOUR_NAMES, inSentence, type Recipe, type Settings } from './recipes.ts';
+import { addInLines, addInNote } from './addins.ts';
 import { dateString } from './text.ts';
 
 /** What a step is. Saved checklists use its id, which this file keeps exactly as before. */
@@ -11,6 +12,8 @@ export type Kind =
   | 'mix'
   | 'bulk'
   | 'turn'
+  | 'prep'
+  | 'addin'
   | 'preshape'
   | 'bench'
   | 'shape'
@@ -31,9 +34,10 @@ export type Phase = 'room' | 'cold' | 'oven';
  * A step and the facts about it:
  * - `handsOn`: someone has to do something then, so it counts for quiet hours; `activeMinutes` is how long that work
  *   lasts, for mixing and shaping that can run past the cutoff.
- * - `movesPlan`: checking it late or early moves the steps after it. The starter feed, the autolyse and the turns
- *   record their time but move nothing.
- * - `bulk`: the start of bulk or a turn. Bulk never ends before the latest of them that is checked.
+ * - `movesPlan`: checking it late or early moves the steps after it. The starter feed, the autolyse, the turns, and
+ *   the add-ins and their prep record their time but move nothing.
+ * - `bulk`: the start of bulk, a turn, or working in a Tartine recipe's add-ins. Bulk never ends before the latest of
+ *   them that is checked.
  * - `turn`: the turn's number, from 1, or 0.
  */
 export type Step = {
@@ -59,6 +63,8 @@ const FACTS: Record<Kind, Pick<Step, 'phase' | 'handsOn' | 'movesPlan' | 'bulk'>
   mix: { phase: 'room', handsOn: true, movesPlan: true, bulk: false, active: true },
   bulk: { phase: 'room', handsOn: false, movesPlan: true, bulk: true },
   turn: { phase: 'room', handsOn: true, movesPlan: false, bulk: true },
+  prep: { phase: 'oven', handsOn: true, movesPlan: false, bulk: false },
+  addin: { phase: 'room', handsOn: true, movesPlan: false, bulk: true },
   preshape: { phase: 'room', handsOn: true, movesPlan: true, bulk: false, active: true },
   bench: { phase: 'room', handsOn: true, movesPlan: true, bulk: false },
   shape: { phase: 'room', handsOn: true, movesPlan: true, bulk: false, active: true },
@@ -103,6 +109,11 @@ export type PlanInput = {
 
 const LEAVEN_CUE =
   'Use when aerated and puffy, and a spoonful floats in room-temperature water. If it sinks, allow more fermentation before mixing.';
+/** The Basic Country Bread's initial mix and rest, for a Tartine recipe without its own `initialMix`. */
+const TARTINE_MIX = {
+  rest: TARTINE.rest,
+  note: 'Disperse the leaven used in the initial water, about 80°F / 27°C. Add white and whole-wheat flour; mix until no dry flour remains. Cover for 25 to 40 minutes.',
+};
 const gram = (n: number) => `${Math.round(n * 10) / 10} g`;
 const listed = (rows: [string, number][]) =>
   rows.map(([name, n]) => `${inSentence(name)} (${Math.round(n * 10) / 10} g)`).join(', ');
@@ -154,18 +165,12 @@ export function schedule(input: PlanInput): Step[] {
   const later = single ? '' : ' Keep later batches chilled until their own warm-up.';
   let firstBake: number, preheat: number, covered: number, uncovered: number, warmup: number;
   if (tartine) {
-    const t = TARTINE;
+    const t = TARTINE,
+      initial = recipe.initialMix ?? TARTINE_MIX;
     push('leaven', 'leaven', 'Make leaven', 0, t.leaven, leavenNote(recipe, r), LEAVEN_CUE);
     let at = t.leaven;
-    push(
-      'autolyse',
-      'autolyse',
-      'Mix dough and rest',
-      at,
-      t.rest,
-      'Disperse the leaven used in the initial water, about 80°F / 27°C. Add white and whole-wheat flour; mix until no dry flour remains. Cover for 25 to 40 minutes.',
-    );
-    at += t.rest;
+    push('autolyse', 'autolyse', 'Mix dough and rest', at, initial.rest, initial.note);
+    at += initial.rest;
     push(
       'mix',
       'mix',
@@ -182,7 +187,7 @@ export function schedule(input: PlanInput): Step[] {
       Math.min(t.turnEvery, t.bulk),
       'Cover and keep at 75°F to 80°F / 24°C to 27°C.',
     );
-    for (let elapsed = t.turnEvery, n = 1; elapsed < t.bulk; elapsed += t.turnEvery, n++)
+    for (let elapsed = t.turnEvery, n = 1; elapsed < t.bulk; elapsed += t.turnEvery, n++) {
       push(
         `turn${n}`,
         'turn',
@@ -193,6 +198,26 @@ export function schedule(input: PlanInput): Step[] {
           ? 'Wet your hand. Stretch one quadrant over the dough; rotate and repeat to fold all four sides.'
           : 'Repeat the four-sided stretch and fold, with wet hands.',
       );
+      // The book works add-ins in right after the first turn, so the step starts with it.
+      if (n === 1 && recipe.addIns) {
+        const { prep } = recipe.addIns;
+        if (prep) {
+          // Early enough to be ready by then. It lasts until the next step starts: this turn and every step before it
+          // are already on the plan, so the next one is among them.
+          const start = at + elapsed - prep.minutesBefore,
+            next = Math.min(...rows.map((r) => r.offset).filter((offset) => offset > start));
+          push('toast', 'prep', prep.title, start, next - start, prep.note);
+        }
+        push(
+          'addins',
+          'addin',
+          recipe.addIns.title,
+          at + elapsed,
+          0,
+          addInNote(recipe.addIns, addInLines(recipe.addIns, settings, recipe.defaults)),
+        );
+      }
+    }
     at += t.bulk;
     push(
       'shape',

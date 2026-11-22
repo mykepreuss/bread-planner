@@ -8,6 +8,7 @@ import { createServer } from 'vite';
 import { decode, difference } from './format.ts';
 import { plannerState, local, atMoment, useBaselineTimeZone, type PlanInput } from './observe.ts';
 import { dateString, durationText } from '../../src/domain/text.ts';
+import { recipeById } from '../../src/domain/recipes.ts';
 import { fromV6, serialize, STORAGE_V6 } from '../../src/state/load.ts';
 
 /**
@@ -133,7 +134,8 @@ function expected(input: PlanInput, out: Recorded) {
         ? 'Dough temperature after mixing'
         : null;
   // The timeline lists steps day by day, each day's steps in the plan's order, so a step moved onto another day shows under that day.
-  const book = input.recipe === 'tartine',
+  // The book's recipes are every Tartine-method recipe, as on the screen, not only Original Tartine.
+  const book = recipeById(input.recipe)?.method === 'tartine',
     proof = v.coldProof,
     steps = v.days.flatMap((day) => out.steps.filter((s) => s.at.slice(0, 10) === day));
   return {

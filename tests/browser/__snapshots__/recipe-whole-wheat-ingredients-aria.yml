@@ -1,0 +1,115 @@
+- banner:
+  - heading "Bread Planner" [level=1]
+- main:
+  - tablist:
+    - tab "Schedule"
+    - tab "Ingredients" [selected]
+  - text: Recipe
+  - combobox "Recipe": Tartine Whole Wheat
+  - paragraph: The book’s 70/30 whole-wheat and all-purpose loaf, mixed with cooler water and rested longer before the salt. If the dough runs lively, lower the leaven toward 15%.
+  - tabpanel "Ingredients":
+    - text: Your batch Each recipe remembers its own settings. Number of loaves
+    - spinbutton "Number of loaves": "2"
+    - text: loaves Dough weight per loaf
+    - spinbutton "Dough weight per loaf": "1010"
+    - text: g Total hydration
+    - spinbutton "Total hydration": "82"
+    - text: "%"
+    - slider "Adjust total hydration"
+    - paragraph: Includes the flour and water in the leaven used.
+    - text: Flour blend Parts set the balance between flours. The gram weights scale to your batch.
+    - table:
+      - rowgroup:
+        - row "Flour Blend parts":
+          - columnheader "Flour"
+          - columnheader "Blend parts"
+      - rowgroup:
+        - row "Whole-wheat flour 700 g in this batch · 70% 70 parts":
+          - cell "Whole-wheat flour 700 g in this batch · 70%"
+          - cell "70 parts":
+            - spinbutton "Whole-wheat flour proportion": "70"
+            - text: parts
+        - row "All-purpose flour 300 g in this batch · 30% 30 parts":
+          - cell "All-purpose flour 300 g in this batch · 30%"
+          - cell "30 parts":
+            - spinbutton "All-purpose flour proportion": "30"
+            - text: parts
+    - heading "Leaven, salt & water split" [level=3]:
+      - button "Leaven, salt & water split" [expanded]
+    - region "Leaven, salt & water split":
+      - text: Leaven / added flour
+      - spinbutton "Leaven / added flour": "20"
+      - text: "%"
+      - slider "Adjust leaven / added flour"
+      - text: Salt / added flour
+      - spinbutton "Salt / added flour": "2"
+      - text: "%"
+      - slider "Adjust salt / added flour"
+      - text: Water reserved for final mix
+      - spinbutton "Water reserved for final mix": "6.25"
+      - text: "%"
+      - slider "Adjust water reserved for final mix"
+      - paragraph: The water split is a percentage of total added water.
+    - heading "Leaven build" [level=3]:
+      - button "Leaven build" [expanded]
+    - region "Leaven build":
+      - paragraph: Build quantities per 1,000 g added flour. The amounts made scale with your batch. Mature starter is equal weights flour and water. If the build is empty, the leaven is treated as 100% hydration.
+      - text: Mature starter
+      - spinbutton "Mature starter": "15"
+      - text: g White-bread flour
+      - spinbutton "White-bread flour": "100"
+      - text: g Whole-wheat flour
+      - spinbutton "Whole-wheat flour": "100"
+      - text: g Water
+      - spinbutton "Water": "200"
+      - text: g
+      - term: Mature starter
+      - definition: 15 g
+      - term: White-bread flour
+      - definition: 100 g
+      - term: Whole-wheat flour
+      - definition: 100 g
+      - term: Water
+      - definition: 200 g
+      - term: Total
+      - definition: 415 g
+      - text: Made
+      - strong: 415 g
+      - text: Used in dough
+      - strong: 200 g
+      - text: Reserved
+      - strong: 215 g
+    - heading "Recipe defaults" [level=3]:
+      - button "Recipe defaults" [expanded]
+    - region "Recipe defaults":
+      - button "Restore recipe defaults"
+    - text: 2,020g
+    - paragraph: Total dough for 2 loaves
+    - text: 82% total hydration 1,010 g per loaf 01 / Initial mix and rest Leaven goes into this mix before the initial rest.
+    - term: Leaven used
+    - definition: 200 g
+    - term: Whole-wheat flour
+    - definition: 700 g
+    - term: All-purpose flour
+    - definition: 300 g
+    - term: Water
+    - definition: 750 g
+    - text: 02 / Salt and remaining water Add after the initial rest, then begin bulk fermentation.
+    - term: Salt
+    - definition: 20 g
+    - term: Water
+    - definition: 50 g
+    - strong: 1,000 g
+    - text: added flour
+    - strong: 800 g
+    - text: added water
+    - strong: 200 g
+    - text: leaven used Basket and dusting flour Separate supplies, outside dough weight.
+    - term: Rice flour
+    - definition: 200 g
+  - heading "Mature starter and readiness guide" [level=3]:
+    - button "Mature starter and readiness guide"
+  - heading "Establishing a starter from scratch" [level=3]:
+    - button "Establishing a starter from scratch"
+  - heading "Shaping, basket preparation and baking" [level=3]:
+    - button "Shaping, basket preparation and baking"

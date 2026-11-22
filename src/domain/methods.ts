@@ -26,6 +26,7 @@ export const HOUSE = {
 
 export const TARTINE = {
   leaven: 720,
+  /** The rest after the initial mix. A recipe's `initialMix` can set its own (see recipes.ts). */
   rest: 30,
   turnEvery: 30,
   bulk: 180,
