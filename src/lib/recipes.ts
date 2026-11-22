@@ -1,4 +1,5 @@
 import {defaults as legacyDefaults,restorePlan as restoreLegacy,ingredients,bookIngredients,houseIngredients,schedule as legacySchedule,dateString,type Plan,type Step} from './model.ts';
+import {inTempRange,withReading,type BulkReading} from './bakeday.ts';
 
 export const flourNames:Record<string,string>={anita:'Anita\'s all-purpose flour',red:'Red spring flour',white:'White-bread flour',wheat:'Whole-wheat flour',rye:'Rye flour',ap:'All-purpose flour',fife:'Red Fife flour'};
 /** `buildFlour` names the flour in the leaven build; without it the build uses red spring, white-bread or generic bread flour by the recipe's flours. */
@@ -15,8 +16,8 @@ export const definitions:Record<string,RecipeDefinition>={
 export function buildFlourName(d:RecipeDefinition){return d.buildFlour?flourNames[d.buildFlour]:d.flours.includes('red')?flourNames.red:d.flours.includes('white')?flourNames.white:'Bread flour';}
 /** A flour name as it reads mid-sentence: lowercase, except names that start with a proper noun. */
 export function inSentence(name:string){return /^(Anita's|Red Fife)/.test(name)?name:name.charAt(0).toLowerCase()+name.slice(1).toLowerCase();}
-/** `doneAt` records when each checked step was actually done, in epoch milliseconds, so the schedule can follow the dough. `doughTemp` is this bake's measured dough temperature in °F. */
-export type Profile={params:Record<string,number>;done:string[];doneAt:Record<string,number>;doughTemp:number|null};
+/** `doneAt` records when each checked step was actually done, in epoch milliseconds, so the schedule can follow the dough. `doughTemp` is this bake's dough temperature after mixing, in °F, and `bulkTemps` the readings taken later in bulk, each with when it was taken. */
+export type Profile={params:Record<string,number>;done:string[];doneAt:Record<string,number>;doughTemp:number|null;bulkTemps:BulkReading[]};
 export type Planner={recipes:Record<string,Profile>;order:string[];recipe:string;date:string;time:string;anchor:'leaven'|'done';proof:'cold'|'warm';ovenCapacity:number;reheat:number;tempUnit:'F'|'C';legacy:Plan};
 const clean=(n:number)=>Math.abs(n)<1e-12?0:n;
 /** Leaven balances compare sums of separately scaled parts, so sub-microgram differences are arithmetic noise, not a deficit. */
@@ -38,7 +39,7 @@ export function addedHydration(total:number,p:Record<string,number>){
 }
 function profile(flours:Record<string,number>,water:number,leaven:number,salt:number,finalWater:number,count:number,weight:number,build:number[],done:string[]=[]):Profile{
   const flour=Object.values(flours).reduce((a,b)=>a+b,0),denominator=flour||1;
-  return {params:{count,weight,hydration:water/denominator*100,leaven:leaven/denominator*100,salt:salt/denominator*100,reserve:water?finalWater/water*100:0,...Object.fromEntries(Object.entries(flours).map(([k,n])=>[`flour_${k}`,n/denominator*100])),buildSeed:build[0]/denominator*1000,buildBread:build[1]/denominator*1000,buildWheat:build[2]/denominator*1000,buildWater:build[3]/denominator*1000},done:[...done],doneAt:{},doughTemp:null};
+  return {params:{count,weight,hydration:water/denominator*100,leaven:leaven/denominator*100,salt:salt/denominator*100,reserve:water?finalWater/water*100:0,...Object.fromEntries(Object.entries(flours).map(([k,n])=>[`flour_${k}`,n/denominator*100])),buildSeed:build[0]/denominator*1000,buildBread:build[1]/denominator*1000,buildWheat:build[2]/denominator*1000,buildWater:build[3]/denominator*1000},done:[...done],doneAt:{},doughTemp:null,bulkTemps:[]};
 }
 /** Identity ignores hydration, water staging and yield, but retains flour, leaven, salt and mixing method. */
 export function recipeSignature(id:string,p:Profile){
@@ -85,7 +86,9 @@ export function restorePlanner(saved:unknown):Planner{
     const done=base.recipes[id].done=Array.isArray(source.done)?source.done.filter(x=>typeof x==='string'):[];
     const times=source.doneAt&&typeof source.doneAt==='object'?Object.entries(source.doneAt):[];
     base.recipes[id].doneAt=Object.fromEntries(times.filter(([step,t])=>done.includes(step)&&typeof t==='number'&&Number.isFinite(t)));
-    const temp=source.doughTemp;base.recipes[id].doughTemp=typeof temp==='number'&&temp>=50&&temp<=100?temp:null;
+    const temp=source.doughTemp,validTemp=(t:unknown):t is number=>typeof t==='number'&&inTempRange(t,'F');base.recipes[id].doughTemp=validTemp(temp)?temp:null;
+    const readings=Array.isArray(source.bulkTemps)?source.bulkTemps:[];
+    base.recipes[id].bulkTemps=readings.filter(r=>r&&typeof r==='object'&&typeof r.at==='number'&&Number.isFinite(r.at)&&validTemp(r.f)).map(r=>({at:r.at,f:r.f})).reduce(withReading,[] as BulkReading[]);
   }
   base.order=Array.isArray(p.order)?[...new Set(p.order.filter(id=>typeof id==='string'&&Object.hasOwn(definitions,id)))]:base.order;
   if(!base.order.length)base.order=['house'];

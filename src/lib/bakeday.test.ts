@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createPlanner,recipeSchedule,restorePlanner} from './recipes.ts';
-import {liveSchedule,retime,clockText,untilText,shiftText,stampNow,skippedSteps,stepPhase,bulkEstimate,bulkAdvice,toF,fromF,BULK_REFERENCE_F} from './bakeday.ts';
+import {liveSchedule,followDough,holdTemperature,withReading,bulkDoneText,retime,clockText,stepGaps,untilText,shiftText,stampNow,skippedSteps,stepPhase,bulkEstimate,bulkAdvice,toF,fromF,BULK_REFERENCE_F} from './bakeday.ts';
 const plan=()=>{const p=createPlanner();p.date='2026-10-21';p.time='09:00';return p;};
 const minutes=(n:number)=>n*60000;
 const at=(steps:{id:string;at:Date}[],id:string)=>+steps.find(s=>s.id===id)!.at;
@@ -81,22 +81,129 @@ test('bulk time halves for every 15°F warmer and doubles for every 15°F cooler
   assert.equal(bulkEstimate(steps,null),null);assert.equal(bulkEstimate(steps,Number.NaN),null);
 });
 
-test('warm dough advice says when to start checking and to skip remaining turns; cool dough says keep folding',()=>{
-  const {steps}=liveSchedule(recipeSchedule(plan()),[]);
-  const warm=bulkAdvice(bulkEstimate(steps,82)!,clock),cool=bulkAdvice(bulkEstimate(steps,72)!,clock);
-  assert.equal(warm,'Bulk should take about 3h 19m, ready around 17:34. That is 41 min before the planned preshape. Start checking from 17:04. If the dough is ready before the last turn, skip the remaining turns and preshape.');
-  assert.equal(cool,'Bulk should take about 5h 17m, ready around 19:32. That is 1h 17m after the planned preshape. Keep folding every 30 minutes until the dough is ready.');
+test('the advice says how the plan moved, how many turns it now has, and what temperature would get back on plan',()=>{
+  const planned=recipeSchedule(plan()),rest=at(planned,'rest'),temp=(f:number)=>`${Math.round(f)}°F`;
+  const advise=(f:number)=>{const r=followDough(planned,[],{},f);return bulkAdvice(r.estimate!,clock,{turns:r.turns,hold:holdTemperature(r.estimate!,rest),temp});};
+  assert.equal(advise(82),'Bulk should take about 3h 19m, ready around 17:34. That is 41 min before the original preshape, so preshape and every later step have moved earlier. The plan now has 6 turns instead of 7. Start checking the dough from 17:04. To preshape at 18:15 as first planned, keep the dough near 78°F.');
+  assert.equal(advise(72),'Bulk should take about 5h 17m, ready around 19:32. That is 1h 17m after the original preshape, so preshape and every later step have moved later. Keep folding every 30 minutes for up to one more hour, then leave the dough covered until it is ready. The plan now has 9 turns instead of 7. Start checking the dough from 19:02. To preshape at 18:15 as first planned, keep the dough near 78°F.');
+  assert.equal(advise(79),'Bulk should take about 3h 49m, ready around 18:04. That is close to the plan. Start checking the dough from 17:34.');
 });
 
-test('the estimate runs from when bulk actually started, and leaves the planned steps alone',()=>{
+test('the estimate runs from when bulk actually started, and preshape follows it',()=>{
   const planned=recipeSchedule(plan()),rest=at(planned,'rest');
-  const {steps}=liveSchedule(planned,['rest'],{rest:rest+minutes(20)}),e=bulkEstimate(steps,82)!;
-  assert.equal(+e.readyAt,rest+minutes(20)+minutes(199));assert.equal(at(steps,'shape'),at(planned,'shape')+minutes(20));
+  const {steps,estimate}=followDough(planned,['rest'],{rest:rest+minutes(20)},82);
+  assert.equal(+estimate!.readyAt,rest+minutes(20)+minutes(199));assert.equal(at(steps,'shape'),rest+minutes(20)+minutes(199));
 });
 
-test('Tartine estimates its 3-hour warm bulk the same way',()=>{
-  const p=plan();p.recipe='tartine';const {steps}=liveSchedule(recipeSchedule(p),[]);
+test('without a dough temperature, the schedule is exactly the live schedule',()=>{
+  const planned=recipeSchedule(plan()),rest=at(planned,'rest');
+  for(const [done,doneAt] of [[[],{}],[['rest'],{rest:rest+minutes(20)}]] as [string[],Record<string,number>][]){
+    const followed=followDough(planned,done,doneAt,null),live=liveSchedule(planned,done,doneAt);
+    assert.deepEqual(followed.steps,live.steps);assert.equal(followed.shift,live.shift);assert.equal(followed.estimate,null);
+  }
+});
+
+test('warm dough brings preshape and every later step forward, and drops the turns that no longer fit',()=>{
+  const planned=recipeSchedule(plan()),rest=at(planned,'rest'),{steps,estimate,turns,shift}=followDough(planned,[],{},84);
+  assert.equal(estimate!.minutes,182);assert.equal(at(steps,'shape'),rest+minutes(182));
+  assert.deepEqual(steps.filter(s=>/^turn/.test(s.id)).map(s=>[s.id,+s.at-rest]),[1,2,3,4,5].map(n=>[`turn${n}`,minutes(30*n)]));
+  assert.deepEqual(turns,{planned:7,now:5,capped:false});assert.equal(shift,0,'the check-off shift is reported apart from the temperature');
+  for(const id of ['fold','fridge','preheat','done'])assert.equal(at(steps,id),at(planned,id)-minutes(58),id);
+});
+
+test('cool dough moves preshape later and adds a turn every 30 minutes, for up to one more hour',()=>{
+  const planned=recipeSchedule(plan()),rest=at(planned,'rest');
+  const slight=followDough(planned,[],{},76),t8=slight.steps.filter(s=>/^turn/.test(s.id));
+  assert.deepEqual(t8.map(s=>[s.id,+s.at-rest]),Array.from({length:8},(_,i)=>[`turn${i+1}`,minutes(30*(i+1))]),'76°F: one extra turn fits before the 4h 23m end');
+  assert.equal(t8[7].title,'Turn 8');assert.equal(t8[7].note,t8[6].note);assert.deepEqual(slight.turns,{planned:7,now:8,capped:false});
+  const {steps,turns}=followDough(planned,[],{},72),t=steps.filter(s=>/^turn/.test(s.id));
+  assert.deepEqual(t.map(s=>s.id),Array.from({length:9},(_,i)=>`turn${i+1}`),'72°F: two extra turns, then the dough rests');assert.deepEqual(turns,{planned:7,now:9,capped:true});
+  assert.equal(at(steps,'shape'),rest+minutes(317));assert.equal(at(steps,'done'),at(planned,'done')+minutes(77));
+  assert.equal(steps.findIndex(s=>s.id==='turn9')+1,steps.findIndex(s=>s.id==='shape'),'added turns come just before preshape');
+});
+
+test('very cool dough still gets at most two extra turns, but a checked turn past the cap stays',()=>{
+  const planned=recipeSchedule(plan()),rest=at(planned,'rest'),cold=followDough(planned,[],{},55);
+  assert.ok(cold.estimate!.minutes>600);assert.equal(cold.steps.filter(s=>/^turn/.test(s.id)).length,9);assert.equal(cold.turns!.capped,true);
+  const turnIds=Array.from({length:12},(_,i)=>`turn${i+1}`),doneAt=Object.fromEntries([['rest',rest],...turnIds.map((id,i)=>[id,rest+minutes(30*(i+1))])]);
+  assert.equal(followDough(planned,['rest',...turnIds],doneAt,55).steps.filter(s=>/^turn/.test(s.id)).length,12);
+  const over=followDough(planned,['rest','shape'],{rest,shape:rest+minutes(600)},55).steps.filter(s=>/^turn/.test(s.id));
+  assert.equal(over.length,9,'after a late preshape, skipped turns stop at the cap too');
+});
+
+test('once preshape is done, the note says how long bulk took against the estimate',()=>{
+  const planned=recipeSchedule(plan()),rest=at(planned,'rest');
+  const r=followDough(planned,['rest','shape'],{rest,shape:rest+minutes(200)},84);
+  assert.equal(r.bulkMinutes,200);assert.equal(bulkDoneText(r.bulkMinutes!,r.estimate),'Bulk took 3h 20m. The estimate was 3h 2m.');
+  assert.equal(followDough(planned,['rest'],{rest},84).bulkMinutes,null,'not while bulk is running');
+  assert.equal(bulkDoneText(240),'Bulk took 4h.');
+});
+
+test('a later reading re-times only what is left of bulk',()=>{
+  const planned=recipeSchedule(plan()),rest=at(planned,'rest');
+  assert.equal(followDough(planned,['rest'],{rest},78,[{at:rest+minutes(120),f:84}]).estimate!.minutes,211,'2h at 78°F, then the last half at 84°F');
+  assert.equal(followDough(planned,[],{},82,[{at:rest+minutes(60),f:82}]).estimate!.minutes,199,'the same temperature again changes nothing');
+  assert.equal(followDough(planned,[],{},78,[{at:rest-minutes(30),f:93}]).estimate!.minutes,240,'a reading from before the final mix belongs to another bake');
+  assert.equal(followDough(planned,['rest'],{rest},78,[{at:rest,f:84}]).estimate!.minutes,182,'a reading in the minute bulk started counts');
+  assert.equal(followDough(planned,[],{},78,[{at:rest-minutes(10),f:84}]).estimate!.minutes,182,'one between the final mix and bulk start applies from the start');
+});
+
+test('preshape never comes before a turn that was already checked, and checked turns stay',()=>{
+  const planned=recipeSchedule(plan()),rest=at(planned,'rest'),done=['rest','turn1','turn2','turn3','turn4','turn5','turn6'];
+  const {steps}=followDough(planned,done,Object.fromEntries(done.map((id,i)=>[id,rest+minutes(30*i)])),93);
+  assert.equal(at(steps,'shape'),rest+minutes(180),'93°F says 2h, but turn 6 was done at 3h');
+  assert.ok(steps.some(s=>s.id==='turn6'));assert.ok(!steps.some(s=>s.id==='turn7'));
+});
+
+test('once preshape is checked, the dough temperature moves no times, and only turns due before it are shown',()=>{
+  const planned=recipeSchedule(plan()),rest=at(planned,'rest'),done=['rest','shape'],doneAt={rest,shape:rest+minutes(200)};
+  const followed=followDough(planned,done,doneAt,72).steps,live=liveSchedule(planned,done,doneAt).steps;
+  for(const s of followed)assert.equal(+s.at,at(live,s.id),s.id);
+  assert.deepEqual(followed.filter(s=>/^turn/.test(s.id)).map(s=>s.id),['turn1','turn2','turn3','turn4','turn5','turn6'],'turn 7 was due after preshape');
+  assert.equal(followDough(planned,done,doneAt,72).turns,null);
+});
+
+test('turns added for cool dough and then checked stay after preshape is checked',()=>{
+  const planned=recipeSchedule(plan()),rest=at(planned,'rest'),turnIds=Array.from({length:10},(_,i)=>`turn${i+1}`);
+  const done=['rest',...turnIds],doneAt:Record<string,number>={rest,...Object.fromEntries(turnIds.map((id,i)=>[id,rest+minutes(30*(i+1))]))};
+  const before=followDough(planned,done,doneAt,72).steps;assert.ok(before.some(s=>s.id==='turn10'));
+  const after=followDough(planned,[...done,'shape'],{...doneAt,shape:rest+minutes(317)},72).steps;
+  assert.deepEqual(after.filter(s=>/^turn/.test(s.id)).map(s=>s.id),turnIds,'turns 8 to 10 stay checked in the timeline');
+  assert.deepEqual(followDough(planned,done,doneAt,null).steps.filter(s=>/^turn/.test(s.id)).map(s=>s.id),turnIds,'and stay if the temperature is cleared');
+});
+
+test('turns dropped for warm dough do not come back once preshape is checked early',()=>{
+  const planned=recipeSchedule(plan()),rest=at(planned,'rest'),done=['rest','turn1','turn2','turn3','turn4','shape'];
+  const doneAt={...Object.fromEntries(done.slice(0,5).map((id,i)=>[id,rest+minutes(30*i)])),shape:rest+minutes(156)};
+  const turns=followDough(planned,done,doneAt,84).steps.filter(s=>/^turn/.test(s.id)).map(s=>s.id);
+  assert.deepEqual(turns,['turn1','turn2','turn3','turn4','turn5'],'turn 5 was due before preshape, so it shows as skipped; 6 and 7 do not');
+});
+
+test('a reading in the same minute as an earlier one replaces it',()=>{
+  const a={at:minutes(100),f:84},b={at:minutes(130),f:80};
+  assert.deepEqual(withReading([b],a),[a,b],'readings stay in time order');
+  assert.deepEqual(withReading([a,b],{at:minutes(100),f:82}),[{at:minutes(100),f:82},b],'a corrected typo counts once');
+});
+
+test('the temperature to get back on plan counts the fermentation already done',()=>{
+  const planned=recipeSchedule(plan()),rest=at(planned,'rest'),e=followDough(planned,[],{},84).estimate!;
+  assert.ok(Math.abs(holdTemperature(e,rest)!-78)<1e-9,'from the start, the reference temperature finishes on time');
+  const expected=78+15*Math.log2((240-60*2**(6/15))/180);
+  assert.ok(Math.abs(holdTemperature(e,rest+minutes(60))!-expected)<1e-9,'after an hour at 84°F, a cooler spot');
+  assert.equal(holdTemperature(e,+e.plannedEnd+minutes(1)),null);
+});
+
+test('planned turns sit every 30 minutes from the start of bulk, the grid followDough fits turns to',()=>{
+  for(const recipe of ['house','tartine']){const p=plan();p.recipe=recipe;const planned=recipeSchedule(p),rest=at(planned,'rest');
+    planned.filter(s=>/^turn/.test(s.id)).forEach((s,i)=>assert.equal(+s.at-rest,minutes(30*(i+1)),`${recipe} ${s.id}`));}
+});
+
+test('Tartine estimates its 3-hour warm bulk the same way, and its turns and preshape follow',()=>{
+  const p=plan();p.recipe='tartine';const planned=recipeSchedule(p),{steps}=liveSchedule(planned,[]);
   assert.equal(bulkEstimate(steps,78)!.planned,180);assert.equal(bulkEstimate(steps,93)!.minutes,90);
+  const rest=at(planned,'rest'),warm=followDough(planned,[],{},93);
+  assert.deepEqual(warm.steps.filter(s=>/^turn/.test(s.id)).map(s=>+s.at-rest),[minutes(30),minutes(60)]);assert.equal(at(warm.steps,'shape'),rest+minutes(90));
+  assert.deepEqual(followDough(planned,[],{},78).steps,liveSchedule(planned,[]).steps,'at the reference, nothing moves');
 });
 
 test('°C converts through °F and back',()=>{
@@ -114,12 +221,16 @@ test('bulk steps left unchecked before a later checked step count as skipped; no
 });
 
 test('dough temperature and unit survive a reload; out-of-range or missing values are dropped',()=>{
-  const p=plan();p.tempUnit='C';p.recipes.house.doughTemp=81.5;
+  const p=plan();p.tempUnit='C';p.recipes.house.doughTemp=81.5;p.recipes.house.bulkTemps=[{at:Date.UTC(2026,9,21,14,0),f:80},{at:Date.UTC(2026,9,21,15,0),f:83.5}];
   assert.deepEqual(restorePlanner(JSON.parse(JSON.stringify({version:5,plan:p}))),p);
+  const messy=JSON.parse(JSON.stringify({version:5,plan:p}));messy.plan.recipes.house.bulkTemps=[{at:Date.UTC(2026,9,21,15,0),f:83.5},{at:'x',f:80},{at:1,f:140},null,{at:Date.UTC(2026,9,21,14,0),f:80}];
+  assert.deepEqual(restorePlanner(messy).recipes.house.bulkTemps,p.recipes.house.bulkTemps,'invalid readings are dropped and the rest sorted');
+  const twice=JSON.parse(JSON.stringify({version:5,plan:p}));twice.plan.recipes.house.bulkTemps=[{at:Date.UTC(2026,9,21,14,0),f:84},{at:Date.UTC(2026,9,21,14,0),f:80},{at:Date.UTC(2026,9,21,15,0),f:83.5}];
+  assert.deepEqual(restorePlanner(twice).recipes.house.bulkTemps,p.recipes.house.bulkTemps,'two readings saved for the same minute load as the later one');
   const odd=JSON.parse(JSON.stringify({version:5,plan:p}));odd.plan.recipes.house.doughTemp=140;odd.plan.tempUnit='K';
   const r=restorePlanner(odd);assert.equal(r.recipes.house.doughTemp,null);assert.equal(r.tempUnit,'F');
-  const older=JSON.parse(JSON.stringify({version:5,plan:p}));delete older.plan.recipes.house.doughTemp;delete older.plan.tempUnit;
-  const o=restorePlanner(older);assert.equal(o.recipes.house.doughTemp,null);assert.equal(o.tempUnit,'F');
+  const older=JSON.parse(JSON.stringify({version:5,plan:p}));delete older.plan.recipes.house.doughTemp;delete older.plan.recipes.house.bulkTemps;delete older.plan.tempUnit;
+  const o=restorePlanner(older);assert.equal(o.recipes.house.doughTemp,null);assert.equal(o.tempUnit,'F');assert.deepEqual(o.recipes.house.bulkTemps,[]);
 });
 
 test('each step is coloured by its temperature: only the cold proof is cold, and preheat through the last loaf out is oven',()=>{
@@ -156,4 +267,14 @@ test('Tartine turns follow the same rule',()=>{
   const p=plan();p.recipe='tartine';const planned=recipeSchedule(p);
   const {steps,shift}=liveSchedule(planned,['rest','turn1'],{rest:at(planned,'rest'),turn1:at(planned,'turn1')+minutes(15)});
   assert.equal(shift,0);assert.equal(at(steps,'turn2'),at(planned,'turn2'));assert.equal(at(steps,'shape'),at(planned,'shape'));
+});
+
+test('the gap shown between steps is the time to the next step, not the step\'s own length',()=>{
+  const steps=recipeSchedule(plan()),gaps=stepGaps(steps),gap=(id:string)=>gaps.get(id);
+  assert.equal(gap('rest'),30,'bulk starts, and turn 1 is 30 minutes later; bulk itself runs about 4 hours');
+  assert.equal(gap('feed'),660);
+  const warm=steps.findIndex(s=>s.id==='warmup');assert.equal(+steps[warm+1].at,+steps[warm].at,'warm-up and preheat start together');
+  assert.equal(gap('warmup'),0,'steps that start together show no gap');assert.equal(gap('preheat'),60);
+  assert.equal(gap(steps.at(-1)!.id),0);
+  for(const [id,n] of gaps)assert.ok(n>=0,id);
 });

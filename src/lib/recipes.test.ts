@@ -200,6 +200,17 @@ test('House-method turns 1 to 3 are vigorous double rounds and later turns a sin
   assert.equal(turns[0].note,'Wet your hand. Stretch one quadrant over the dough; rotate and repeat to fold all four sides.');assert.ok(turns.slice(1).every(s=>s.note==='Repeat the four-sided stretch and fold, with wet hands.'));
 });
 
+test('step notes speak to the baker, and mention later batches only when there are some',()=>{
+  const p=plan();
+  for(const id of p.order){p.recipe=id;for(const proof of ['cold','warm'] as const){p.proof=proof;for(const s of recipeSchedule(p))assert.ok(!/supplied recipe|default is/i.test(s.note??''),`${id} ${s.id}: ${s.note}`);}}
+  p.recipe='house';p.proof='cold';assert.doesNotMatch(recipeSchedule(p).find(s=>s.id==='fridge')!.note!,/later batches/i);
+  assert.equal(recipeSchedule(p).find(s=>s.id==='cooled')!.note,'The loaves are ready to slice.');
+  p.recipes.house.params.count=4;const many=recipeSchedule(p);
+  assert.match(many.find(s=>s.id==='fridge')!.note!,/Keep later batches chilled until their own warm-up/);
+  assert.equal(many.find(s=>s.id==='cooled-1')!.note,'This batch is ready to slice.');
+  p.recipe='tartine';p.recipes.tartine.params.count=1;assert.equal(recipeSchedule(p).find(s=>s.id==='fridge')!.note,'Cover the baskets and refrigerate for 10 to 12 hours.');
+});
+
 test('a saved House blend moves from red spring to Anita\'s all-purpose flour with its parts intact',()=>{
   const p=plan(),saved=JSON.parse(JSON.stringify({version:5,plan:p}));
   const params=saved.plan.recipes.house.params;delete params.flour_anita;params.flour_red=60;params.flour_wheat=25;
