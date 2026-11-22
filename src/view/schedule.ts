@@ -13,6 +13,7 @@ import {
 import { quietHourActions } from '../domain/quiet.ts';
 import { dateString, round } from '../domain/text.ts';
 import { planOf, selected, type PlannerState } from '../state/schema.ts';
+import { setChecked } from '../state/actions.ts';
 
 /**
  * What the Schedule tab shows for a planner at a moment: the live schedule, what is up next, whether the plan has
@@ -104,3 +105,22 @@ export function scheduleView(state: PlannerState, now: number, when: (d: Date) =
   };
 }
 export type ScheduleView = ReturnType<typeof scheduleView>;
+
+/** One check asks first when it would skip more than this many earlier steps that count; see `skipsOnCheck`. */
+export const ASK_BEFORE_SKIPPING = 3;
+
+/**
+ * The steps that checking `id` at `now` would newly mark Skipped, and whether the planner asks first. Added at Michael's
+ * request on November 22, 2026: a mis-tap on the last step passed over the whole bake. Once bulk's start time has come,
+ * the start of bulk and the turns don't count towards asking: skipping them then is how a bake goes when the dough is
+ * ready early. Before it, they count, so a tap on preshape the evening before asks.
+ */
+export function skipsOnCheck(state: PlannerState, id: string, now: number) {
+  const current = scheduleView(state, now, String),
+    before = new Set(current.skipped);
+  const after = scheduleView(setChecked(state, id, true, now), now, String);
+  const skips = after.steps.filter((s) => after.skipped.includes(s.id) && !before.has(s.id));
+  const start = current.steps.find((s) => s.kind === 'bulk'),
+    bulkDue = start !== undefined && start.at.getTime() <= now;
+  return { skips, ask: skips.filter((s) => !(bulkDue && s.bulk)).length > ASK_BEFORE_SKIPPING };
+}

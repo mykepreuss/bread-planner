@@ -9,7 +9,7 @@ Production branch: main
 Project: prj_oaBadxUrg76MQyvwFsY68FvfuM8r (bread-planner)
 Team: team_U2Fu7jNsQEgGylxpq9YR7M2f (mpmba)
 
-Each dated release section below ends with its delivery state, newest last. The last one marked "verified live" is what production runs. When this header was last edited, that was the Done at fix for iPhone: `main` at `523fa8990964d8ff3623deaa553392f47cb57727`, production deployment `dpl_6hbbhCDnXNU3wVRinWg3obih18sq` (READY). Michael is the planner's only user.
+Each dated release section below ends with its delivery state, newest last. The last one marked "verified live" is what production runs. When this header was last edited, that was Up next moving past unchecked steps: `main` at `2bd709e9131ce946cd3c56dde565aee43484a182`, production deployment `dpl_BnWDPJYE6SGaDTB1v5D6YBYG4Mjx` (READY). Michael is the planner's only user.
 
 ## Scope and decisions
 
@@ -661,7 +661,7 @@ Release: merged as pull request #29 at `523fa89`, with Michael's approval, right
 - At phone width in Chromium, the first Done at date field's appearance is "none" (it was "auto" before this release), and the pair sits where it did, inside the screen.
 - Not confirmed: the fields on Michael's iPhone. He hasn't reported back yet.
 
-## Up next moves past an unchecked step, November 22, 2026: committed, pull request open
+## Up next moves past an unchecked step, November 22, 2026: merged and verified live
 
 Michael's request: with Feed starter unchecked and every step through Turn 3 checked, Up next should show Turn 4, not stay on Feed starter. Only the start of bulk and the turns could be skipped, so any other unchecked step held Up next back. Branch `up-next-after-checked`, from `main` at `523fa89`.
 
@@ -750,3 +750,96 @@ What the same-time rule does that Michael should know (the verifier's findings):
 - Some pairs are accidents of the reheat time. With 15 minutes, "Batch 1: 15-minute cooling mark" shares a time with "Batch 2: bake covered", so checking the bake keeps the cooling mark as Up next instead of "Batch 2: remove lid". With 17 minutes, "Warm batch 2" pairs with batch 1's bake. Changing the reheat time mid-bake changes which steps pair.
 - Tartine's "Warm both loaves to room temperature" (1:10 PM) is 30 minutes before Preheat (1:40 PM), not at the same time, so checking Preheat first still skips it. Only the House-method recipes have the fridge-out and Preheat pair.
 - The pairing lasts only until the next check: checking anything later skips the open partner.
+
+The last commit, `48a0213`, changed only this file. The verifier didn't re-run on `bcedabb` or `48a0213`.
+
+Release: merged as pull request #30 at `2bd709e`, with Michael's approval. Production deployment `dpl_BnWDPJYE6SGaDTB1v5D6YBYG4Mjx` is READY for that commit and holds the `bread.assemblydigital.com` alias. On November 22 after the merge, with no console errors:
+- `verify-deployment.mjs` passed 9 checks and 7 assets. The live smoke, upgrade, impossible-date and decision checks passed as for the decisions release. The first Done at date field's appearance is still "none" at phone width.
+- On a fresh plan with the clock fixed at November 21, 3:20 PM:
+  - Michael's example: Start leaven through Turn 3 checked showed "7 of 23 steps checked", Up next "Turn 4" and only Feed starter Skipped, the same after a reload. Checking Feed starter then gave 8 of 23, nothing Skipped, and Up next still Turn 4.
+  - Every step through the cold proof, then Preheat: 18 of 23, Up next "Take both loaves out of the fridge" and nothing Skipped, the same after a reload. Checking "Bake covered" then skipped the fridge step, and Up next became "Remove lid".
+
+## A big skip asks first, November 22, 2026: committed, pull request open
+
+Michael's request: fix the mis-tap on the last step. Checking the last step on a fresh plan marked the 22 steps before it Skipped and showed "All batches done". Branch `confirm-big-skip`, from `main` at `2bd709e`.
+
+Change:
+- `skipsOnCheck` in `src/view/schedule.ts` works out which steps a check would newly mark Skipped, by applying the check to a copy of the planner. It asks first when more than three of them count.
+  - Once the start of bulk is due by the live schedule, the start of bulk and the turns don't count: skipping them then is how a bake goes when the dough is ready early. So "Ready: preshape now", which only shows during bulk, never asks.
+  - Before that, they count, so a tap on "Cut and preshape" the evening before asks.
+  - Steps already skipped, and a same-time partner left open, never count.
+- The Schedule tab runs every check through it: a timeline check box, the Up next card's Done button and "Ready: preshape now".
+- When it asks, a dialog says "Skip N earlier steps?" and "Checking "<step>" marks N earlier steps as Skipped. You can still check them later." It has "Check and skip" and "Don't check it", with focus on "Don't check it".
+  - The check is recorded at the tap, so what it skips is what the question counted.
+  - Closing the dialog puts focus back on the step's check box.
+- Unchecking never asks.
+- docs/BEHAVIOUR.md records it as decision 8.
+
+Tests, each failing before its change:
+- `view/schedule.test.ts`:
+  - The last step on a fresh plan asks, with 22 skips.
+  - These don't ask:
+    - The leaven checked with the feed forgotten skips just the feed.
+    - In Michael's example, Turn 3 skips nothing new.
+    - Preshape after Turn 1, once bulk has started, skips six turns.
+    - The first check at Mix final dough skips three steps.
+    - Preheat skips nothing while its partner stays open.
+  - These ask:
+    - The first check at Turn 1, before bulk is due, skips five steps.
+    - The day before, at 3:20 PM, preshape would skip twelve steps.
+  - With the feed checked, Turn 1 would skip the leaven, the autolyse, the mix and the start of bulk. It asks the day before, at 3:20 PM, and at 2:14 PM on bake day, but not from 2:15 PM, the start of bulk.
+- Browser flows:
+  - A tap on the last step of a fresh plan opens the dialog.
+    - "Don't check it" leaves 0 of 23 checked, with Up next on Feed starter.
+    - "Check and skip" gives 1 of 23 checked, 22 Skipped and "All batches done", the same after a reload.
+    - Focus is back on the check box after either.
+    - It failed before the change, finding no dialog. Its first run after the change failed at the reload check, because it read the page while the dialog was still closing; it now waits for the dialog to close.
+  - Cool dough at 60°F, preshape tapped at 5:45 PM on bake day and confirmed a minute later: the dialog says 11, and 11 steps are skipped. Recorded at the confirm, 12 were, because Turn 7 had come due.
+  - The same bake drawn at 5:45:20 PM and tapped at 5:45:50, which rounds to 5:46: the dialog says 12, and 12 are skipped. Recorded at the screen's 30-second clock, 11 were; counted there too, the dialog said 11.
+
+Evidence (this session, on `confirm-big-skip`, final code):
+- `npm test` passed 133 of 133 with the host zone and with `BASELINE_ZONE=rule`.
+- `npm run build` had 0 errors, 0 warnings and 0 hints with a clean format check.
+- `npm run test:browser` passed 51 of 51 after the second check's fix, with no recorded screen changed.
+- `npm run baseline:update` left the record unchanged.
+- At 390 px wide, the dialog fits the screen (320 px, from 35 px) with focus on "Don't check it" and no console errors.
+- Deliberate breaks at `3bc6ca2`, each caught and then restored, in a separate copy against the full unit and browser suites. Each browser failure is one of the two new flows:
+
+| Break | Unit tests failing | Browser tests failing |
+|---|---|---|
+| It never asks | 2 | 2 |
+| The start of bulk and the turns always count | 2 | 0 |
+| The start of bulk and the turns never count (the first version) | 1 | 0 |
+| The start of bulk counts even once it is due | 1 | 0 |
+| Three steps are enough to ask | 2 | 0 |
+| Steps already skipped count again | 1 | 0 |
+| Bulk's planned start decides, not its live one | 1 | 0 |
+| The tab never shows the question | 0 | 2 |
+| "Check and skip" doesn't check | 0 | 2 |
+| "Don't check it" checks anyway | 0 | 1 |
+| The check is recorded at the confirm | 0 | 1 |
+| Focus isn't returned to the check box | 0 | 1 |
+
+Independent check (the verifier, on `879f679`): FAIL on five of nine criteria (1, 3, 5, 7 and 9), from four small defects.
+- Passed:
+  - The mis-tap fix in the built app, with the dialog, its cancel paths and the check box.
+  - Normal use never asking, across 68,940 checks in 147 setups and in the browser.
+  - Nothing else changing, the test commands, and the scope.
+- Not met, each fixed in `3bc6ca2`:
+  - Closing the dialog left focus on the page body, so the next Tab jumped to the top. Focus now goes back to the step's check box.
+  - The count was worked out at the tap but the check recorded at the confirm, so with cool dough a turn could come due in between: 11 asked, 12 skipped. The check is now recorded at the tap.
+  - One break survived: counting the start of bulk towards asking. With the new rule, the bulk-time test catches it.
+  - Two HANDOFF claims were wrong. "Checking preshape with turns left never asks" was untrue on a fresh plan. The first break table's "2" browser failures for "Three steps are enough to ask" couldn't be reproduced: rerun with the failing tests named, it is 0, and the verifier also gets 0.
+- It also found that turns never counting let a tap on "Cut and preshape" the evening before skip 11 steps without asking, and suggested excusing them only once bulk has started. They now count until the start of bulk is due.
+
+Second check (the verifier, on `022d29d`): FAIL on two small items.
+- Passed:
+  - its four findings are fixed in the built app;
+  - the bulk-time rule never asked in 81,522 realistic checks across 105 setups, and caught every big tap the day before;
+  - the test commands, the record, the scope and the break table all reproduce.
+- Not met: recording the check at the screen's 30-second clock instead of the tap passed every test, because the 60°F flow draws and taps in the same minute. A new flow draws at 5:45:20 and taps at 5:45:50; it fails under that break (11 skipped against 12 asked) and under counting at the screen's clock (11 asked against 12 expected).
+- Not met: this section said the first check failed four of nine criteria; it was five, from four defects. Corrected, with two looser wordings it noted: the "flaky run" and "the evening before" for a 3:20 PM test.
+- What Michael should know, from its notes:
+  - Once bulk is due, a tap past preshape still skips quietly: "Basket rest" at the start of bulk skips 10 steps, all turns and shaping, without asking.
+  - Whether a tap asks depends on the clock while the start of bulk is unchecked.
+  - A two-batch bake with only its bake steps checked asks "Skip 5" at Batch 2.
