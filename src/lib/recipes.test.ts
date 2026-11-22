@@ -43,20 +43,20 @@ test('existing saved recipes retain their added-water settings and exact weights
   assert.deepEqual(restored,p);assert.deepEqual(restored.order.map(id=>calculateRecipe(restored,id)),weights);
   approx(calculateRecipe(restored,'five-flour')!.totalHydration,83/1.1);assert.equal(JSON.stringify({version:5,plan:restored}),saved);
 });
-test('one dropdown contains six distinct recipes and the House duplicate is removed',()=>{
+test('one dropdown contains six distinct recipes and the unedited red-spring variation stays hidden',()=>{
   const p=plan();assert.deepEqual(p.order,['house','tartine','white-wheat','red-rye','five-flour','four-flour']);assert.equal(p.recipe,'house');
   assert.equal(new Set(p.order.map(id=>recipeSignature(id,p.recipes[id]))).size,p.order.length);
-  assert.equal(recipeSignature('house',p.recipes.house),recipeSignature('manual-rye',p.recipes['manual-rye']));
+  assert.notEqual(recipeSignature('house',p.recipes.house),recipeSignature('manual-rye',p.recipes['manual-rye']),'House now uses Anita\'s all-purpose flour, not red spring');
 });
 test('deduplication ignores hydration and batch size but preserves different flour/leaven/salt/method',()=>{
-  const p=plan(),r=p.recipes['manual-rye'];r.params.hydration=85;r.params.reserve=20;r.params.count=4;r.params.weight=750;
-  assert.deepEqual(consolidate(p.recipes,['house','manual-rye']).order,['house']);
-  r.params.leaven=30;assert.equal(consolidate(p.recipes,['house','manual-rye']).order.length,2);
-  r.params.leaven=20;r.params.flour_wheat=20;assert.equal(consolidate(p.recipes,['house','manual-rye']).order.length,2);
+  const p=plan();p.recipes['red-rye']=structuredClone(p.recipes['manual-rye']);const r=p.recipes['red-rye'];r.params.hydration=85;r.params.reserve=20;r.params.count=4;r.params.weight=750;
+  assert.deepEqual(consolidate(p.recipes,['manual-rye','red-rye']).order,['manual-rye']);
+  r.params.leaven=30;assert.equal(consolidate(p.recipes,['manual-rye','red-rye']).order.length,2);
+  r.params.leaven=20;r.params.flour_wheat=20;assert.equal(consolidate(p.recipes,['manual-rye','red-rye']).order.length,2);
 });
 test('base House stages, hydration and leaven reserve match the supplied recipe exactly',()=>{
   const p=plan(),r=calculateRecipe(p)!;assert.equal(r.total,2000);approx(r.flour,1000);approx(r.water,780);approx(r.used,200);approx(r.salt,20);approx(r.made,312);approx(r.reserve,112);
-  assert.deepEqual(r.initial.map(x=>x[0]),['Red spring flour','Whole-wheat flour','Water']);r.initial.forEach(([,n],i)=>approx(n,[800,100,680][i]));r.final.forEach(([,n],i)=>approx(n,[100,200,20,100][i]));
+  assert.deepEqual(r.initial.map(x=>x[0]),['Anita\'s all-purpose flour','Whole-wheat flour','Water']);r.initial.forEach(([,n],i)=>approx(n,[800,100,680][i]));r.final.forEach(([,n],i)=>approx(n,[100,200,20,100][i]));
 });
 test('book recipe retains its quantities, initial leaven, and dusting supplies',()=>{
   const p=plan(),r=calculateRecipe(p,'tartine')!;approx(r.total,1970);approx(r.hydration,75);assert.equal(r.initial[0][0],'Leaven used');
@@ -90,8 +90,8 @@ test('every profile conserves dough mass and scales count, loaf weight and hydra
   }
 });
 test('flour proportions normalize visibly to batch weights, and zero flour is a valid empty state',()=>{
-  const p=plan();p.recipes.house.params.flour_red=60;const r=calculateRecipe(p)!;approx(r.flours[0].percent,75);approx(r.flours.reduce((a,f)=>a+f.grams,0),r.flour);
-  for(const key of ['red','wheat','rye'])p.recipes.house.params[`flour_${key}`]=0;assert.equal(calculateRecipe(p),null);assert.deepEqual(recipeSchedule(p),[]);
+  const p=plan();p.recipes.house.params.flour_anita=60;const r=calculateRecipe(p)!;approx(r.flours[0].percent,75);approx(r.flours.reduce((a,f)=>a+f.grams,0),r.flour);
+  for(const key of ['anita','wheat','rye'])p.recipes.house.params[`flour_${key}`]=0;assert.equal(calculateRecipe(p),null);assert.deepEqual(recipeSchedule(p),[]);
 });
 test('leaven shortfall is independent of recipe identity and never creates a negative reserve',()=>{
   const p=plan();for(const key of ['buildSeed','buildBread','buildWheat','buildWater'])p.recipes.house.params[key]=0;
@@ -172,7 +172,8 @@ test('default House schedule has no quiet-hour work; a late start and book sched
 test('leaven steps list the scaled build and what is kept, for every recipe',()=>{
   const p=plan();
   p.recipe='house';let note=recipeSchedule(p).find(s=>s.id==='leaven')!.note!;
-  assert.match(note,/28 g mature starter, 71 g red spring flour, 71 g whole-wheat flour and 142 g water/);assert.match(note,/use 200 g in the dough and keep 112 g/);
+  assert.match(note,/28 g mature starter, 71 g Anita's all-purpose flour, 71 g whole-wheat flour and 142 g water/);
+  assert.match(recipeSchedule(p).find(s=>s.id==='autolyse')!.note!,/^Mix Anita's all-purpose flour \(800 g\), whole-wheat flour \(100 g\), water \(680 g\)\./);assert.match(note,/use 200 g in the dough and keep 112 g/);
   p.recipe='tartine';note=recipeSchedule(p).find(s=>s.id==='leaven')!.note!;
   assert.match(note,/15 g \(about 1 tbsp\) of mature starter with 200 g water, then add 100 g white-bread flour and 100 g whole-wheat flour/);assert.match(note,/keep 215 g/);
   p.recipe='white-wheat';assert.match(recipeSchedule(p).find(s=>s.id==='leaven')!.note!,/white-bread flour/);
@@ -197,4 +198,13 @@ test('House-method turns 1 to 3 are vigorous double rounds and later turns a sin
   }
   const t=plan();t.recipe='tartine';const turns=recipeSchedule(t).filter(s=>/^turn\d+$/.test(s.id));
   assert.equal(turns[0].note,'Wet your hand. Stretch one quadrant over the dough; rotate and repeat to fold all four sides.');assert.ok(turns.slice(1).every(s=>s.note==='Repeat the four-sided stretch and fold, with wet hands.'));
+});
+
+test('a saved House blend moves from red spring to Anita\'s all-purpose flour with its parts intact',()=>{
+  const p=plan(),saved=JSON.parse(JSON.stringify({version:5,plan:p}));
+  const params=saved.plan.recipes.house.params;delete params.flour_anita;params.flour_red=60;params.flour_wheat=25;
+  const r=restorePlanner(saved).recipes.house.params;
+  assert.equal(r.flour_anita,60);assert.equal(r.flour_wheat,25);assert.equal(r.flour_red,undefined);
+  const unedited=JSON.parse(JSON.stringify({version:5,plan:p}));delete unedited.plan.recipes.house.params.flour_anita;delete unedited.plan.recipes.house.params.flour_red;
+  approx(restorePlanner(unedited).recipes.house.params.flour_anita,p.recipes.house.params.flour_anita);
 });

@@ -16,7 +16,7 @@ import {Table,TableHeader,TableHead,TableBody,TableRow,TableCell} from '@/compon
 import {Tooltip,TooltipTrigger,TooltipContent,TooltipProvider} from '@/components/ui/tooltip';
 import {AlertDialog,AlertDialogTrigger,AlertDialogContent,AlertDialogHeader,AlertDialogTitle,AlertDialogDescription,AlertDialogFooter,AlertDialogCancel,AlertDialogAction} from '@/components/ui/alert-dialog';
 import {coldProofWindow,calendarText,dateString,durationText,loafText,timeText,round,type InputSpec} from '@/lib/model';
-import {definitions,flourNames,createPlanner,restorePlanner,calculateRecipe,recipeSchedule,recipeDefaults,quietHourActions,totalHydration,addedHydration,type Planner} from '@/lib/recipes';
+import {definitions,flourNames,buildFlourName,createPlanner,restorePlanner,calculateRecipe,recipeSchedule,recipeDefaults,quietHourActions,totalHydration,addedHydration,type Planner} from '@/lib/recipes';
 import {liveSchedule,retime,clockText,shiftText,stampNow,untilText,skippedSteps,stepPhase,bulkEstimate,bulkAdvice,toF,fromF,tempLimits,type LiveStep} from '@/lib/bakeday';
 
 const STORAGE='bread-planner.v5';
@@ -132,7 +132,7 @@ function FlourTable({values}:{values:Planner}){
 function spec(cell:string,label:string,unit:string,min=0,step=.001):InputSpec{return {key:cell,cell,label,unit,value:0,min,step};}
 function RecipeFormula({values,onReset}:{values:Planner;onReset:()=>void}){
   const r=calculateRecipe(values),d=definitions[values.recipe],p=values.recipes[values.recipe].params,book=d.method==='tartine';
-  const buildFlour=d.flours.includes('red')?'Red spring flour':d.flours.includes('white')?'White-bread flour':'Bread flour';
+  const buildFlour=buildFlourName(d);
   return <><div className="formula-layout"><div className="form-stack">
     <Panel title="Your batch" description="Each recipe remembers its own settings."><FieldGroup specs={[spec('count','Number of loaves','loaves',1,1),spec('weight','Dough weight per loaf','g',1)]}/><div className="hydration-control"><NumberField spec={spec('hydration','Total hydration','%',0,1)} hydrationParams={p}/><p className="field-note">Includes the flour and water in the leaven used.</p></div></Panel>
     <Panel title="Flour blend" description="Parts set the balance between flours. The gram weights scale to your batch."><FlourTable values={values}/>{!r&&<p className="notice" role="alert">Add at least one flour part to calculate this recipe.</p>}</Panel>

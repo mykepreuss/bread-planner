@@ -1,9 +1,10 @@
 import {defaults as legacyDefaults,restorePlan as restoreLegacy,ingredients,bookIngredients,houseIngredients,schedule as legacySchedule,dateString,type Plan,type Step} from './model.ts';
 
-export const flourNames:Record<string,string>={red:'Red spring flour',white:'White-bread flour',wheat:'Whole-wheat flour',rye:'Rye flour',ap:'All-purpose flour',fife:'Red Fife flour'};
-export type RecipeDefinition={id:string;name:string;description:string;method:'house'|'custom'|'tartine';flours:string[];late:string[];houseCompletion?:boolean};
+export const flourNames:Record<string,string>={anita:'Anita\'s all-purpose flour',red:'Red spring flour',white:'White-bread flour',wheat:'Whole-wheat flour',rye:'Rye flour',ap:'All-purpose flour',fife:'Red Fife flour'};
+/** `buildFlour` names the flour in the leaven build; without it the build uses red spring, white-bread or generic bread flour by the recipe's flours. */
+export type RecipeDefinition={id:string;name:string;description:string;method:'house'|'custom'|'tartine';flours:string[];late:string[];houseCompletion?:boolean;buildFlour?:string};
 export const definitions:Record<string,RecipeDefinition>={
-  house:{id:'house',name:'Preuss House',description:'Our red spring, whole-wheat and rye loaf. Autolyse, then an overnight cold proof.',method:'house',flours:['red','wheat','rye'],late:['rye']},
+  house:{id:'house',name:'Preuss House',description:'Anita\'s all-purpose flour with whole wheat and rye. Autolyse, then an overnight cold proof.',method:'house',flours:['anita','wheat','rye'],late:['rye'],buildFlour:'anita'},
   tartine:{id:'tartine',name:'Original Tartine',description:'The book’s 90/10 white and whole-wheat loaf, with leaven in the initial mix. Its 12-hour leaven suits an evening start.',method:'tartine',flours:['white','wheat'],late:[]},
   'white-wheat':{id:'white-wheat',name:'White & Whole Wheat',description:'An 80/20 white and whole-wheat loaf, with a separate autolyse and overnight cold proof.',method:'house',flours:['white','wheat'],late:[]},
   'red-rye':{id:'red-rye',name:'Red Spring & Rye',description:'Red spring, whole wheat and rye with extra leaven, a separate autolyse and an overnight cold proof.',method:'custom',flours:['red','wheat','rye'],late:['rye']},
@@ -11,6 +12,9 @@ export const definitions:Record<string,RecipeDefinition>={
   'four-flour':{id:'four-flour',name:'Four-Flour Sourdough',description:'All-purpose, red spring, whole wheat and rye, with more whole wheat than the five-flour recipe.',method:'house',flours:['ap','red','fife','wheat','rye'],late:['rye'],houseCompletion:true},
   'manual-rye':{id:'manual-rye',name:'Red Spring & Rye Variation',description:'Your separately edited red-spring-and-rye formula.',method:'house',flours:['red','wheat','rye'],late:['rye']},
 };
+export function buildFlourName(d:RecipeDefinition){return d.buildFlour?flourNames[d.buildFlour]:d.flours.includes('red')?flourNames.red:d.flours.includes('white')?flourNames.white:'Bread flour';}
+/** A flour name as it reads mid-sentence: lowercase, except names that start with a proper noun. */
+export function inSentence(name:string){return /^(Anita's|Red Fife)/.test(name)?name:name.charAt(0).toLowerCase()+name.slice(1).toLowerCase();}
 /** `doneAt` records when each checked step was actually done, in epoch milliseconds, so the schedule can follow the dough. `doughTemp` is this bake's measured dough temperature in °F. */
 export type Profile={params:Record<string,number>;done:string[];doneAt:Record<string,number>;doughTemp:number|null};
 export type Planner={recipes:Record<string,Profile>;order:string[];recipe:string;date:string;time:string;anchor:'leaven'|'done';proof:'cold'|'warm';ovenCapacity:number;reheat:number;tempUnit:'F'|'C';legacy:Plan};
@@ -46,13 +50,14 @@ export function consolidate(profiles:Record<string,Profile>,order:string[]){
   for(const id of order){const signature=recipeSignature(id,profiles[id]),prior=seen.get(signature);if(prior){aliases[id]=prior;continue;}seen.set(signature,id);unique.push(id);aliases[id]=id;}
   return {order:unique,aliases};
 }
+function manualProfile(c:Plan['cells']){return profile({red:c.J2,wheat:c.J3,rye:c.J5},c.J4+c.J8,c.J6,c.J7,c.J8,2,(c.J2+c.J3+c.J4+c.J5+c.J6+c.J7+c.J8)/2,[28,71,71,142].map(n=>n*(c.J2+c.J3+c.J5)/1000));}
 export function createPlanner(legacy:Plan=legacyDefaults()):Planner{
   const c=legacy.cells,h=houseIngredients(c),b=bookIngredients(c),old=ingredients(c,legacy.customUseAll?undefined:c.customLeavenUsed);
   const recipes:Record<string,Profile>={
-    house:profile({red:800*h.scale,wheat:100*h.scale,rye:100*h.scale},h.water,h.used,h.second[2],h.second[3],c.houseCount,c.houseWeight,h.madeParts,legacy.houseDone),
+    house:profile({anita:800*h.scale,wheat:100*h.scale,rye:100*h.scale},h.water,h.used,h.second[2],h.second[3],c.houseCount,c.houseWeight,h.madeParts,legacy.houseDone),
     tartine:profile({white:b.white,wheat:b.wheat},b.water,b.used,b.salt,b.finalWater,c.bookCount,c.bookWeight,b.madeParts,legacy.bookDone),
     'white-wheat':profile({white:c.N2,wheat:c.N3},c.N4+c.N8,c.N6,c.N7,c.N8,2,(c.N2+c.N3+c.N4+c.N8+c.N6+c.N7)/2,[28,71,71,142].map(n=>n*(c.N2+c.N3)/1000)),
-    'manual-rye':profile({red:c.J2,wheat:c.J3,rye:c.J5},c.J4+c.J8,c.J6,c.J7,c.J8,2,(c.J2+c.J3+c.J4+c.J5+c.J6+c.J7+c.J8)/2,[28,71,71,142].map(n=>n*(c.J2+c.J3+c.J5)/1000)),
+    'manual-rye':manualProfile(c),
   };
   const r=old??ingredients(legacyDefaults().cells)!;
   recipes['red-rye']=profile({red:r.autolyse[0],wheat:r.autolyse[1],rye:r.second[0]},r.water,r.leavenUsed,r.final[3],r.second[3],c.F24,r.total/c.F24,r.leaven,legacy.done);
@@ -60,7 +65,9 @@ export function createPlanner(legacy:Plan=legacyDefaults()):Planner{
     const flours=Object.fromEntries(['ap','red','fife','wheat','rye'].map((k,i)=>[k,c[`${prefix}${i+2}`]])),flour=Object.values(flours).reduce((a,b)=>a+b,0),water=c[`${prefix}11`]+c[`${prefix}12`],count=flour>1250?3:2;
     recipes[id]=profile(flours,water,flour*.2,flour*.02,c[`${prefix}12`],count,(flour*1.22+water)/count,[28,71,71,142].map(n=>n*flour/1000));
   }
-  const {order}=consolidate(recipes,['house','tartine','white-wheat','red-rye','five-flour','four-flour','manual-rye']);
+  // The red-spring variation is listed only once it has been edited away from the sheet's defaults.
+  const manualEdited=recipeSignature('manual-rye',recipes['manual-rye'])!==recipeSignature('manual-rye',manualProfile(legacyDefaults().cells));
+  const {order}=consolidate(recipes,['house','tartine','white-wheat','red-rye','five-flour','four-flour',...(manualEdited?['manual-rye']:[])]);
   return {recipes,order,recipe:legacy.recipe==='custom'?'red-rye':legacy.recipe,date:legacy.date,time:legacy.time,anchor:legacy.anchor,proof:legacy.proof,ovenCapacity:Math.min(2,c.ovenCapacity),reheat:c.batchReheat,tempUnit:'F',legacy};
 }
 export function restorePlanner(saved:unknown):Planner{
@@ -71,7 +78,8 @@ export function restorePlanner(saved:unknown):Planner{
   for(const id of Object.keys(definitions)){
     const source=p.recipes?.[id];if(!source)continue;
     for(const [key,defaultValue] of Object.entries(base.recipes[id].params)){
-      const n=source.params?.[key],min=key==='count'||key==='weight'?1:0;
+      // House used red spring flour before Anita's all-purpose; a saved blend keeps its parts.
+      const n=source.params?.[key]??(id==='house'&&key==='flour_anita'?source.params?.flour_red:undefined),min=key==='count'||key==='weight'?1:0;
       if(typeof n==='number'&&Number.isFinite(n)&&n>=min&&(key!=='count'||Number.isInteger(n))&&(key!=='reserve'||n<=100))base.recipes[id].params[key]=n;else base.recipes[id].params[key]=defaultValue;
     }
     const done=base.recipes[id].done=Array.isArray(source.done)?source.done.filter(x=>typeof x==='string'):[];
@@ -107,15 +115,15 @@ export function recipeSchedule(plan:Planner):Step[]{
   if(!calculateRecipe(plan))return [];
   const d=definitions[plan.recipe],p=plan.recipes[plan.recipe].params,base:Plan={...plan.legacy,date:plan.date,time:plan.time,anchor:plan.anchor,proof:plan.proof,recipe:d.method,cells:{...plan.legacy.cells,ovenCapacity:plan.ovenCapacity,batchReheat:plan.reheat,houseCount:p.count,bookCount:p.count,F24:p.count}};
   const r=calculateRecipe(plan)!,gram=(n:number)=>`${Math.round(n*10)/10} g`;
-  const buildFlour=(d.flours.includes('red')?flourNames.red:d.flours.includes('white')?flourNames.white:'Bread flour').toLowerCase();
+  const buildFlour=inSentence(buildFlourName(d));
   const [seed,bread,wheat,buildWater]=r.madeParts,keep=r.reserve>0?` You use ${gram(r.used)} in the dough and keep ${gram(r.reserve)}.`:r.shortfall>0?` This makes ${gram(r.shortfall)} less than the ${gram(r.used)} the dough needs; increase the build.`:` All ${gram(r.used)} goes into the dough.`;
   const leavenNote=d.method==='tartine'
     ?`Mix ${gram(seed)} (about 1 tbsp) of mature starter with ${gram(buildWater)} water, then add ${gram(bread)} ${buildFlour} and ${gram(wheat)} whole-wheat flour. Cover at room temperature.${keep}`
     :`Mix ${gram(seed)} mature starter, ${gram(bread)} ${buildFlour}, ${gram(wheat)} whole-wheat flour and ${gram(buildWater)} water. Keep it separate from the autolyse and cover.${keep}`;
   return legacySchedule(base).map(step=>{
     if(step.id==='leaven')return {...step,note:leavenNote};
-    if(step.id==='autolyse'&&d.method!=='tartine')return {...step,note:`Mix ${r.initial.map(([name,n])=>`${name.toLowerCase()} (${Math.round(n*10)/10} g)`).join(', ')}. Cover. Keep the remaining ingredients for the final mix.`};
-    if(step.id==='mix'&&d.method!=='tartine')return {...step,note:`Add ${r.final.map(([name,n])=>`${name.toLowerCase()} (${Math.round(n*10)/10} g)`).join(', ')} after the autolyse. Mix until incorporated.`};
+    if(step.id==='autolyse'&&d.method!=='tartine')return {...step,note:`Mix ${r.initial.map(([name,n])=>`${inSentence(name)} (${Math.round(n*10)/10} g)`).join(', ')}. Cover. Keep the remaining ingredients for the final mix.`};
+    if(step.id==='mix'&&d.method!=='tartine')return {...step,note:`Add ${r.final.map(([name,n])=>`${inSentence(name)} (${Math.round(n*10)/10} g)`).join(', ')} after the autolyse. Mix until incorporated.`};
     return step;
   });
 }

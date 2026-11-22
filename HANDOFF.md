@@ -150,3 +150,15 @@ Michael's request: a checked step's "Done at" should let you change the day as w
 Evidence: 96 of 96 tests pass. The nearest-day test was replaced by one covering a date move, a past-midnight correction, a year end and five invalid entries. The build had 0 errors, 0 warnings and the 4 existing hints. In the dev server at 375px, moving the leaven from Nov 21 to Nov 20 moved the record and the autolyse back a day. Setting 23:50 kept Nov 20, and a cleared date was ignored. The label sits above the two fields at 375px and 861px, with a document width of 375 at phone size. The local plan was restored to the leaven done at 3:22 PM on Nov 21.
 
 Not verified: the native date picker on a real phone, and the live site.
+
+## Preuss House uses Anita's all-purpose flour, November 21, 2026: locally verified, not released
+
+Michael's decision: Preuss House uses Anita's all-purpose flour instead of red spring flour. This covers the dough (800 g in the autolyse at the defaults) and the leaven build (71 g per 1,000 g added flour). Quantities, hydration and timing are unchanged. Anita's is a new flour of its own (`anita`), so the generic "All-purpose flour" in the Five-Flour and Four-Flour recipes is untouched, as is every other recipe that uses red spring.
+
+- A saved House blend keeps its parts: a saved `flour_red` value becomes `flour_anita` on load.
+- The "Red Spring & Rye Variation" (`manual-rye`) used to be hidden because it matched House exactly. It is now hidden unless its legacy sheet cells were edited, so the dropdown still lists the same six recipes.
+- Flour names in step text keep proper nouns capitalized. This also changes Five-Flour's "red fife flour" to "Red Fife flour".
+
+Evidence: 96 of 96 tests pass. The House name, leaven and dedup tests were updated, and a new test covers the saved-blend carry-over. The build had 0 errors, 0 warnings and the 4 existing hints. In the dev server, the saved local plan loaded with 80/10/10 Anita's, whole-wheat and rye parts, its checked leaven intact, and Anita's in the leaven step, autolyse step, flour table, weighing lists and leaven build, with no "red spring" left on the House page. A fresh plan listed the same six recipes. The console had no errors.
+
+Not verified: the live site. Once a browser has loaded this version, an older version of the app would reset the House blend to its defaults (80/10/10) because it does not know `flour_anita`.
