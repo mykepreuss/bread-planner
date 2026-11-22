@@ -1,3 +1,5 @@
+import type { AddIns } from './addins.ts';
+
 /**
  * The two recipes, Preuss House and Original Tartine, as data. Each default is written as the sum it came from in the
  * source spreadsheet or the book, so it equals the value the app has always started with. White & Whole Wheat, Red
@@ -36,7 +38,8 @@ export type Settings = {
 
 /**
  * `method` is how the dough is mixed and timed (see methods.ts). `late` flours go into the final mix. `buildFlour`
- * is the flour in the leaven build besides whole wheat.
+ * is the flour in the leaven build besides whole wheat. `addIns`, for Tartine recipes only, are worked in after the
+ * first turn (see addins.ts).
  */
 export type Recipe = {
   id: string;
@@ -46,6 +49,7 @@ export type Recipe = {
   flours: FlourKey[];
   late: FlourKey[];
   buildFlour: FlourKey;
+  addIns?: AddIns;
   defaults: Settings;
 };
 
