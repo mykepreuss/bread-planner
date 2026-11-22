@@ -1,4 +1,4 @@
-import { RotateCcw, Snowflake } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
@@ -208,12 +208,6 @@ export function IngredientsTab() {
                   </div>
                 </CardContent>
               </Card>
-              {d.houseCompletion && (
-                <p className="recipe-origin">
-                  <Snowflake size={18} />
-                  Uses the House leaven, salt and overnight method.
-                </p>
-              )}
               {r.shortfall > 0 && (
                 <p className="notice" role="alert">
                   Make {g(r.shortfall)} g more leaven before mixing. Increase the leaven build.

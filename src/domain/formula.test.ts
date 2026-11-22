@@ -37,57 +37,13 @@ function stage(actual: Weighed[], expected: Weighed[], message = '') {
 }
 const grams = (r: Formula, key: string) => r.flours.find((f) => f.key === key)!.grams;
 
-test('Red Spring & Rye is the spreadsheet main calculator: 944 g flour, 724 g water, 22 g salt and all of a 312 g build', () => {
-  const r = weigh('red-rye')!;
-  // The dough with the leaven's flour and water counted, the starter half each: 946 g red spring and rye, 154 g whole
-  // wheat, 880 g water and 22 g salt.
-  near(grams(r, 'red') + grams(r, 'rye') + r.madeParts[1] + r.madeParts[0] / 2, 946);
-  near(grams(r, 'wheat') + r.madeParts[2], 154);
-  near(r.totalFlour, 946 + 154);
-  near(r.totalWater, 880);
-  near(r.salt, 22);
-  // The leaven build, all of it used.
-  nearAll(r.madeParts, [28, 71, 71, 142]);
-  near(r.made, 312);
-  near(r.used, 312);
-  // The dough without the leaven: 861 g red spring and rye, 83 g whole wheat, 724 g water, 22 g salt, 312 g leaven.
-  near(grams(r, 'red') + grams(r, 'rye'), 861);
-  near(grams(r, 'wheat'), 83);
-  near(r.water, 724);
-  near(r.flour + r.water + r.salt + r.used, 2002);
-  stage(r.initial, [
-    ['Red spring flour', 758],
-    ['Whole-wheat flour', 83],
-    ['Water', 652],
-  ]);
-  stage(r.final, [
-    ['Rye flour', 103],
-    ['Leaven used', 312],
-    ['Salt', 22],
-    ['Water', 72],
-  ]);
-  near(r.total, 2002);
-  near(r.flour, 944);
-  // The water is the autolyse's and the final mix's together.
-  near(r.initial.at(-1)![1] + r.final.at(-1)![1], 724);
-});
-
-test('White & Whole Wheat and the two blends keep their flour, water and dough weights', () => {
-  const white = weigh('white-wheat')!;
-  assert.deepEqual([white.flour, white.water, white.total, white.hydration], [1000, 800, 2020, 80]);
-  const five = weigh('five-flour')!;
-  assert.deepEqual([five.flour, five.water, five.hydration], [1000, 800, 80]);
-  const four = weigh('four-flour')!;
-  assert.deepEqual([four.flour, four.water, four.hydration], [1500, 1200, 80]);
-});
-
-test('every Red Spring & Rye setting changes the computed weights', () => {
+test('every Preuss House setting changes the computed weights', () => {
   const weights = (r: Formula | null) => [r?.flours.map((f) => f.grams), r?.initial, r?.final, r?.madeParts];
-  const before = weights(weigh('red-rye'));
+  const before = weights(weigh('house'));
   const changes: [string, (s: Settings) => void][] = [
     ['loaf weight', (s) => (s.weight += 200)],
     ['loaf count', (s) => (s.count += 5)],
-    ['red spring flour', (s) => (s.flours.red = (s.flours.red ?? 0) + 5)],
+    ["Anita's flour", (s) => (s.flours.anita = (s.flours.anita ?? 0) + 5)],
     ['whole wheat', (s) => (s.flours.wheat = (s.flours.wheat ?? 0) + 5)],
     ['rye', (s) => (s.flours.rye = (s.flours.rye ?? 0) + 5)],
     ['hydration', (s) => (s.hydration += 5)],
@@ -99,17 +55,17 @@ test('every Red Spring & Rye setting changes the computed weights', () => {
     ['build whole wheat', (s) => (s.build.wheat += 5)],
     ['build water', (s) => (s.build.water += 5)],
   ];
-  for (const [name, change] of changes) assert.notDeepEqual(weights(weigh('red-rye', change)), before, name);
+  for (const [name, change] of changes) assert.notDeepEqual(weights(weigh('house', change)), before, name);
 });
 
 test('a recipe with no flour has no weights, so no hydration', () => {
   assert.equal(
-    weigh('white-wheat', (s) => (s.flours = { white: 0, wheat: 0 })),
+    weigh('tartine', (s) => (s.flours = { white: 0, wheat: 0 })),
     null,
   );
   assert.equal(
-    weigh('red-rye', (s) => {
-      s.flours = { red: 0, wheat: 0, rye: 0 };
+    weigh('house', (s) => {
+      s.flours = { anita: 0, wheat: 0, rye: 0 };
       s.hydration = 0;
       s.salt = 0;
     }),

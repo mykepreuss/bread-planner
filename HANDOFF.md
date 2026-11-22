@@ -9,7 +9,7 @@ Production branch: main
 Project: prj_oaBadxUrg76MQyvwFsY68FvfuM8r (bread-planner)
 Team: team_U2Fu7jNsQEgGylxpq9YR7M2f (mpmba)
 
-Each dated release section below ends with its delivery state, newest last. The last one marked "verified live" is what production runs. When this header was last edited, that was Up next moving past unchecked steps: `main` at `2bd709e9131ce946cd3c56dde565aee43484a182`, production deployment `dpl_BnWDPJYE6SGaDTB1v5D6YBYG4Mjx` (READY). Michael is the planner's only user.
+Each dated release section below ends with its delivery state, newest last. The last one marked "verified live" is what production runs. When this header was last edited, that was a big skip asking first: `main` at `0b92450b7a1b9d7f4470227adeca93ccf58addcc`, production deployment `dpl_5tUND9ZQHFkgCn4v4mnExZRGZLQD` (READY). Michael is the planner's only user.
 
 ## Scope and decisions
 
@@ -759,7 +759,7 @@ Release: merged as pull request #30 at `2bd709e`, with Michael's approval. Produ
   - Michael's example: Start leaven through Turn 3 checked showed "7 of 23 steps checked", Up next "Turn 4" and only Feed starter Skipped, the same after a reload. Checking Feed starter then gave 8 of 23, nothing Skipped, and Up next still Turn 4.
   - Every step through the cold proof, then Preheat: 18 of 23, Up next "Take both loaves out of the fridge" and nothing Skipped, the same after a reload. Checking "Bake covered" then skipped the fridge step, and Up next became "Remove lid".
 
-## A big skip asks first, November 22, 2026: committed, pull request open
+## A big skip asks first, November 22, 2026: merged and verified live
 
 Michael's request: fix the mis-tap on the last step. Checking the last step on a fresh plan marked the 22 steps before it Skipped and showed "All batches done". Branch `confirm-big-skip`, from `main` at `2bd709e`.
 
@@ -842,4 +842,77 @@ Second check (the verifier, on `022d29d`): FAIL on two small items.
 - What Michael should know, from its notes:
   - Once bulk is due, a tap past preshape still skips quietly: "Basket rest" at the start of bulk skips 10 steps, all turns and shaping, without asking.
   - Whether a tap asks depends on the clock while the start of bulk is unchecked.
-  - A two-batch bake with only its bake steps checked asks "Skip 5" at Batch 2.
+  - A two-batch bake with only its bake steps checked can ask at Batch 2, depending on the reheat time. Two checks disagreed on which reheat times, so no count is given here.
+
+Third check (the verifier, on `217e136`): PASS. Every time source other than the tap that it tried fails a browser flow (seven variants). It noted that a check that doesn't ask could be recorded at the screen's clock without any test noticing, as already on `main` before this PR: a proposal for later is to move the clock between drawing the page and a plain check, and assert the Done at time.
+
+Release: merged as pull request #31 at `0b92450`, with Michael's approval once the verifier passed. Production deployment `dpl_5tUND9ZQHFkgCn4v4mnExZRGZLQD` is READY for that commit and holds the `bread.assemblydigital.com` alias. On November 22 after the merge, with no console errors:
+- `verify-deployment.mjs` passed 9 checks and 7 assets; the live smoke, upgrade, impossible-date and Up next checks passed as for the last release.
+- At 390 px wide on a fresh plan, a tap on "15-minute cooling mark" asked "Skip 22 earlier steps?":
+  - "Don't check it" left 0 of 23 checked, Up next on Feed starter, and focus on the check box.
+  - "Check and skip" gave 1 of 23 checked, 22 Skipped and "All batches done", the same after a reload.
+  - Michael's example, Start leaven through Turn 3 checked with Feed starter left, asked nothing and showed Up next Turn 4.
+
+## Only Preuss House and Original Tartine, November 22, 2026: committed, pull request open
+
+Michael's request: remove the four-flour, five-flour, Red Spring & Rye and White & Whole Wheat recipes, so only Preuss House and Tartine are available. Branch `remove-four-recipes`, from `confirm-big-skip`.
+
+Change:
+- `src/domain/recipes.ts` keeps Preuss House and Original Tartine. Things only the removed recipes used went with them:
+  - the red spring, all-purpose and Red Fife flours;
+  - the `houseCompletion` flag, with its line "Uses the House leaven, salt and overnight method." on the Ingredients tab and its style;
+  - the per-kilo helper.
+- Saved data needs no new code. The loader already reads only recipes it knows and falls back to the first recipe on the menu:
+  - A save whose selected recipe was removed opens on Preuss House.
+  - House and Tartine keep their settings and checklists.
+  - The removed recipes' data is dropped at the next save. A version 5 save is never written, so its copy stays as it was.
+- docs/BEHAVIOUR.md records it as decision 9 and marks decision 2, Red Spring & Rye's cold-proof wording, superseded. Its record counts, and the README's, are updated. The README and BEHAVIOUR.md had said 16 browser actions since step 0; there are now 30.
+
+Tests:
+- New, each failing before the change:
+  - The menu is exactly Preuss House then Original Tartine, and the four ids find nothing.
+  - A version 6 save with Red Spring & Rye selected, and a version 5 save with Five-Flour selected, open on Preuss House with House and Tartine only. Tartine keeps its settings and checklist.
+  - A browser flow opens the recipe menu and finds exactly the two options.
+- Tests that covered only a removed recipe are gone:
+  - Red Spring & Rye as the spreadsheet's main calculator;
+  - White & Whole Wheat and the two blends' weights and stages;
+  - Red Spring & Rye's own red spring parts on load.
+- Tests that used a removed recipe as an example now use Preuss House or Tartine:
+  - The schedule tests moved from Red Spring & Rye to Preuss House with every expected time unchanged; the two schedule the same.
+  - The floating-point case Red Spring & Rye covered, 311.99999999999994 g made against 312 g used, is kept by Preuss House set to its numbers. A direct check confirmed the noise reproduces.
+  - "Every setting changes the weights" and "no flour, no weights" now use House and Tartine. The note test now changes House's flours.
+- The load fuzz test still names the removed recipes, because old saves can hold them.
+
+Record changes:
+- `baseline.json`: the 80 random bakes were drawn from all six recipes with a seeded generator. Drawing from two would change every later bake, so the remaining ones are now kept exactly as recorded, like the saved-data cases. The generator is in git history.
+- A script compared the old and new records:
+  - 94 plans and 19 recipe calculations left, exactly those for the removed recipes.
+  - The other 120 plans, 26 calculations and 53 helper results are identical, in the same order.
+  - All 24 saved-data cases changed: each lists the recipes, and the four are gone. Two cases also changed recipe:
+    - "an edited plan" had Five-Flour selected and now opens on Preuss House, with its schedule.
+    - "an odd recipe order", whose menu held only Four-Flour, now opens on Preuss House with House alone on the menu. That is the loader's existing rule for such a save.
+  - A second `npm run baseline:update` left the record unchanged.
+- The browser record: the eight screens of the removed recipes, with their 32 snapshot files, are deleted.
+
+Evidence (this session, on `remove-four-recipes`, rebased onto `main` at `0b92450`):
+- `npm test` passed 130 of 130 with the host zone and with `BASELINE_ZONE=rule`, and `npm run baseline:update` left the record unchanged.
+- `npm run test:browser` passed 44 of 44: 14 screens and 30 flows. One earlier full run failed once on "The method guide for house"; it passed alone, 30 of 30 times for both method-guide flows under load, and in the next full run. The verifier saw the same one-off on the Tartine method guide earlier today. It is a flaky flow, not a change.
+- After the rebase, HANDOFF.md needed a hand merge: both sections are kept.
+
+Independent check (the verifier, on `2267301`): FAIL on criterion 6 only, three doc sentences, now corrected.
+- Passed:
+  - In the built app at 375 and 1280 px, only the two recipes show, with no trace of the four or their flours.
+  - A save written by production today, with Red Spring & Rye selected, opens on Preuss House with House and Tartine as saved. The next save holds only those two, and no version 5 key is written.
+  - The record holds exactly as described, and the 45 texts used only by removed plans left the text table.
+  - No test was weakened, the new tests fail on `main`, all 8 of its breaks were caught, the commands pass with the stated counts, and the method-guide flows passed 30 of 30.
+- Not met, each corrected:
+  - Decision 9 said every other case was unchanged; the saved-data cases changed.
+  - BEHAVIOUR.md still said Red Spring & Rye calls its proof "Overnight cold proof", in the present tense.
+  - This section said 29 browser actions; there are 30.
+- Also corrected:
+  - a stale comment in `schedule.test.ts`;
+  - the "Skip 5" sentence in the previous section, which this check couldn't reproduce at the 30-minute reheat.
+- It noted for Michael:
+  - Rolling back to `0b92450` after the new build has saved won't bring the four recipes back, except at their defaults after clearing storage.
+  - A hand-made saved order can leave a recipe off the menu.
+- Not part of this pull request: the Tartine recipes change, branch `tartine-recipes` at `66d29e8` and not yet merged, makes `src/state/load.ts` add every recipe a saved order doesn't name, which also closes that gap.

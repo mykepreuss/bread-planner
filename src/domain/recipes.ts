@@ -1,22 +1,21 @@
 /**
- * The six recipes, as data. Each default is written as the sum it came from in the source spreadsheet or the book,
- * so it equals the value the app has always started with.
+ * The two recipes, Preuss House and Original Tartine, as data. Each default is written as the sum it came from in the
+ * source spreadsheet or the book, so it equals the value the app has always started with. White & Whole Wheat, Red
+ * Spring & Rye, Five-Flour and Four-Flour Sourdough were removed at Michael's request on November 22, 2026, with the
+ * flours only they used; they are in git history.
  */
 
-export type FlourKey = 'anita' | 'red' | 'white' | 'wheat' | 'rye' | 'ap' | 'fife';
+export type FlourKey = 'anita' | 'white' | 'wheat' | 'rye';
 export const FLOUR_NAMES: Record<FlourKey, string> = {
   anita: "Anita's all-purpose flour",
-  red: 'Red spring flour',
   white: 'White-bread flour',
   wheat: 'Whole-wheat flour',
   rye: 'Rye flour',
-  ap: 'All-purpose flour',
-  fife: 'Red Fife flour',
 };
 
-/** A flour name as it reads mid-sentence: lowercase, except names that start with a proper noun. */
+/** A flour name as it reads mid-sentence: lowercase, except a name that starts with a proper noun. */
 export function inSentence(name: string) {
-  return /^(Anita's|Red Fife)/.test(name) ? name : name.charAt(0).toLowerCase() + name.slice(1).toLowerCase();
+  return /^Anita's/.test(name) ? name : name.charAt(0).toLowerCase() + name.slice(1).toLowerCase();
 }
 
 /**
@@ -47,14 +46,11 @@ export type Recipe = {
   flours: FlourKey[];
   late: FlourKey[];
   buildFlour: FlourKey;
-  houseCompletion: boolean;
   defaults: Settings;
 };
 
 /** A part as a percentage of a whole, in the order the source formulas divide. */
 const share = (part: number, whole: number) => (part / whole) * 100;
-/** Grams per 1,000 g of added flour. */
-const perKilo = (grams: number, flour: number) => (grams / flour) * 1000;
 /** The House leaven build, per 1,000 g of added flour. */
 const houseBuild = { starter: 28, flour: 71, wheat: 71, water: 142 };
 
@@ -67,7 +63,6 @@ export const RECIPES: Recipe[] = [
     flours: ['anita', 'wheat', 'rye'],
     late: ['rye'],
     buildFlour: 'anita',
-    houseCompletion: false,
     // 800 g Anita's, 100 g whole wheat, 100 g rye; 780 g water with 100 g held back; 200 g leaven; 20 g salt.
     defaults: {
       count: 2,
@@ -89,7 +84,6 @@ export const RECIPES: Recipe[] = [
     flours: ['white', 'wheat'],
     late: [],
     buildFlour: 'white',
-    houseCompletion: false,
     // 900 g white, 100 g whole wheat; 750 g water with 50 g held back; 200 g leaven; 20 g salt; 1 tbsp (15 g) starter.
     defaults: {
       count: 2,
@@ -100,93 +94,6 @@ export const RECIPES: Recipe[] = [
       reserve: share(50, 750),
       flours: { white: 90, wheat: 10 },
       build: { starter: 15, flour: 100, wheat: 100, water: 200 },
-    },
-  },
-  {
-    id: 'white-wheat',
-    name: 'White & Whole Wheat',
-    description: 'An 80/20 white and whole-wheat loaf, with a separate autolyse and overnight cold proof.',
-    method: 'house',
-    flours: ['white', 'wheat'],
-    late: [],
-    buildFlour: 'white',
-    houseCompletion: false,
-    // 800 g white, 200 g whole wheat; 800 g water with 50 g held back; 200 g leaven; 20 g salt.
-    defaults: {
-      count: 2,
-      weight: 1010,
-      hydration: 80,
-      leaven: 20,
-      salt: 2,
-      reserve: share(50, 800),
-      flours: { white: 80, wheat: 20 },
-      build: { ...houseBuild },
-    },
-  },
-  {
-    id: 'red-rye',
-    name: 'Red Spring & Rye',
-    description: 'Red spring, whole wheat and rye with extra leaven, a separate autolyse and an overnight cold proof.',
-    method: 'house',
-    flours: ['red', 'wheat', 'rye'],
-    late: ['rye'],
-    buildFlour: 'red',
-    houseCompletion: false,
-    // The spreadsheet's main calculator: 758 g red spring, 83 g whole wheat, 103 g rye (944 g); 724 g water with 72 g
-    // held back; all 312 g of a 28/71/71/142 g build; 22 g salt; 2,002 g of dough.
-    defaults: {
-      count: 2,
-      weight: 2002 / 2,
-      hydration: share(724, 944),
-      leaven: share(312, 944),
-      salt: share(22, 944),
-      reserve: share(72, 724),
-      flours: { red: share(758, 944), wheat: share(83, 944), rye: share(103, 944) },
-      build: { starter: perKilo(28, 944), flour: perKilo(71, 944), wheat: perKilo(71, 944), water: perKilo(142, 944) },
-    },
-  },
-  {
-    id: 'five-flour',
-    name: 'Five-Flour Sourdough',
-    description: 'All-purpose, red spring, Red Fife, whole wheat and rye.',
-    method: 'house',
-    flours: ['ap', 'red', 'fife', 'wheat', 'rye'],
-    late: ['rye'],
-    buildFlour: 'red',
-    houseCompletion: true,
-    // The spreadsheet's first blend, 350/350/100/100/100 g with 800 g water (50 g held back), completed with the
-    // House leaven and salt.
-    defaults: {
-      count: 2,
-      weight: 1010,
-      hydration: 80,
-      leaven: 20,
-      salt: 2,
-      reserve: share(50, 800),
-      flours: { ap: 35, red: 35, fife: 10, wheat: 10, rye: 10 },
-      build: { ...houseBuild },
-    },
-  },
-  {
-    id: 'four-flour',
-    name: 'Four-Flour Sourdough',
-    description: 'All-purpose, red spring, whole wheat and rye, with more whole wheat than the five-flour recipe.',
-    method: 'house',
-    flours: ['ap', 'red', 'fife', 'wheat', 'rye'],
-    late: ['rye'],
-    buildFlour: 'red',
-    houseCompletion: true,
-    // The spreadsheet's second blend, 500/600/0/250/150 g (1,500 g) with 1,200 g water (75 g held back), completed
-    // with the House leaven and salt; three loaves.
-    defaults: {
-      count: 3,
-      weight: 1010,
-      hydration: 80,
-      leaven: 20,
-      salt: 2,
-      reserve: share(75, 1200),
-      flours: { ap: share(500, 1500), red: share(600, 1500), fife: 0, wheat: share(250, 1500), rye: share(150, 1500) },
-      build: { ...houseBuild },
     },
   },
 ];

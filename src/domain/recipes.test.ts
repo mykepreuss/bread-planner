@@ -7,7 +7,26 @@ import { schedule, type PlanInput } from './schedule.ts';
 // Ported from src/lib/recipes.test.ts. Plans are for 9:00 AM local time on 21 October 2026, as there, and every time
 // is built and read in the local zone, so these tests hold in any time zone.
 const approx = (a: number, b: number, message?: string) => assert.ok(Math.abs(a - b) < 1e-7, message ?? `${a} != ${b}`);
-const IDS = ['house', 'tartine', 'white-wheat', 'red-rye', 'five-flour', 'four-flour'];
+const IDS = ['house', 'tartine'];
+/**
+ * Preuss House set to the numbers of the retired Red Spring & Rye (removed November 22, 2026): the spreadsheet's main
+ * calculator, which puts all of a 312 g build into the dough. It keeps the floating-point cases that recipe covered.
+ */
+const allLeaven = (s: Settings) =>
+  Object.assign(s, {
+    weight: 2002 / 2,
+    hydration: (724 / 944) * 100,
+    leaven: (312 / 944) * 100,
+    salt: (22 / 944) * 100,
+    reserve: (72 / 724) * 100,
+    flours: { anita: (758 / 944) * 100, wheat: (83 / 944) * 100, rye: (103 / 944) * 100 },
+    build: {
+      starter: (28 / 944) * 1000,
+      flour: (71 / 944) * 1000,
+      wheat: (71 / 944) * 1000,
+      water: (142 / 944) * 1000,
+    },
+  });
 
 function recipe(id: string): Recipe {
   const r = recipeById(id);
@@ -51,10 +70,6 @@ test('total hydration includes only the used leaven while every recipe quantity 
   const expected: Record<string, number> = {
     house: 80,
     tartine: (850 / 1100) * 100,
-    'white-wheat': (900 / 1100) * 100,
-    'red-rye': 80,
-    'five-flour': (900 / 1100) * 100,
-    'four-flour': (1350 / 1650) * 100,
   };
   const recipes = JSON.stringify(RECIPES);
   for (const id of IDS) {
@@ -126,7 +141,7 @@ test('total hydration follows the leaven build, taking mature starter as half wa
 });
 
 test('a recipe keeps its added-water setting and shows the total hydration that water gives', () => {
-  const input = plan('five-flour', (s) => {
+  const input = plan('house', (s) => {
       s.hydration = 73;
       s.count = 4;
     }),
@@ -136,7 +151,7 @@ test('a recipe keeps its added-water setting and shows the total hydration that 
   approx(r.totalHydration, 83 / 1.1);
 });
 
-test('the menu lists six recipes in order, House uses Anita’s flour, and the red-spring variation is not one of them', () => {
+test('the menu lists Preuss House then Original Tartine, House uses Anita’s flour, and the red-spring variation is not one of them', () => {
   assert.deepEqual(
     RECIPES.map((r) => r.id),
     IDS,
@@ -177,44 +192,6 @@ test('the book recipe keeps its quantities, leaven in the initial mix, and rice 
   approx(r.reserve, 215);
   assert.ok(!('dustingWheat' in r));
   approx(r.dustingRice, 200);
-});
-
-test('White & Whole Wheat is a separate 80/20 flour recipe with its original staged water', () => {
-  const r = weigh(plan('white-wheat'));
-  approx(r.total, 2020);
-  approx(r.hydration, 80);
-  grams(r.initial, [800, 200, 750]);
-  grams(r.final, [200, 20, 50]);
-});
-
-test('Red Spring & Rye keeps the flour, water and leaven of the spreadsheet’s main calculator', () => {
-  const r = weigh(plan('red-rye'));
-  approx(r.total, 2002);
-  approx(r.flour, 944);
-  approx(r.water, 724);
-  approx(r.used, 312);
-  approx(r.hydration, (724 / 944) * 100);
-  // The spreadsheet's autolyse and second-addition amounts, as the old core read them from its cells.
-  grams(r.initial, [758, 83, 652]);
-  grams(r.final, [103, 312, 22, 72]);
-});
-
-test('both blends are full House-method recipes with all their original flour and water amounts', () => {
-  for (const [id, flour, water, total, count] of [
-    ['five-flour', 1000, 800, 2020, 2],
-    ['four-flour', 1500, 1200, 3030, 3],
-  ] as const) {
-    const input = plan(id),
-      r = weigh(input);
-    approx(r.flour, flour);
-    approx(r.water, water);
-    approx(r.used, flour * 0.2);
-    approx(r.salt, flour * 0.02);
-    approx(r.total, total);
-    assert.equal(input.settings.count, count);
-    assert.equal(recipe(id).method, 'house');
-  }
-  assert.ok(!weigh(plan('four-flour')).initial.some(([name]) => name === 'Red Fife flour'));
 });
 
 test('every recipe conserves dough mass and scales count, loaf weight and hydration independently', () => {
@@ -287,13 +264,13 @@ test('each recipe schedules its own count, with an overnight House proof and pla
 });
 
 test('recipe schedule descriptions follow the selected flours and quantities', () => {
-  const input = plan('white-wheat');
+  const input = plan('house', (s) => (s.flours = { anita: 80, wheat: 20, rye: 0 }));
   assert.ok(!note(input, 'mix').includes('rye'));
-  assert.match(note(input, 'autolyse'), /white-bread flour \(800 g\)/);
+  assert.match(note(input, 'autolyse'), /Anita's all-purpose flour \(800 g\), whole-wheat flour \(200 g\)/);
 });
 
 test('arithmetic noise never reports a leaven shortfall, while real deficits still do', () => {
-  const input = plan('red-rye'),
+  const input = plan('house', allLeaven),
     r = weigh(input);
   assert.equal(r.shortfall, 0);
   assert.equal(r.reserve, 0);
@@ -324,8 +301,7 @@ test('leaven steps list the scaled build and what is kept, for every recipe', ()
     /15 g \(about 1 tbsp\) of mature starter with 200 g water, then add 100 g white-bread flour and 100 g whole-wheat flour/,
   );
   assert.match(tartine, /keep 215 g/);
-  assert.match(note(plan('white-wheat'), 'leaven'), /white-bread flour/);
-  assert.match(note(plan('red-rye'), 'leaven'), /All 312 g goes into the dough/);
+  assert.match(note(plan('house', allLeaven), 'leaven'), /All 312 g goes into the dough/);
   const empty = plan('house', (s) => {
     s.build = { starter: 0, flour: 0, wheat: 0, water: 0 };
   });
@@ -341,7 +317,7 @@ test('every refrigerated proof tells you to cover and refrigerate, and no step i
 });
 
 test('House-method turns 1 to 3 are vigorous double rounds and later turns a single round; Tartine keeps the book wording', () => {
-  for (const id of ['house', 'white-wheat', 'red-rye', 'five-flour', 'four-flour']) {
+  for (const id of ['house']) {
     const notes = Object.fromEntries(
       schedule(plan(id))
         .filter((s) => /^turn\d+$/.test(s.id))
@@ -403,4 +379,15 @@ test('a recipe is found only by its own id, and its defaults cannot be changed i
   assert.equal(house.defaults.flours.rye, 10, 'changing a copy leaves the defaults alone');
   assert.equal(house.defaults.build.starter, 28);
   assert.notEqual(defaultSettings(house), defaultSettings(house), 'each copy is new');
+});
+
+test('only Preuss House and Original Tartine are on the menu (Michael, November 22, 2026)', () => {
+  assert.deepEqual(
+    RECIPES.map((r) => [r.id, r.name]),
+    [
+      ['house', 'Preuss House'],
+      ['tartine', 'Original Tartine'],
+    ],
+  );
+  for (const gone of ['white-wheat', 'red-rye', 'five-flour', 'four-flour']) assert.equal(recipeById(gone), undefined);
 });

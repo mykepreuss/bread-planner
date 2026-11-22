@@ -8,7 +8,7 @@ import { dateString } from './text.ts';
 
 /**
  * A plan for a recipe at its default settings, with the leaven started at 9:00 AM on October 21, 2026, and one loaf
- * baked at a time, changed as given. Red Spring & Rye is the old spreadsheet's own recipe.
+ * baked at a time, changed as given. These tests used Red Spring & Rye until it was removed; it scheduled as House does.
  */
 function plan(id: string, change: Partial<PlanInput> = {}, settings: Partial<Settings> = {}): PlanInput {
   const recipe = recipeById(id)!;
@@ -32,7 +32,7 @@ const timeOf = (s: Step[]) => (id: string) => local(find(s, id).at);
 
 test('with both loaves in the oven together, every step keeps its original time', () => {
   const actual = Object.fromEntries(
-    schedule(plan('red-rye', { ovenCapacity: 2 }))
+    schedule(plan('house', { ovenCapacity: 2 }))
       .filter((s) => s.id !== 'warmup')
       .map((s) => [s.id, local(s.at)]),
   );
@@ -63,7 +63,7 @@ test('with both loaves in the oven together, every step keeps its original time'
 });
 
 test('shaped loaves go straight into baskets and the fridge follows the 20-minute basket rest', () => {
-  for (const id of ['house', 'red-rye']) {
+  for (const id of ['house']) {
     const s = schedule(plan(id)),
       ids = s.map((x) => x.id);
     assert.ok(!ids.includes('bench2'), id);
@@ -74,20 +74,20 @@ test('shaped loaves go straight into baskets and the fridge follows the 20-minut
 });
 
 test('planning back from the last loaf out reproduces the identical forward schedule', () => {
-  const a = schedule(plan('red-rye'));
-  const b = schedule(plan('red-rye', { anchor: 'done', date: '2026-10-22', time: '10:46' }));
+  const a = schedule(plan('house'));
+  const b = schedule(plan('house', { anchor: 'done', date: '2026-10-22', time: '10:46' }));
   assert.deepEqual(a, b);
 });
 
 test('an impossible date or time, or no room in the oven, gives no schedule', () => {
-  assert.deepEqual(schedule(plan('red-rye', { date: '2026-02-31' })), []);
-  assert.deepEqual(schedule(plan('red-rye', { time: '25:00' })), []);
-  assert.deepEqual(schedule(plan('red-rye', { ovenCapacity: 0 })), []);
+  assert.deepEqual(schedule(plan('house', { date: '2026-02-31' })), []);
+  assert.deepEqual(schedule(plan('house', { time: '25:00' })), []);
+  assert.deepEqual(schedule(plan('house', { ovenCapacity: 0 })), []);
 });
 
 test('elapsed durations survive daylight-saving changes', () => {
   // In America/Vancouver the clocks go back at 2:00 AM on November 1, 2026, between the feed and the leaven.
-  const s = schedule(plan('red-rye', { date: '2026-11-01' }));
+  const s = schedule(plan('house', { date: '2026-11-01' }));
   assert.equal((+find(s, 'leaven').at - +find(s, 'feed').at) / 60000, 660);
   // A cold proof that starts the evening before that change still lasts 12 h 30 min.
   const w = coldProofWindow(schedule(plan('house', { date: '2026-10-31' })))!;
@@ -110,7 +110,7 @@ test('elapsed durations survive daylight-saving changes', () => {
 });
 
 test('one loaf at a time bakes two serial batches, each with its own cooling mark', () => {
-  const s = schedule(plan('red-rye')),
+  const s = schedule(plan('house')),
     at = timeOf(s);
   assert.equal(s.filter((x) => x.kind === 'covered').length, 2);
   assert.equal(at('out-1'), '2026-10-22 09:33');
@@ -123,7 +123,7 @@ test('one loaf at a time bakes two serial batches, each with its own cooling mar
 
 test('one batch drops batch numbers, while serial batches keep them', () => {
   const titles = (s: Step[], ids: string[]) => ids.map((id) => find(s, id).title);
-  for (const id of ['house', 'red-rye']) {
+  for (const id of ['house']) {
     assert.deepEqual(
       titles(schedule(plan(id, { ovenCapacity: 2 })), ['warmup', 'covered', 'uncovered', 'done', 'cooled']),
       [
@@ -141,7 +141,7 @@ test('one batch drops batch numbers, while serial batches keep them', () => {
       id,
     );
   }
-  const one = schedule(plan('red-rye', {}, { count: 1 }));
+  const one = schedule(plan('house', {}, { count: 1 }));
   assert.deepEqual(titles(one, ['warmup', 'covered', 'done']), [
     'Take the loaf out of the fridge',
     'Bake covered',
@@ -155,19 +155,19 @@ test('one batch drops batch numbers, while serial batches keep them', () => {
 });
 
 test('every schedule note ends as a complete sentence', () => {
-  for (const id of ['house', 'red-rye', 'tartine'])
+  for (const id of ['house', 'tartine'])
     for (const ovenCapacity of [1, 2])
       for (const step of schedule(plan(id, { ovenCapacity })))
         assert.match(step.note, /[.!?]$/, `${id} ${step.id}: ${step.note}`);
 });
 
 test('parallel capacity and a partial final batch cover every loaf once', () => {
-  const s = schedule(plan('red-rye', { ovenCapacity: 2 }, { count: 3 })),
+  const s = schedule(plan('house', { ovenCapacity: 2 }, { count: 3 })),
     covered = s.filter((x) => x.id.startsWith('covered'));
   assert.equal(covered.length, 2);
   assert.match(covered[0].title, /loaves 1 to 2/);
   assert.match(covered[1].title, /loaf 3/);
-  const all = schedule(plan('red-rye', { ovenCapacity: 3 }, { count: 3 }));
+  const all = schedule(plan('house', { ovenCapacity: 3 }, { count: 3 }));
   assert.ok(!all.some((x) => x.kind === 'reheat'), 'one batch');
   assert.equal(all.filter((x) => x.id.startsWith('covered')).length, 1);
 });
@@ -200,7 +200,7 @@ test('Tartine warm proof leaves out the fridge and warm-up, and the preheat over
 });
 
 test('planning back is from the last batch, for every method, proof and oven capacity', () => {
-  for (const id of ['house', 'red-rye', 'tartine'])
+  for (const id of ['house', 'tartine'])
     for (const proof of ['warm', 'cold'] as const)
       for (const ovenCapacity of [1, 2, 3]) {
         const p = plan(id, { proof, ovenCapacity }, { count: 3 }),
@@ -212,7 +212,7 @@ test('planning back is from the last batch, for every method, proof and oven cap
 });
 
 test('instructions include readiness, pot preheating, scoring, steam, and batch reheating', () => {
-  for (const id of ['house', 'red-rye', 'tartine']) {
+  for (const id of ['house', 'tartine']) {
     const text = schedule(plan(id))
       .map((x) => `${x.note} ${x.readiness}`)
       .join(' ');
@@ -258,7 +258,7 @@ test('two loaves bake together and finish after one bake cycle', () => {
 });
 
 test('preshaping takes 10 minutes and starts by turning the dough out', () => {
-  for (const id of ['house', 'red-rye']) {
+  for (const id of ['house']) {
     const step = find(schedule(plan(id)), 'shape');
     assert.equal(step.minutes, 10, id);
     assert.match(step.note, /^Turn the dough out of its container onto your work surface\./, id);

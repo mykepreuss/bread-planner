@@ -6,15 +6,17 @@
  * Not covered, because no saved data on the live site can reach them: the hidden "Red Spring & Rye Variation"
  * (`manual-rye`) and saved data from versions 1 to 4. Every version of the app on this site saved version 5 until
  * step 3b of the rebuild.
+ *
+ * On November 22, 2026 Michael removed four recipes (White & Whole Wheat, Red Spring & Rye, Five-Flour and Four-Flour
+ * Sourdough). Their cases left the record and every other case stayed as it was; see `randomBakes`.
  */
 import { readFileSync } from 'node:fs';
-import { defaultSettings, recipeById } from '../../src/domain/recipes.ts';
 import { schedule } from '../../src/domain/schedule.ts';
 import { planOf } from '../../src/state/schema.ts';
 import { decode } from './format.ts';
 import { plannerState, stamp, local, type PlanInput, type FormulaInput, type HelperCall } from './observe.ts';
 
-export const RECIPES = ['house', 'tartine', 'white-wheat', 'red-rye', 'five-flour', 'four-flour'];
+export const RECIPES = ['house', 'tartine'];
 const DAY = '2026-11-22',
   BEFORE = '2026-11-21 15:20';
 const minutes = (t: string, n: number) => stamp(local(t) + n * 60000).slice(0, 16);
@@ -95,8 +97,6 @@ function schedules(): [string, PlanInput][] {
     ['house', '23:45'],
     ['tartine', '20:00'],
     ['tartine', '06:00', 'warm'],
-    ['red-rye', '22:00'],
-    ['white-wheat', '13:00'],
   ] as [string, string, ('cold' | 'warm')?][])
     out.push([`${recipe}${proof ? ' warm proof' : ''} starting at ${time}`, plan(recipe, { time, proof })]);
   out.push(['house across the end of daylight saving', plan('house', { date: '2026-10-31' })]);
@@ -136,9 +136,6 @@ function schedules(): [string, PlanInput][] {
     plan('house', { params: { buildSeed: 0, buildBread: 0, buildWheat: 0, buildWater: 0 } }),
   ]);
   out.push(['house at 85% total hydration', plan('house', { totalHydration: 85 })]);
-  out.push(['five-flour, 4 loaves of 900 g', plan('five-flour', { params: { count: 4, weight: 900 } })]);
-  out.push(['four-flour with some Red Fife', plan('four-flour', { params: { flour_fife: 10 } })]);
-  out.push(['red-rye, all of the leaven used', plan('red-rye')]);
   return out;
 }
 
@@ -370,77 +367,20 @@ function bakeDays(): [string, PlanInput][] {
         now: '2026-11-23 06:00',
       },
     ],
-    [
-      'white-wheat mid-bulk at 80°F',
-      {
-        ...upTo({ recipe: 'white-wheat', date: DAY, time: '09:00', now: BEFORE }, 'turn2'),
-        doughTemp: 80,
-        now: '2026-11-22 15:30',
-      },
-    ],
   ];
 }
 
-/** Deterministic pseudo-random numbers (mulberry32), so the random cases are the same on every update. */
-function random(seed: number) {
-  return () => {
-    seed = (seed + 0x6d2b79f5) | 0;
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-/** Bakes at random points: steps checked late or early, some skipped or without a time, and dough temperatures and readings. */
-function randomBakes(n: number): [string, PlanInput][] {
-  const r = random(20261121),
-    pick = <T>(a: T[]) => a[Math.floor(r() * a.length)],
-    int = (lo: number, hi: number) => lo + Math.floor(r() * (hi - lo + 1));
-  const out: [string, PlanInput][] = [];
-  for (let k = 0; k < n; k++) {
-    const base: PlanInput = {
-      recipe: pick(RECIPES),
-      date: DAY,
-      time: pick(['06:00', '07:30', '09:00', '10:15', '12:00', '16:30']),
-      proof: pick(['cold', 'cold', 'warm']),
-      ovenCapacity: pick([1, 2, 2]),
-      params: { count: pick([1, 2, 2, 2, 3, 4]) },
-      tempUnit: r() < 0.2 ? 'C' : 'F',
-      now: BEFORE,
-    };
-    const steps = schedule(planOf(plannerState(base))),
-      upto = int(0, steps.length),
-      done: string[] = [],
-      doneAt: Record<string, string> = {};
-    let drift = 0,
-      last = +steps[0].at;
-    for (const s of steps.slice(0, upto)) {
-      const bulk = s.id === 'rest' || /^turn\d+$/.test(s.id);
-      if (r() < (bulk ? 0.2 : 0.05)) continue;
-      drift += int(-20, 40);
-      done.push(s.id);
-      last = +s.at + drift * 60000;
-      if (r() > 0.1) doneAt[s.id] = stamp(last).slice(0, 16);
-    }
-    const rest = steps.find((s) => s.id === 'rest'),
-      now = last + int(-30, 90) * 60000;
-    const doughTemp = r() < 0.5 ? pick([58, 64, 70, 74, 77, 78, 80, 83, 86, 90, 96]) : null;
-    // Readings are saved the way the app saves them: in time order, one per minute (the later one wins).
-    const bulkTemps = (
-      doughTemp !== null && rest && now > +rest.at
-        ? Array.from({ length: int(0, 2) }, () => ({
-            at: stamp(+rest.at + int(-20, Math.max(0, Math.round((now - +rest.at) / 60000))) * 60000).slice(0, 16),
-            f: pick([62, 70, 75, 79, 82, 88]),
-          }))
-        : []
-    )
-      .map((reading, order) => ({ reading, order }))
-      .sort((x, y) => x.reading.at.localeCompare(y.reading.at) || x.order - y.order)
-      .map((x) => x.reading)
-      .filter((r, i, list) => list[i + 1]?.at !== r.at);
-    out.push([`random bake ${k + 1}`, { ...base, done, doneAt, doughTemp, bulkTemps, now: stamp(now).slice(0, 16) }]);
-  }
-  return out;
+/**
+ * Bakes at random points: steps checked late or early, some skipped or without a time, and dough temperatures and
+ * readings. They were drawn from all six recipes with a seeded generator; once four recipes were removed, drawing again
+ * would change every later bake, so they are kept exactly as baseline.json stores them, less the removed recipes'
+ * bakes. The generator is in git history before November 22, 2026.
+ */
+function randomBakes(): [string, PlanInput][] {
+  const recorded = decode(readFileSync(new URL('./baseline.json', import.meta.url), 'utf8'));
+  return recorded.plans
+    .filter(({ name, input }) => name.startsWith('random bake ') && RECIPES.includes(input.recipe))
+    .map(({ name, input }) => [name, input]);
 }
 
 function formulas(): [string, FormulaInput][] {
@@ -478,10 +418,6 @@ function formulas(): [string, FormulaInput][] {
     'tartine with an empty leaven build',
     { recipe: 'tartine', params: { buildSeed: 0, buildBread: 0, buildWheat: 0, buildWater: 0 } },
   ]);
-  const redRye = defaultSettings(recipeById('red-rye')!).build;
-  out.push(['red-rye 1 g short of leaven', { recipe: 'red-rye', params: { buildWater: redRye.water - 1 } }]);
-  out.push(['red-rye 1 g over', { recipe: 'red-rye', params: { buildWater: redRye.water + 1 } }]);
-  out.push(['four-flour with some Red Fife', { recipe: 'four-flour', params: { flour_fife: 10 } }]);
   return out;
 }
 
@@ -550,7 +486,7 @@ function helpers(): HelperCall[] {
 
 export function cases() {
   return {
-    plans: [...schedules(), ...bakeDays(), ...randomBakes(80)].map(([name, input]) => ({ name, input })),
+    plans: [...schedules(), ...bakeDays(), ...randomBakes()].map(([name, input]) => ({ name, input })),
     formulas: formulas().map(([name, input]) => ({ name, input })),
     restores: restores().map(([name, input]) => ({ name, input })),
     helpers: helpers().map((input) => ({ name: `${input.fn}(${JSON.stringify(input.args).slice(1, -1)})`, input })),
