@@ -173,3 +173,53 @@ Michael asked for all five findings from a design and content review of the Sche
 Evidence: 97 of 97 tests pass. New tests cover the step gaps (bulk start 30 min, parallel warm-up 0, preheat 60, last step 0) and the copy rules (no "supplied recipe" or "default is" in any recipe's step notes, and the later-batches sentence only with several batches). The build had 0 errors, 0 warnings and the 4 existing hints. In the dev server with a fresh plan at 1280px, the gap labels matched those values and the colours followed the phases. At 375px, checking the first step moved the first timeline step from 2,400px to 1,835px from the top and the batch card from 1,326px to 6,620px. At 768px the reorder held, unchecking restored it, the document width matched the viewport, and the console had no errors. The local plan was restored.
 
 Not verified: the live site, and a real phone.
+
+## Dough temperature moves bulk, November 21, 2026: locally verified, not released
+
+Built on branch `temperature-moves-bulk`, from `loaf-count-on-schedule` at `36299ea` (committed locally, not pushed). This supersedes the November 15 decision that the dough temperature is advice only. Michael chose this design in session, including these two choices:
+
+- Cool dough keeps folding: when the estimate runs past the planned turns, a turn is added every 30 minutes until then.
+- Everything after preshape shifts by the same amount, bake included, as a late check-off does.
+
+How it works (`followDough` in `bakeday.ts`):
+
+- **Bulk as progress.** Bulk is progress toward the planned length at 78°F, with the existing doubling-per-15°F rule. The after-mixing reading applies from bulk start, and later readings (`bulkTemps`, saved per recipe with when each was taken) apply from their own time. A new reading re-times only what is left.
+- **Preshape follows the dough.** Preshape moves to the estimated end of bulk, and every later step keeps its spacing. Preshape never lands before a turn that was already checked. Once preshape or a later step is checked, the temperature moves nothing.
+- **Turns fit the estimate.** Turns stay on 30-minute marks from bulk start, and none comes within 15 minutes of preshape. Warm dough loses turns, cool dough gains them, and checked turns always stay. At 78°F nothing moves, for House or Tartine.
+- **Up next.** During bulk, once there is an after-mixing reading, the card has "Dough temperature now" with an Update button. From 30 minutes before the estimated end, a turn's card leads with "Check the dough before this turn" and a "Ready: preshape now" button that checks preshape.
+- **Advice.** The note says how far the plan moved and how many turns it now has. When the dough is off plan by 15 minutes or more, it also names the steady temperature that would preshape at the original time, if that is between 68°F and 86°F.
+- **Timeline.** Under "Start bulk fermentation", the after-mixing field stays, and later readings are listed with their times and a remove button. Clearing the checklist clears all readings. The "Running … behind plan" message still reflects check-offs only.
+
+Evidence: 104 of 104 tests pass. New tests cover: no reading leaves the schedule untouched; 84°F gives a 3h 2m bulk with turns 1 to 5 and later steps 58 minutes early; 72°F adds turns 8 to 10 and moves later steps 1h 17m; a second reading at 2h re-times only the rest (78°F then 84°F gives 3h 31m); a checked turn holds preshape; a checked preshape ends the estimate's effect; the hold temperature; Tartine; and saving the readings. The build had 0 errors, 0 warnings and the 4 existing hints.
+
+In the dev server, with a bake set 2h 35m into bulk at 84°F and turns 1 to 4 checked: preshape moved to 4:42 PM, turns 6 and 7 dropped, and turn 5's card led with the dough check. A 72°F reading entered through the form at 4:16 PM moved preshape to 5:01 PM and brought turn 6 back. Removing that reading restored 4:42 PM. "Ready: preshape now" checked preshape at 4:16 PM, marked turns 5 to 7 skipped, and moved the rest of the plan. The 375px layout fit, with no console errors. The local plan was restored.
+
+Not verified: the live site, a real phone, and a real bake.
+
+Review fixes, same day (Michael asked for the four blocking findings from a code review):
+
+- **Bulk over.** Once preshape is checked, the timeline shows the turns that were due before preshape was actually done, plus every checked turn. Turns added for cool dough and checked no longer vanish, and turns dropped for warm dough no longer come back as Skipped after preshape. Checked extra turns also stay if the temperature is cleared. Without a temperature, behaviour is unchanged.
+- **Same-minute readings.** A reading in the same minute as an earlier one replaces it (`withReading`), so a corrected typo counts once. Duplicates already saved load as the later one.
+- **Reading window.** A reading counts from this bake's final mix on. One taken before bulk started, or in its first minute, applies from bulk start, where it used to be ignored while still listed. Readings from before the final mix are ignored.
+- **New bake.** The dough temperatures are cleared by "Plan the next bake", and by changing the plan's date or time while nothing is checked, so a value typed while planning no longer shifts a later bake.
+
+Evidence: 107 of 107 tests pass, with new tests for each fix. The build had 0 errors, 0 warnings and the 4 existing hints. In the dev server: entering 84 then 82 in the same minute listed and saved one 82°F reading with no console errors. With turns 1 to 10 checked at 72°F, checking preshape kept all ten turns (16 of 26 steps checked). With nothing checked, a planning-time 84°F moved preshape to 2:08 PM, and changing the date cleared it, emptied the field and put preshape back at 3:06 PM. The local plan was restored.
+
+The five remaining review findings were then fixed too, at Michael's request:
+
+- **Turn cap.** Cool dough gets at most two extra turns (one more hour of folds, as the Tartine cue allows), then rests covered until it is ready, and the note says so. At 72°F the plan has 9 turns, not 10. Checked turns past the cap still stay, and after a late preshape the skipped turns stop at the cap.
+- **Bulk summary.** Once preshape is checked, the bulk note says how long bulk took against the estimate ("Bulk took 3h 20m. The estimate was 3h 2m.") instead of still advising.
+- **Code comment.** The NowCard comment is back above NowCard.
+- **Sidebar element.** The schedule sidebar is a `div`, not an `<aside>`. It holds the main planning controls rather than side content, and a plain `div` loses nothing when it is rearranged on phones.
+- **Up next.** The card no longer shows the step's own length next to its time ("Start bulk fermentation · 30 min"). "Then: … · time" already shows when the next step is.
+
+Evidence: 109 of 109 tests pass, with new tests for the cap (76°F adds one turn, 72°F and 55°F stop at 9, checked turns past the cap stay) and the bulk summary. The build had 0 errors, 0 warnings and the 4 existing hints. In the dev server at 55°F, 45 minutes into bulk, the plan showed 9 turns and the capped note, suggesting 81°F to get back on plan. The Up next card showed only "4:44 PM". Checking preshape replaced the note with "Bulk took 45 min. The estimate was 11h 35m." At 375px the sidebar `div` still moved the setup cards below the steps (first step at 1,957px, batch card at 6,183px) with a document width of 375. The console had no errors, and the local plan was restored.
+
+Cleanup pass, same day (`/simplify`: reuse, simplification, efficiency and altitude reviews). Behaviour is unchanged; 110 of 110 tests pass, and the bake-day controls were rechecked in the dev server.
+
+- `liveSchedule` is back to its `main` form. `followDough` moves preshape and the later steps itself, and returns `checkFrom` so the page no longer recomputes the 30-minute check window.
+- One `turnNumber` helper replaces five copies of the turn-id test. Saved readings are cleaned up by `withReading`, the same function the form uses, with one `BulkReading` type and the existing `tempLimits` range (`inTempRange`).
+- In `App.tsx`: one `setProfile` writer, one `clearTemps` (also used by Clear checklist), one date and time handler, and a shared `TempRow` for both temperature forms. `bulkAdvice` builds one sentence for earlier and later; `holdTemperature` always targets the original preshape. The unused `latestF` is gone.
+- A new test pins the 30-minute turn grid that `followDough` relies on.
+
+Proposals, not done: build the two date formatters in `model.ts` once instead of on every call (about 1–2 ms per render, every 30-second tick); generate turns from a bulk length in `model.ts` if a duration editor ever returns; `planNext` never clears the checklist, so a fully checked plan cannot be moved forward (existing before this branch).

@@ -306,6 +306,16 @@ h2 { font-size: 30px; line-height: 1.25; letter-spacing: -.4px; font-weight: 700
 .dough-temp-row .temp-unit { width: 84px; background: var(--background); }
 .dough-temp .input-error { display: block; margin-top: 6px; }
 .step-details .dough-temp .bulk-advice, .dough-temp .bulk-advice { margin: 10px 0 0; font-size: 15px; line-height: 1.65; color: var(--ink-soft); }
+.dough-temp .bulk-advice.lead { margin: 0 0 14px; }
+.dough-temp-row [type=submit] { min-height: 48px; }
+.bulk-readings { list-style: none; margin: 10px 0 0; padding: 0; max-width: 720px; }
+.bulk-readings li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 0 4px 16px; font-size: 15px; color: var(--ink-soft); border-top: 1px solid var(--border); }
+.bulk-readings strong { font-weight: 600; color: var(--foreground); }
+.bulk-readings [data-slot=button] { width: 44px; }
+.dough-check { margin: 14px 0 0; padding: 14px 16px; border-radius: var(--radius-inset); background: var(--secondary); max-width: 720px; }
+.dough-check p { margin: 0; font-size: 16px; line-height: 1.65; color: var(--ink-soft); }
+.dough-check strong { color: var(--foreground); font-weight: 600; }
+.dough-check [data-slot=button] { margin-top: 12px; background: var(--card); }
 
 /* Bake day: the next step, its countdown and a single action, ahead of the planning controls. */
 .now-card { margin-bottom: 28px; padding: 26px 28px; border: 1px solid var(--border); border-left: 4px solid var(--phase, var(--primary)); border-radius: var(--radius-card); background: var(--card); }
@@ -315,7 +325,6 @@ h2 { font-size: 30px; line-height: 1.25; letter-spacing: -.4px; font-weight: 700
 .now-countdown { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--primary); }
 .now-card h2 { margin-top: 6px; font-size: 32px; letter-spacing: -.5px; color: var(--phase, var(--foreground)); }
 .now-time { margin: 6px 0 0; font-size: 17px; font-weight: 550; font-variant-numeric: tabular-nums; }
-.now-time span { font-weight: 400; color: var(--muted-foreground); }
 .now-note { margin: 14px 0 0; font-size: 16px; line-height: 1.7; color: var(--ink-soft); max-width: 720px; }
 .now-card .readiness-cue { color: var(--ink-soft); background: var(--secondary); border-radius: var(--radius-inset); padding: 12px 14px; margin: 14px 0 0; font-size: 15px; line-height: 1.7; max-width: 720px; }
 .now-shift { display: flex; align-items: flex-start; gap: 8px; margin: 14px 0 0; font-size: 15px; line-height: 1.6; color: var(--warning-foreground); }
