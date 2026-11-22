@@ -3,7 +3,10 @@ import type { BulkReading, TempUnit } from '../domain/bakeday.ts';
 import type { PlanInput } from '../domain/schedule.ts';
 import { dateString } from '../domain/text.ts';
 
-/** One bake of a recipe: the steps checked, when each was done, and the dough temperatures taken during bulk. */
+/**
+ * One bake of a recipe: the steps checked, when each was done, the mixing additions ticked, and the dough
+ * temperatures taken during bulk.
+ */
 export type Bake = {
   done: string[];
   /** When each checked step was done, in epoch milliseconds. */
@@ -12,6 +15,8 @@ export type Bake = {
   doughTemp: number | null;
   /** Later readings during bulk, in time order, one per minute. */
   bulkTemps: BulkReading[];
+  /** The additions ticked off at a mixing step, by id, such as `mix:salt`. */
+  added: string[];
 };
 export type RecipeState = { settings: Settings; bake: Bake };
 
@@ -32,7 +37,7 @@ export type PlannerState = {
   recipes: Record<string, RecipeState>;
 };
 
-export const emptyBake = (): Bake => ({ done: [], doneAt: {}, doughTemp: null, bulkTemps: [] });
+export const emptyBake = (): Bake => ({ done: [], doneAt: {}, doughTemp: null, bulkTemps: [], added: [] });
 
 /** The day after `now`, as `YYYY-MM-DD`: where a new plan starts. */
 export function tomorrow(now: number) {

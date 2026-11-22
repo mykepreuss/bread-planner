@@ -988,7 +988,7 @@ Release: merged as pull request #33 at `34ad1ff`, with Michael's approval once t
 - A version 6 save with a two-recipe menu and Tartine at 3 loaves with its leaven checked showed all six recipes, and still showed Tartine with "1 of 25 steps checked".
 - Olive: "Add the olive mixture" at 10:00 PM with Turn 1, and the four add-ins at the book's amounts. Sesame: "Toast the sesame seeds" at 9:00 PM and its add-in step at 10:00 PM. Whole Wheat and Country Rye: 2,020 g of dough, salt at 9:50 PM and Turn 1 at 10:20 PM.
 
-## No cooling mark, November 22, 2026: committed, pull request open
+## No cooling mark, November 22, 2026: merged and verified live
 
 Michael's request: remove the 15-minute cooling mark from the process. Branch `remove-cooling-mark`, from `main` at `34ad1ff`. Under the lighter verification Michael asked for after the rebuild went live: one verifier pass, about four breaks.
 
@@ -1019,7 +1019,7 @@ Independent check (the verifier, on `60f27d4`): PASS on all five criteria.
   - Old cooling-mark checks stay in saved data. They are ignored in counts, skips and the shift, but still mark a bake as underway.
   - A bake with everything checked except its cooling mark now shows "All batches done".
 
-## No basket and dusting flour card, November 22, 2026: committed, pull request open
+## No basket and dusting flour card, November 22, 2026: merged and verified live
 
 Michael's request, pointing at the card on the Ingredients tab: "We don't need the entire card." Branch `remove-dusting-card`, from `remove-cooling-mark` (pull request #34, not yet merged), so its diff includes #34's until that merges. A small display change, checked here without a verifier pass, under the lighter verification Michael asked for.
 
@@ -1038,3 +1038,38 @@ Evidence:
 - The browser record: only the five Tartine recipes' Ingredients screens changed, each only by losing the card's lines. Their screenshots show the first screen only, so they didn't change.
 - `npm test` passed 164 of 164 in both zones. The build had 0 errors, 0 warnings and 0 hints, and `npm run test:browser` passed 53 of 53.
 - A flaky flow, fixed on the way: "Ingredient edits recalculate the weights…" failed once in a full run. Its recorded snapshot had caught the "Restore defaults" dialog mid-close, so a loaded run could read the page after it had closed. The flow now waits for the dialog to close, and the snapshot is re-recorded in that settled state. It passed 12 of 12 under six workers, and the full record passed 53 of 53.
+
+Release of the two sections above, recorded on the `final-mix-tick-offs` branch from what that session observed on November 22, 2026: pull request #34 merged as `5ff796c` and #35 as `82759e9`, and no pull request was open. `node scripts/verify-deployment.mjs https://bread.assemblydigital.com` passed 9 checks and 7 assets, and the live bundle held neither "cooling mark" nor "Basket and dusting flour". The live page itself was not opened in a browser for this note.
+
+## Final-mix tick-offs, November 22, 2026: committed, pull request open
+
+Why: Michael baked Preuss House loaves that came out flat, and after a long diagnosis realised he had forgotten the salt. The "Mix final dough" note listed rye flour, leaven, salt and water in one sentence. Asked "Should the planner list the final-mix additions as separate tick-offs?", he answered "Yes, add it". Branch `final-mix-tick-offs`, from `main` at `82759e9`.
+
+Done means: on the Schedule tab, "Mix final dough" shows rye flour, leaven, salt and water as four check boxes with their weights; a tick survives a reload; and `npm test`, the build and `npm run test:browser` pass.
+
+Change:
+- `src/domain/schedule.ts`: a step can carry `additions`, each with an id such as `mix:salt`, a name and grams. The mixing step (`mix`) gets them from the formula's final stage, for both methods: four for Preuss House, salt and water for the Tartine recipes. An ingredient with no weight is left out. The House note no longer repeats the list: "Add these after the autolyse. Mix until incorporated." Tartine's note is unchanged.
+- `src/state/`: a bake keeps `added`, the ids ticked. `setAdded` ticks or unticks one. Clear checklist, Plan the next bake and Restore defaults clear them. The loader reads the list, dropping anything that isn't a string and repeats; a save without it loads with nothing ticked. The save stays version 6.
+- `src/components/Additions.tsx`: the list, shown under the note in the Up next card and in the step's timeline row. The whole row is the tap target, at least 44 px high. A done step's name is struck through and its tick-offs are not, so one still not ticked stands out.
+- docs/BEHAVIOUR.md records it as decision 13, with the choices made for Michael: Tartine's salt step is included; a tick is never required and Done doesn't ask; the list is in both places; "Leaven used" reads "Leaven".
+
+Tests, each new or changed one failing before the change:
+- `schedule.test.ts`: the House list with its ids and weights, scaled for three loaves; ingredients the recipe has none of; a final mix with nothing to add; every Tartine recipe's list and its unchanged note; no other step has a list.
+- `state.test.ts`: ticking and unticking, per recipe; ticks survive a save and load; a bad list loads clean; version 5 and earlier version 6 saves load with nothing ticked; Clear checklist, Plan the next bake and Restore defaults clear them.
+- `view/schedule.test.ts`: the live schedule keeps the list through checks, a late start and a dough temperature, and a tick moves no step.
+- `tests/baseline/app.test.ts` now reads each step's tick-offs, and the Up next card's, from the rendered App.tsx and compares them with the record.
+- One browser flow: tick in the card by the box and by the name, see it in the timeline, reload, check the step, tick from the timeline, check what is saved, and Clear checklist.
+
+Record changes, checked by a script that decodes both records and compares them field by field against `main`:
+- 66 plans, all Preuss House, changed the final mix's note. 146 plans, every one with a schedule, gained `additions` on the mixing step. Three plans were added: the final mix up next with everything ticked but the salt, the final mix checked with the salt still not ticked, and Tartine with the salt ticked and the water not.
+- No other step field changed in any plan, and no plan's view changed. The 42 recipe calculations and 53 helper results are identical. Each of the 24 saved-data cases gained an empty `added` for each recipe and nothing else. The diff of `baseline.json` is far larger than that, because steps refer to notes by number and the numbers moved.
+- The browser record: the text records changed only by gaining the "Add to the dough" list on 28 timelines and by the House note on 22; the layout records changed by additions only; five whole-page screenshots changed and no first-screen screenshot did. Two records were added for the new flow.
+
+Evidence (this session, on `final-mix-tick-offs`):
+- `npm test` passed 170 of 170 with the host zone and with `BASELINE_ZONE=rule`. The build had 0 errors, 0 warnings and 0 hints, Prettier is clean, and `npm run test:browser` passed 54 of 54.
+- Four deliberate breaks were each caught by `npm test` and restored: no tick-off for the salt (6 tests), a loader that forgets the ticks (3), a timeline list that never shows a tick (the App.tsx check), and Clear checklist keeping the ticks (2).
+- In the dev server, with the final mix up next: the card and the timeline row each listed Rye flour 100 g, Leaven 200 g, Salt 20 g and Water 100 g. Ticking Salt in the card ticked it in the timeline and saved `mix:salt`; a tap on a row's name ticked that row; both survived a reload. After Done, Up next moved to "Start bulk fermentation", the step's name was struck through and the tick-offs were not. At 375 px the page was 375 wide. Original Tartine listed Salt 20 g and Water 50 g with its note unchanged. No console errors. The local plan was restored.
+
+Not verified: a real phone, and a real bake.
+
+Proposal, not done: ask before Done when an ingredient isn't ticked ("Salt isn't ticked. Check the step anyway?"). It would catch a missed salt at the moment it matters, at the cost of an extra tap for a baker who doesn't use the ticks.

@@ -162,3 +162,27 @@ test('before the start of bulk is due, the start of bulk and the turns count tow
     'a minute before, it asks',
   );
 });
+
+test("the live schedule keeps the final mix's tick-offs through checks, a late start and a dough temperature, and ticks move nothing", () => {
+  let s = freshState(NOW);
+  const before = scheduleView(s, NOW, String);
+  for (const id of ['leaven', 'autolyse', 'mix', 'rest', 'turn1']) s = act.setChecked(s, id, true, NOW + 3600000);
+  s = act.setAdded(act.setDoughTemp(s, 72), 'mix:salt', true);
+  const v = scheduleView(s, NOW + 3600000, String),
+    mix = v.steps.find((step) => step.id === 'mix')!;
+  assert.deepEqual(
+    mix.additions?.map((a) => a.id),
+    ['mix:rye-flour', 'mix:leaven', 'mix:salt', 'mix:water'],
+  );
+  assert.deepEqual(v.bake.added, ['mix:salt']);
+  // A tick alone changes no step's time, state or the count of steps checked.
+  const ticked = scheduleView(act.setAdded(freshState(NOW), 'mix:salt', true), NOW, String);
+  assert.deepEqual(
+    ticked.steps.map((step) => [step.id, +step.at]),
+    before.steps.map((step) => [step.id, +step.at]),
+  );
+  assert.deepEqual(
+    [ticked.completed, ticked.next?.id, ticked.underway, ticked.skipped],
+    [before.completed, before.next?.id, before.underway, before.skipped],
+  );
+});

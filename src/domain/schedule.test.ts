@@ -282,3 +282,70 @@ test('no plan has a cooling mark: each batch ends when it comes out of the oven 
         assert.match(s.at(-1)!.note, /Cool each loaf at least 15 minutes before slicing\./, label);
       }
 });
+
+test('the House final mix lists rye flour, leaven, salt and water as separate tick-offs, with the weights out of its note (Michael, November 22, 2026)', () => {
+  const steps = schedule(plan('house')),
+    mix = find(steps, 'mix');
+  assert.deepEqual(mix.additions, [
+    { id: 'mix:rye-flour', name: 'Rye flour', grams: 100 },
+    { id: 'mix:leaven', name: 'Leaven', grams: 200 },
+    { id: 'mix:salt', name: 'Salt', grams: 20 },
+    { id: 'mix:water', name: 'Water', grams: 100 },
+  ]);
+  assert.equal(mix.note, 'Add these after the autolyse. Mix until incorporated.');
+  // No other step has tick-offs: the leaven build and the autolyse keep their sentence.
+  assert.deepEqual(
+    steps.filter((s) => s.additions).map((s) => s.id),
+    ['mix'],
+  );
+  // Three loaves weigh half as much again, to the gram.
+  const three = find(schedule(plan('house', {}, { count: 3 })), 'mix').additions!;
+  assert.deepEqual(
+    three.map((a) => [a.id, Math.round(a.grams * 1e6) / 1e6]),
+    [
+      ['mix:rye-flour', 150],
+      ['mix:leaven', 300],
+      ['mix:salt', 30],
+      ['mix:water', 150],
+    ],
+  );
+});
+
+test('an ingredient the recipe has none of gets no tick-off, and a final mix with nothing to add says only to mix', () => {
+  const house = recipeById('house')!,
+    noRye = find(schedule(plan('house', {}, { flours: { ...house.defaults.flours, rye: 0 } })), 'mix');
+  assert.deepEqual(
+    noRye.additions!.map((a) => a.id),
+    ['mix:leaven', 'mix:salt', 'mix:water'],
+  );
+  const noSalt = find(schedule(plan('house', {}, { salt: 0, reserve: 0 })), 'mix');
+  assert.deepEqual(
+    noSalt.additions!.map((a) => a.id),
+    ['mix:rye-flour', 'mix:leaven'],
+  );
+  const nothing = find(
+    schedule(plan('house', {}, { salt: 0, reserve: 0, leaven: 0, flours: { ...house.defaults.flours, rye: 0 } })),
+    'mix',
+  );
+  assert.equal(nothing.additions, undefined);
+  assert.equal(nothing.note, 'Mix until incorporated.');
+});
+
+test("Tartine's second addition lists its salt and water as tick-offs, for every Tartine recipe, and keeps the book's note", () => {
+  for (const id of ['tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye']) {
+    const steps = schedule(plan(id)),
+      mix = find(steps, 'mix');
+    assert.deepEqual(mix.additions, [
+      { id: 'mix:salt', name: 'Salt', grams: 20 },
+      { id: 'mix:water', name: 'Water', grams: 50 },
+    ]);
+    assert.equal(
+      mix.note,
+      'Work in the salt and reserved water. Keep mixing if the dough separates; it should come together again.',
+    );
+    assert.deepEqual(
+      steps.filter((s) => s.additions).map((s) => s.id),
+      ['mix'],
+    );
+  }
+});

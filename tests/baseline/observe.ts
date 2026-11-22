@@ -103,6 +103,8 @@ export type PlanInput = {
   doneAt?: Record<string, string>;
   doughTemp?: number | null;
   bulkTemps?: { at: string; f: number }[];
+  /** The mixing additions ticked off, by id, such as `mix:salt`. */
+  added?: string[];
   now: string;
 };
 export type FormulaInput = { recipe: string; params?: Record<string, number>; totalHydration?: number };
@@ -163,6 +165,7 @@ export function plannerState(i: PlanInput | (FormulaInput & { date?: string; tim
           doneAt: Object.fromEntries(Object.entries(full.doneAt ?? {}).map(([id, t]) => [id, local(t)])),
           doughTemp: full.doughTemp ?? null,
           bulkTemps: (full.bulkTemps ?? []).map((r) => ({ at: local(r.at), f: r.f })),
+          added: [...(full.added ?? [])],
         },
       },
     },
@@ -191,6 +194,15 @@ export function observePlan(i: PlanInput) {
       gap: gaps.get(s.id) ?? 0,
       ...(s.note !== undefined && { note: s.note }),
       ...(s.readiness !== undefined && { ready: s.readiness }),
+      // A mixing step's tick-offs: each ingredient, its grams, and whether it is ticked.
+      ...(s.additions && {
+        additions: s.additions.map((a) => ({
+          id: a.id,
+          name: a.name,
+          grams: a.grams,
+          ticked: v.bake.added.includes(a.id),
+        })),
+      }),
       ...(+s.planned !== +s.at && { planned: stamp(s.planned) }),
       ...(s.actual && { actual: stamp(s.actual) }),
       ...(checks.includes(s.id)
@@ -305,6 +317,7 @@ export function observeRestore(saved: unknown) {
           doneAt: Object.fromEntries(Object.entries(bake.doneAt).map(([k, t]) => [k, stamp(t)])),
           doughTemp: bake.doughTemp,
           bulkTemps: bake.bulkTemps.map((b) => ({ at: stamp(b.at), f: b.f })),
+          added: bake.added,
         },
       ]),
     ),

@@ -115,9 +115,15 @@ export function setDoneAt(state: PlannerState, id: string, date: string, hhmm: s
   return t === null ? state : update(state, { bake: { doneAt: { ...bakeOf(state).doneAt, [id]: t } } });
 }
 
-/** Clears the selected recipe's checklist, check-off times and dough temperatures. */
+/** Ticks or unticks one addition of a mixing step, such as the salt. It records no time and moves nothing. */
+export function setAdded(state: PlannerState, id: string, added: boolean): PlannerState {
+  const others = bakeOf(state).added.filter((x) => x !== id);
+  return update(state, { bake: { added: added ? [...others, id] : others } });
+}
+
+/** Clears the selected recipe's checklist, check-off times, ticked additions and dough temperatures. */
 export function clearChecklist(state: PlannerState): PlannerState {
-  return clearTemperatures(update(state, { bake: { done: [], doneAt: {} } }));
+  return clearTemperatures(update(state, { bake: { done: [], doneAt: {}, added: [] } }));
 }
 
 export const setDoughTemp = (state: PlannerState, f: number | null): PlannerState =>
