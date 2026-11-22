@@ -15,8 +15,20 @@ export const STORAGE_V6 = 'bread-planner.v6',
 type Raw = Record<string, unknown>;
 const isObject = (x: unknown): x is Raw => !!x && typeof x === 'object';
 const isFinite = (n: unknown): n is number => typeof n === 'number' && Number.isFinite(n);
-const DATE = /^\d{4}-\d{2}-\d{2}$/,
-  TIME = /^\d{2}:\d{2}$/;
+/** A real calendar date, written YYYY-MM-DD. */
+function isDate(s: unknown): s is string {
+  const m = typeof s === 'string' ? /^(\d{4})-(\d{2})-(\d{2})$/.exec(s) : null;
+  if (!m) return false;
+  const [y, month, day] = [+m[1], +m[2], +m[3]],
+    leap = (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0,
+    days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1];
+  return days !== undefined && day >= 1 && day <= days;
+}
+/** A clock time from 00:00 to 23:59, written HH:MM. */
+function isTime(s: unknown): s is string {
+  const m = typeof s === 'string' ? /^(\d{2}):(\d{2})$/.exec(s) : null;
+  return !!m && +m[1] <= 23 && +m[2] <= 59;
+}
 
 /** A setting, or its default when missing or invalid. Counts are whole and at least 1, weights at least 1, the water held back at most 100%, everything else at least 0. */
 function setting(key: string, n: unknown, fallback: number) {
@@ -98,8 +110,8 @@ function bakeFrom(source: Raw): Bake {
 function createdFrom(saved: unknown, now: number) {
   const c = isObject(saved) ? saved : {};
   return {
-    date: typeof c.date === 'string' && DATE.test(c.date) ? c.date : tomorrow(now),
-    time: typeof c.time === 'string' && TIME.test(c.time) ? c.time : '09:00',
+    date: isDate(c.date) ? c.date : tomorrow(now),
+    time: isTime(c.time) ? c.time : '09:00',
   };
 }
 
@@ -127,8 +139,8 @@ function assemble(
   return {
     recipe: typeof p.recipe === 'string' && order.includes(p.recipe) ? p.recipe : order[0],
     order,
-    date: typeof p.date === 'string' && DATE.test(p.date) ? p.date : created.date,
-    time: typeof p.time === 'string' && TIME.test(p.time) ? p.time : created.time,
+    date: isDate(p.date) ? p.date : created.date,
+    time: isTime(p.time) ? p.time : created.time,
     anchor: p.anchor === 'done' ? 'done' : 'leaven',
     proof: p.proof === 'warm' ? 'warm' : 'cold',
     ovenCapacity:

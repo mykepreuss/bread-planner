@@ -6,12 +6,10 @@ Public URL: https://bread.assemblydigital.com/
 Private source: https://github.com/mykepreuss/bread-planner
 Workspace: /Users/mp/Code/mp-hq/bread-planner
 Production branch: main
-Functional release source: 6496e9275ca79d3f4270e5f2ace315659292366c
-Verified Vercel deployment: dpl_GdxF1qiADmTZQEXK64fmwoBT4Gcq (READY, production,29s build)
 Project: prj_oaBadxUrg76MQyvwFsY68FvfuM8r (bread-planner)
 Team: team_U2Fu7jNsQEgGylxpq9YR7M2f (mpmba)
 
-This checkpoint is documentation following the functional release. Subsequent documentation-only Git deployments retain the same application behavior.
+Each dated section below ends with its delivery state, newest last. The last one marked "verified live" is what production runs. When this header was last edited, that was rebuild step 3c: `main` at `e39c146972f6620d2fdf28b911d935e3529c4d0e`, production deployment `dpl_5JFY9yWnrExGSB7voohA6NAnXPXn` (READY). Michael is the planner's only user.
 
 ## Scope and decisions
 
@@ -455,7 +453,7 @@ Fixed on the same branch:
 - `docs/BEHAVIOUR.md` notes that edits made after a rollback stay in version 5, as decision 6.
 - Two nits: an unused blur handler in `NumberField.tsx`, and a repeated import in `src/view/schedule.ts`.
 - After the fixes and the re-check: `npm test` passed 148 of 148 in both zones, the browser record 43 of 43 with no record file changed, and the build and format check passed. The ten breaks each fail a named test.
-- Proposal from the re-check, not done: the phone screenshots of the Ingredients screens sometimes fail with the page scrolled about 370 px further, because the scroll position after opening the three sections depends on timing. Waiting for the sections to finish opening before the screenshot would steady it. It failed 1 in 3 and 2 in 5 runs in the verifier's copies, and in none of this session's runs in the worktree.
+- Proposal from the re-check, done in step 4: the phone screenshots of the Ingredients screens sometimes fail with the page scrolled about 370 px further, because the scroll position after opening the three sections depends on timing. Waiting for the sections to finish opening before the screenshot would steady it. It failed 1 in 3 and 2 in 5 runs in the verifier's copies, and in none of this session's runs in the worktree.
 
 Second re-check (the verifier, on `9d0dbbf`): PASS on all eight criteria. All 61 of its deliberate breaks fail a named test.
 
@@ -466,7 +464,7 @@ Release: merged as pull request #24 at `9c1a7b9`, after that PASS. Production de
 
 Not done here: step 3c deletes `src/lib/`. The old core still runs in the tests, and `app.test.ts` still uses the old loader to decide which recorded plans saved data can hold.
 
-## Rebuild step 3c: the old core deleted, November 21, 2026: committed, pull request open
+## Rebuild step 3c: the old core deleted, November 21, 2026: merged and verified live
 
 Michael asked to merge step 3b once the verifier was clean, then do step 3c. Branch `rebuild-retire-lib`, on top of step 3b. Nothing the app runs changed.
 - Deleted: `src/lib/model.ts`, `recipes.ts` and `bakeday.ts`, with their tests. `src/lib/utils.ts`, shadcn's `cn` helper, stays where `components.json` expects it.
@@ -512,7 +510,7 @@ Evidence (this session, on `rebuild-retire-lib`):
 Independent check (the verifier, on `ba3b5b9`): FAIL on criteria 5 and 8. Criteria 1 to 4, 6 and 7 were met.
 - It built both revisions: `dist/` is byte-identical. All 259 recorded plan and recipe inputs build the same planner as before. The regenerated `baseline.json` differs only by `manual-rye`, and the update is a no-op.
 - It accounted for all 111 old tests, and 101 of its first 107 breaks failed `npm test`. The carried unit tests passed in 7 time zones.
-- Finding A: with the old-loader comparison gone, a version 5 save's setting names were no longer pinned. Breaking the reading of water held back, loaf weight, salt, leaven or Red Fife parts passed every test. That reader runs the first time each browser opens this release.
+- Finding A: with the old-loader comparison gone, a version 5 save's setting names were no longer pinned. Breaking the reading of water held back, loaf weight, salt, leaven or Red Fife parts passed every test. That reader runs the first time a browser opens step 3b or later.
 - Finding B: the recipe lookup test above had been deleted with `agree.test.ts`. Without it, looking recipes up in a plain object passed every test, and a damaged save naming the recipe `constructor` would then fail to load.
 - Docs: the `agree.test.ts` sentence, the 1e-9 note, and the README's list of test folders.
 
@@ -522,4 +520,39 @@ Fixed on the same branch:
 - The three doc corrections.
 - After the fixes: `npm test` passed 119 of 119 in both zones, and the build and format check passed.
 
-Proposal, not done: a saved time such as `25:00` passes the HH:MM check and gives a plan with no steps, as it did before the rebuild. The time field can't produce one; only a damaged save can. Checking the hour and minute on load would close it.
+Proposal, done in step 4: a saved time such as `25:00` passes the HH:MM check and gives a plan with no steps, as it did before the rebuild. The time field can't produce one; only a damaged save can. Checking the hour and minute on load would close it.
+
+Second check (the verifier, on `4bb0e3d`): PASS on all eight criteria. Every setting-name break on both save versions, and both recipe lookup breaks, fail a named test. It noted that a saved 0 on the version 5 path was not pinned (done in step 4).
+
+Release: merged as pull request #25 at `e39c146`, after that PASS. Production deployment `dpl_5JFY9yWnrExGSB7voohA6NAnXPXn` is READY for that commit. On November 21 after the merge, `verify-deployment.mjs` passed 9 checks and 7 assets, the live smoke at phone width passed (23 steps, no console errors), and the live upgrade check passed again ("6 of 22 steps checked" before and after a reload, version 5 text unchanged).
+
+## Rebuild step 4: cleanup, November 21, 2026: committed, pull request open
+
+Michael agreed to every item proposed after step 3c and asked for step 4. Branch `rebuild-cleanup`, from `main` at `e39c146`.
+- Removed the unused shadcn `dialog` and `separator` components and the unused `.dark` colour block. The `dark` variant line stays, with a note: without it, Tailwind would apply the components' `dark:` styles whenever the phone is in dark mode.
+  - The built JavaScript is byte-identical. In the CSS, the `.dark` block and the utility classes only the deleted components used are gone, and the 51 effective `:root` colours are unchanged.
+- Loading now checks that a saved date is a real calendar date and a time is from 00:00 to 23:59. An impossible one falls back to the plan's creation date or time, as a malformed one already did, so a damaged save can no longer open a plan with no steps (docs/BEHAVIOUR.md, saved data).
+  - New state test: leap years, the edges of the day, and the creation date checked the same way.
+  - `load.test.ts` is tighter: every loaded plan must now have steps unless its recipe has no flour.
+  - Two recorded plans, "an impossible date" (2026-02-31) and "an impossible time" (25:00), can no longer reach the screen through saved data, so `app.test.ts` lists them as unreachable. `baseline.json` is unchanged. (Before writing the code I had checked only the saved-data cases and expected no test to change; the recorded plans showed otherwise.)
+- The per-setting state test from step 3c now also loads every setting that may be 0 as 0, from both save versions. The verifier's two zero-value breaks now fail it.
+- The flaky Ingredients phone screenshots: `openIngredients` waits for each section to finish opening before the next click, so the final scroll position no longer depends on the machine's speed.
+  - Under heavy load (16 workers on 8 cores, each Ingredients screen 12 times), it went from 58 of 84 failing to 84 of 84 passing. It also passed 70 of 70 at normal load.
+  - The seven phone first-screen images of the Ingredients screens were re-recorded. A full-page screenshot of each screen contains both the old and the new image, apart from at most 7 pixels on one anti-aliased line, about 368 px apart. Only the scroll position changed. Every other record file, desktop and whole-page images included, is unchanged.
+- `npm run build` now runs `prettier --check .` first, so a badly formatted file fails the Vercel build. A deliberately misformatted file made the build exit 1.
+- Decision 6 is closed as kept: Michael is the planner's only user.
+- This file's header now points to the newest section marked verified live instead of naming an old release.
+- Step 3c's release, and its verifier's second check, are recorded in its section above. Two of its proposals are marked done here.
+
+Evidence (this session, on `rebuild-cleanup`):
+- `npm test` passed 120 of 120 with the host zone and with `BASELINE_ZONE=rule`. The build, now with the format check, had 0 errors, 0 warnings and 0 hints.
+- `npm run test:browser` passed 43 of 43. The whole browser suite also passed 129 of 129 three times over with 12 workers.
+- Deliberate breaks, each caught and then restored:
+
+| Break | Failing tests |
+|---|---|
+| A saved 0 setting read as missing (version 5) | 1 |
+| A saved 0 flour part read as missing (version 5) | 1 |
+| Any day up to 31 accepted | 2 |
+| Every fourth year counted as a leap year | 1 |
+| Times checked for shape only | 3 |

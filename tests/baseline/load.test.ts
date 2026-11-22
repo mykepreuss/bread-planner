@@ -70,10 +70,12 @@ function problems(s: PlannerState): string[] {
   }
   if (out.length) return out;
   const selected = recipeById(s.recipe)!;
-  // A time such as 25:00 passes the HH:MM check and gives no steps at all, as it did before the rebuild (a proposal in
-  // HANDOFF.md). What must never happen is a step with an invalid time.
+  // Every loaded plan has steps, all at real times, unless its recipe has no flour at all, which the screen shows as such.
+  const steps = schedule(planOf(s)),
+    flourless = Object.values(s.recipes[s.recipe].settings.flours).every((v) => v === 0);
+  check(steps.length > 0 || flourless, 'a plan with flour but no steps');
   check(
-    schedule(planOf(s)).every((step) => Number.isFinite(+step.at)),
+    steps.every((step) => Number.isFinite(+step.at)),
     'a step with an invalid time',
   );
   // Must not throw; a recipe with no flour has no formula, which the Ingredients tab shows as such.

@@ -76,7 +76,7 @@ Times below are for a 9:00 AM leaven start with two loaves baked together. Durat
   - Check-off times are kept only for checked steps. Readings outside 50–100°F are dropped, and readings sort by time.
   - The recipe order keeps known recipes once each, or becomes just Preuss House if empty. The selected recipe must be in the order; otherwise the first recipe is selected.
   - Loaves at once is capped at 2.
-  - A missing or invalid date or time falls back to the one the plan was first made with (decision 4), or else to tomorrow at 9:00 AM.
+  - A missing or invalid date or time falls back to the one the plan was first made with (decision 4), or else to tomorrow at 9:00 AM. A date must be a real calendar date and a time must be from 00:00 to 23:59. Changed in step 4: before, any date shaped like `YYYY-MM-DD` and time shaped like `HH:MM` was kept, so a damaged save could open a plan with no steps.
   - A House blend saved with red spring flour carries its parts over to Anita's.
   - A save of any other version starts fresh. Before step 3b, versions 1 to 4 were upgraded; that upgrade is not carried into the rebuild (see below).
 
@@ -98,4 +98,4 @@ The rebuild keeps each of these as it is unless you choose otherwise.
 3. **Checklists per recipe.** Each recipe keeps its own checklist and temperatures, while the date and time are shared.
 4. **A corrupt saved date** falls back to the date the save was first created. The rebuild would use tomorrow instead, as for a new plan.
 5. **38°C is accepted, then lost.** The °C field accepts 10–38°C, but saved temperatures must be 50–100°F, and 38°C is 100.4°F. A 38°C reading works until the page reloads, then disappears. The fix would be to accept up to 37.7°C. This is a defect in the current app, so the rebuild keeps it until you decide.
-6. **Moving forward after a rollback.** If the site is rolled back to a release before step 3b and then moved forward again, edits made in between are in version 5 only, and the planner opens its version 6 save without them. The alternative is to keep a fingerprint of the version 5 save in version 6, and upgrade version 5 again whenever it has changed. This only matters if a release is rolled back.
+6. **Moving forward after a rollback.** If the site is rolled back to a release before step 3b and then moved forward again, edits made in between are in version 5 only, and the planner opens its version 6 save without them. The alternative was to keep a fingerprint of the version 5 save in version 6, and upgrade version 5 again whenever it changed. **Decided November 21, 2026: kept as it is.** Michael is the planner's only user, so it matters only if he rolls the site back and edits a plan before moving forward again.

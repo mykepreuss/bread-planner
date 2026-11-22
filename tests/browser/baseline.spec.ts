@@ -100,8 +100,11 @@ async function expectSameAfterReload(page: Page) {
 }
 async function openIngredients(page: Page) {
   await page.getByRole('tab', { name: 'Ingredients' }).click();
-  for (const section of ['Leaven, salt & water split', 'Leaven build', 'Recipe defaults'])
+  for (const section of ['Leaven, salt & water split', 'Leaven build', 'Recipe defaults']) {
     await page.getByRole('button', { name: section }).click();
+    // Let the section finish opening: where the next click scrolls the page must not depend on how fast this machine is.
+    await page.waitForFunction(() => document.getAnimations().every((a) => a.playState !== 'running'));
+  }
 }
 
 const RECIPES = ['house', 'tartine', 'white-wheat', 'red-rye', 'five-flour', 'four-flour'];
