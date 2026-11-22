@@ -4,8 +4,10 @@ import { Button } from '@/components/ui/button';
 import { stepPhase, untilText, shiftText, type LiveStep } from '@/lib/bakeday';
 import { whenText } from './text';
 
-/** The Up next card: the next step, its countdown, its note and cue, and a Done button. */
-/** From 30 minutes before bulk should end, a turn's card leads with the dough: check it, and preshape now if it is ready. */
+/**
+ * The Up next card: the next step, its countdown, its note and cue, and a Done button. From 30 minutes before bulk
+ * should end, a turn's card leads with the dough: check it, and preshape now if it is ready.
+ */
 export function NowCard({
   next,
   then,

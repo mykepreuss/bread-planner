@@ -307,7 +307,7 @@ Michael asked to start step 1 after merging step 0: make the screen code readabl
   - `ScheduleTab` (the live schedule and bake-day actions, moved from App unchanged), `NowCard`, `QuietWarning`, `PlanCard`, `BatchCard`, `OvenCard`, `Timeline` (with each step row) and `DoughTemperature` (both temperature forms);
   - `IngredientsTab` (was `RecipeFormula`), `FlourTable`, `NumberField`, `Panel` and `MethodGuide`;
   - `calculator.ts` (loading and the shared form), `text.ts` and `useNow.ts`.
-  - The code moved by line range, not by retyping. Every line of the old App.tsx is in the new files, except declarations that gained `export`, renamed props and handlers, and text Prettier re-wrapped at the new indentation.
+  - The code moved by line range, not by retyping. Every line of the old App.tsx is in the new files, except regrouped imports, declarations that gained `export`, renamed props and handlers, and text Prettier re-wrapped at the new indentation.
   - The Schedule tab's state now lives inside `ScheduleTab`, which mounts only while that tab is open. Inactive tabs were already unmounted, so nothing visible changes.
 
 Evidence (this session, on `rebuild-readable-screen`):
@@ -315,5 +315,13 @@ Evidence (this session, on `rebuild-readable-screen`):
 - The browser record passed 38 of 38 after formatting, and after the split it passed 3 full runs plus 152 of 152 with `--repeat-each=4`. No record file changed.
 - One screenshot (`recipe-five-flour-ingredients`) failed once, in the first browser run after the split. Its accessibility and layout snapshots had matched, and it then passed 155 times in a row. It was not reproduced, so the cause is unknown.
 
-Not verified: the Vercel preview build of this branch, and a real phone.
+- The `verifier` agent checked step 1 independently and found no behaviour change.
+  - The `src/lib` files compile to byte-identical minified output before and after formatting.
+  - Every declaration of the old App.tsx matches its new copy.
+  - 120 of 120 tests passed, and the browser record passed 38, 38 and 114 of 114.
+  - A deliberate regression in `Timeline.tsx` failed `npm test`, and a class typo in `OvenCard.tsx` failed 25 browser tests.
+  - It found the docs said a pull request was open before one existed, and three cosmetic slips; all are fixed.
+- Vercel's preview build of `58ea3bb` succeeded.
+
+Not verified: a real phone.
 

@@ -228,7 +228,6 @@ export function Timeline({
           <div className="step-list">
             {steps
               .filter((s) => dateString(s.at) === day)
-
               .map((step) => (
                 <TimelineStep
                   key={step.id}
