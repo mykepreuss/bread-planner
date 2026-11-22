@@ -232,6 +232,28 @@ test.describe('flows', () => {
     await expectSameAfterReload(page);
   });
 
+  test('Every date and time field resets its native look, so it fits its place on a phone', async ({ page }) => {
+    // iPhone Safari sizes a native date or time field by its own picker, and lets it spill out of its place, unless the
+    // field's appearance is reset. This browser can't draw that control, so the test checks the reset on every field,
+    // as well as where each Done at pair sits.
+    await page.setViewportSize(widths.phone);
+    await open(page, 'mid-bulk');
+    await expect(page.locator('.done-at')).toHaveCount(6);
+    const fields = await page.locator('input[type="date"], input[type="time"]').all();
+    expect(fields).toHaveLength(14);
+    for (const field of fields) {
+      const name = (await field.getAttribute('aria-label')) ?? (await field.getAttribute('id'));
+      expect(await field.evaluate((el) => getComputedStyle(el).appearance), `${name}: appearance`).toBe('none');
+    }
+    for (const pair of await page.locator('.done-at').all()) {
+      const [date, time] = await pair
+        .locator('input')
+        .evaluateAll((els) => els.map((el) => el.getBoundingClientRect()));
+      expect(date.right, 'the date ends before the time starts').toBeLessThanOrEqual(time.left);
+      expect(time.right, 'the time ends inside the screen').toBeLessThanOrEqual(widths.phone.width);
+    }
+  });
+
   test('Clear checklist clears the checks and the dough temperatures', async ({ page }) => {
     await open(page, 'mid-bulk');
     await page.getByRole('button', { name: 'Clear checklist' }).click();
