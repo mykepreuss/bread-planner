@@ -223,3 +223,15 @@ Cleanup pass, same day (`/simplify`: reuse, simplification, efficiency and altit
 - A new test pins the 30-minute turn grid that `followDough` relies on.
 
 Proposals, not done: build the two date formatters in `model.ts` once instead of on every call (about 1–2 ms per render, every 30-second tick); generate turns from a bulk length in `model.ts` if a duration editor ever returns; `planNext` never clears the checklist, so a fully checked plan cannot be moved forward (existing before this branch).
+
+## Preuss House uses Anita's all-purpose flour, November 21, 2026: locally verified, not released
+
+Michael's decision: Preuss House uses Anita's all-purpose flour instead of red spring flour. This covers the dough (800 g in the autolyse at the defaults) and the leaven build (71 g per 1,000 g added flour). Quantities, hydration and timing are unchanged. Anita's is a new flour of its own (`anita`), so the generic "All-purpose flour" in the Five-Flour and Four-Flour recipes is untouched, as is every other recipe that uses red spring.
+
+- A saved House blend keeps its parts: a saved `flour_red` value becomes `flour_anita` on load.
+- The "Red Spring & Rye Variation" (`manual-rye`) used to be hidden because it matched House exactly. It is now hidden unless its legacy sheet cells were edited, so the dropdown still lists the same six recipes.
+- Flour names in step text keep proper nouns capitalized. This also changes Five-Flour's "red fife flour" to "Red Fife flour".
+
+Evidence: 96 of 96 tests pass. The House name, leaven and dedup tests were updated, and a new test covers the saved-blend carry-over. The build had 0 errors, 0 warnings and the 4 existing hints. In the dev server, the saved local plan loaded with 80/10/10 Anita's, whole-wheat and rye parts, its checked leaven intact, and Anita's in the leaven step, autolyse step, flour table, weighing lists and leaven build, with no "red spring" left on the House page. A fresh plan listed the same six recipes. The console had no errors.
+
+Not verified: the live site. Once a browser has loaded this version, an older version of the app would reset the House blend to its defaults (80/10/10) because it does not know `flour_anita`.
