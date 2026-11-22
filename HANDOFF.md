@@ -275,7 +275,7 @@ Review fixes (the code review of PR #20 at extra-high effort found seven test an
 
 Evidence (this session, at the commit after `e5f2fe0` on `rebuild-baseline`):
 - `git diff --stat HEAD -- src` is empty.
-- `npm test` passed 116 of 116 in America/Vancouver and in UTC: the 111 existing tests, the 4 baseline sections and the App.tsx check. `npm run build` had 0 errors, 0 warnings and the 4 existing hints.
+- `npm test` passed 120 of 120 with the host zone and with the Vancouver rule: the 111 existing tests, 4 checks of the rule, the 4 baseline sections and the App.tsx check. `npm run build` had 0 errors, 0 warnings and the 4 existing hints.
 - A simulated Vercel upload (the committed files minus `.vercelignore`) passed `npm test` and the build.
 - The browser record passed 38 of 38 twice. `npm run baseline:update` leaves both JSON files byte for byte as they are.
 - Deliberate one-line breaks, each reverted:
@@ -285,7 +285,10 @@ Evidence (this session, at the commit after `e5f2fe0` on `rebuild-baseline`):
   - A phone-only difference makes `--update-snapshots` fail with "phone and desktop show the same content", and no record file is written.
 - The `verifier` agent checked the first version independently. Its findings (a Vercel build break, three wrong spec claims, and gaps in the browser record) were fixed before the PR.
 
-Vercel: the preview builds of `e5f2fe0` and `3ba69b5` failed. On Vercel's Linux build (Node 24.22.3), the record tests could not switch the process to America/Vancouver while running ("The baseline needs the America/Vancouver time zone"), while the 111 existing tests passed. The simulated upload above ran on macOS, where that switch works, so it could not show this. The `npm test` and `baseline:update` scripts now start Node with `TZ=America/Vancouver`.
+Vercel: the preview builds of `e5f2fe0`, `3ba69b5` and `d9b456f` failed. Vercel's Linux build (Node 24.22.3) cannot apply America/Vancouver at all: the record tests stopped with "The baseline needs the America/Vancouver time zone" whether the zone was set while running or when Node started. The 111 existing tests passed, in UTC. The simulated upload above ran on macOS, where the zone works, so it could not show this.
+- The fix: `tests/baseline/vancouver.ts` follows Vancouver's rule in force since 2007 (UTC−8, and UTC−7 from 2:00 AM on the second Sunday in March to 2:00 AM on the first Sunday in November). It reads wall-clock times with the host's own parser, so invalid times behave as before. The record tests use it only where the host cannot apply the zone.
+- `vancouver.test.ts` compares it with the real zone wherever the host has it: over 300,000 readings at 15-minute steps through 2026, early 2027 and early 2030; every wall-clock time, including the skipped and repeated hours; invalid times; and day changes. It is skipped on Vercel.
+- `BASELINE_ZONE=rule npm test` runs here what Vercel runs, with the host left in UTC underneath: 120 of 120 pass, as with the host zone.
 
 Not verified: a passing Vercel build with that change, which the PR checks will show; the browser records on any machine but this Mac (the screenshots are Mac-specific).
 

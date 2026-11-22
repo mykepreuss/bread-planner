@@ -8,17 +8,24 @@
  */
 import {createPlanner,restorePlanner,calculateRecipe,recipeSchedule,quietHourActions,addedHydration,totalHydration,type Planner} from '../../src/lib/recipes.ts';
 import {coldProofWindow,dateString,durationText,round} from '../../src/lib/model.ts';
+import {useVancouverRule} from './vancouver.ts';
 import {followDough,skippedSteps,stepPhase,stepGaps,holdTemperature,bulkAdvice,bulkDoneText,turnNumber,untilText,shiftText,fromF,toF,withReading,retime,stampNow,inTempRange,clockText,type BulkReading} from '../../src/lib/bakeday.ts';
 
 export const TIME_ZONE='America/Vancouver';
 /**
- * The npm scripts start Node with `TZ=America/Vancouver`: on Vercel's Linux build, Node did not apply a time zone
- * set while running. Setting it here as well covers a direct `node --test` run on a Mac, where it does apply. Either
- * way, check it took, so a baseline is never compared in the wrong zone.
+ * The baseline runs in America/Vancouver. The npm scripts start Node with TZ=America/Vancouver, which a Mac applies.
+ * Vercel's build machines cannot, so there `Date` becomes VancouverDate, which follows the zone's rule;
+ * vancouver.test.ts checks that rule against the real zone wherever it exists. BASELINE_ZONE=rule forces the rule,
+ * to run here what Vercel runs. Returns which one is in use.
  */
-export function useBaselineTimeZone(){
-  if(process.env.TZ!==TIME_ZONE)process.env.TZ=TIME_ZONE;
-  if(new Date('2026-07-01T12:00:00').getTimezoneOffset()!==420||new Date('2026-12-01T12:00:00').getTimezoneOffset()!==480)throw new Error(`The baseline needs the ${TIME_ZONE} time zone: start Node with TZ=${TIME_ZONE}, as \`npm test\` does.`);
+export function useBaselineTimeZone():'host'|'rule'{
+  // Forcing the rule also leaves the host in UTC, as Vercel's machines are, so nothing can lean on the host's zone.
+  if(process.env.BASELINE_ZONE==='rule')process.env.TZ='UTC';else if(process.env.TZ!==TIME_ZONE)process.env.TZ=TIME_ZONE;
+  const inVancouver=()=>new Date('2026-07-01T12:00:00').getTimezoneOffset()===420&&new Date('2026-12-01T12:00:00').getTimezoneOffset()===480;
+  if(process.env.BASELINE_ZONE!=='rule'&&inVancouver())return 'host';
+  useVancouverRule();
+  if(!inVancouver())throw new Error(`The baseline needs the ${TIME_ZONE} time zone.`);
+  return 'rule';
 }
 
 /** Local wall-clock time and UTC offset, such as `2026-11-22 09:00 -08`. */
