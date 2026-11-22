@@ -6,38 +6,11 @@
  * Everything runs in America/Vancouver (`useBaselineTimeZone`). Times are written as local wall-clock time with the
  * UTC offset, such as `2026-11-22 09:00 -08`, so a daylight-saving change shows.
  */
-import {
-  createPlanner,
-  restorePlanner,
-  calculateRecipe,
-  recipeSchedule,
-  quietHourActions,
-  addedHydration,
-  totalHydration,
-  type Planner,
-} from '../../src/lib/recipes.ts';
-import { coldProofWindow, dateString, durationText, round } from '../../src/lib/model.ts';
+import { createPlanner, restorePlanner, recipeSchedule, addedHydration, type Planner } from '../../src/lib/recipes.ts';
+import { dateString, round } from '../../src/lib/model.ts';
+import { clockText, type BulkReading } from '../../src/lib/bakeday.ts';
 import { useVancouverRule } from './vancouver.ts';
-import {
-  followDough,
-  skippedSteps,
-  stepPhase,
-  stepGaps,
-  holdTemperature,
-  bulkAdvice,
-  bulkDoneText,
-  turnNumber,
-  untilText,
-  shiftText,
-  fromF,
-  toF,
-  withReading,
-  retime,
-  stampNow,
-  inTempRange,
-  clockText,
-  type BulkReading,
-} from '../../src/lib/bakeday.ts';
+import { oldCore, type Core } from './cores.ts';
 
 export const TIME_ZONE = 'America/Vancouver';
 /**
@@ -161,47 +134,41 @@ export function planner(i: PlanInput | (FormulaInput & { date?: string; time?: s
  * app.test.ts checks the real one against the record; step 3 of the rebuild moves those rules into tested code and
  * this adapter then calls it.
  */
-export function observePlan(i: PlanInput) {
+export function observePlan(i: PlanInput, core: Core = oldCore) {
   const plan = planner(i),
     now = local(i.now),
     profile = plan.recipes[plan.recipe],
     checks = profile.done;
-  const planned = recipeSchedule(plan);
-  const { steps, shift, estimate, turns, bulkMinutes, checkFrom } = followDough(
-    planned,
-    checks,
-    profile.doneAt,
-    profile.doughTemp,
-    profile.bulkTemps,
-  );
+  const { steps, shift, estimate, turns, bulkMinutes, checkFrom } = core.follow(plan);
   const doneStep = steps.find((s) => s.id === 'done'),
     first = steps[0];
-  const skipped = skippedSteps(steps, checks),
+  const skipped = core.skipped(steps, checks),
     settled = [...checks, ...skipped];
   const remaining = steps.filter((s) => !settled.includes(s.id)),
     completed = steps.filter((s) => checks.includes(s.id)).length,
     next = remaining[0];
   const stale = doneStep !== undefined && +doneStep.at < now && (completed === 0 || remaining.length === 0);
-  const tempText = (f: number) => `${round(fromF(f, plan.tempUnit), plan.tempUnit === 'C' ? 1 : 0)}°${plan.tempUnit}`;
+  const tempText = (f: number) =>
+    `${round(core.helpers.fromF(f, plan.tempUnit), plan.tempUnit === 'C' ? 1 : 0)}°${plan.tempUnit}`;
   const advice =
     bulkMinutes !== null
-      ? bulkDoneText(bulkMinutes, estimate)
+      ? core.bulkDone(bulkMinutes, estimate)
       : estimate
-        ? bulkAdvice(estimate, stamp, { turns, hold: holdTemperature(estimate, now), temp: tempText })
+        ? core.advice(estimate, stamp, { turns, hold: core.hold(estimate, now), temp: tempText })
         : null;
   const shape = steps.find((s) => s.id === 'shape');
-  const during = next !== undefined && (next.id === 'shape' || turnNumber(next.id) > 0);
-  const night = quietHourActions(steps, settled),
+  const during = next !== undefined && (next.id === 'shape' || core.turnNumber(next.id) > 0);
+  const night = core.quiet(steps, settled),
     quiet = new Map(night.map((a) => [a.step.id, a.continues ? 'continues' : 'starts']));
-  const gaps = stepGaps(steps),
-    proof = coldProofWindow(steps),
+  const gaps = core.gaps(steps),
+    proof = core.coldProof(steps),
     count = plan.recipes[plan.recipe].params.count;
   return {
     steps: steps.map((s) => ({
       id: s.id,
       title: s.title,
       at: stamp(s.at),
-      phase: stepPhase(s.id),
+      phase: core.phase(s),
       gap: gaps.get(s.id) ?? 0,
       ...(s.note !== undefined && { note: s.note }),
       ...(s.readiness !== undefined && { ready: s.readiness }),
@@ -219,7 +186,7 @@ export function observePlan(i: PlanInput) {
     view: {
       batches: Math.ceil(count / plan.ovenCapacity),
       finish: doneStep ? stamp(doneStep.at) : null,
-      totalTime: first && doneStep ? durationText((+doneStep.at - +first.at) / 60000) : null,
+      totalTime: first && doneStep ? core.text.duration((+doneStep.at - +first.at) / 60000) : null,
       checked: completed,
       stale,
       underway: checks.length > 0 && !stale,
@@ -229,15 +196,16 @@ export function observePlan(i: PlanInput) {
         next && !stale
           ? {
               id: next.id,
-              countdown: untilText(+next.at - now),
+              countdown: core.text.until(+next.at - now),
               then: remaining[1]?.id ?? null,
-              doughCheck: turnNumber(next.id) > 0 && shape !== undefined && checkFrom !== null && now >= +checkFrom,
+              doughCheck:
+                core.turnNumber(next.id) > 0 && shape !== undefined && checkFrom !== null && now >= +checkFrom,
               temperatureField:
                 during && profile.doughTemp !== null ? 'now' : during || next.id === 'rest' ? 'after mixing' : null,
             }
           : null,
       shift,
-      shiftText: shiftText(shift),
+      shiftText: core.text.shift(shift),
       estimate: estimate && {
         planned: estimate.planned,
         minutes: estimate.minutes,
@@ -262,11 +230,10 @@ export function observePlan(i: PlanInput) {
 }
 
 /** The Ingredients tab for one recipe: the weights, totals and leaven balance it shows. Null when it cannot calculate. */
-export function observeFormula(i: FormulaInput) {
+export function observeFormula(i: FormulaInput, core: Core = oldCore) {
   const plan = planner(i),
-    r = calculateRecipe(plan);
+    r = core.formula(plan);
   if (!r) return null;
-  const params = plan.recipes[plan.recipe].params;
   return {
     total: r.total,
     flour: r.flour,
@@ -276,7 +243,7 @@ export function observeFormula(i: FormulaInput) {
     addedHydration: r.hydration,
     totalHydration: r.totalHydration,
     shownHydration: Math.round(r.totalHydration),
-    hydrationMin: Math.ceil(totalHydration({ ...params, hydration: 0 })),
+    hydrationMin: Math.ceil(core.hydrationFloor(plan)),
     totalFlour: r.totalFlour,
     totalWater: r.totalWater,
     flours: r.flours.map((f) => ({ key: f.key, name: f.name, grams: f.grams, percent: f.percent })),
@@ -326,34 +293,34 @@ export function observeRestore(saved: unknown) {
 }
 
 /** Small helpers whose wording or rounding the screen shows directly. */
-export function observeHelper({ fn, args }: HelperCall): unknown {
-  const a = args as never[];
+export function observeHelper({ fn, args }: HelperCall, core: Core = oldCore): unknown {
+  const a = args as never[],
+    h = core.helpers;
   switch (fn) {
     case 'retime': {
-      const t = retime(a[0], a[1]);
+      const t = h.retime(a[0], a[1]);
       return t === null ? null : stamp(t);
     }
     case 'untilText':
-      return untilText(a[0]);
+      return core.text.until(a[0]);
     case 'shiftText':
-      return shiftText(a[0]);
+      return core.text.shift(a[0]);
     case 'durationText':
-      return durationText(a[0]);
+      return core.text.duration(a[0]);
     case 'stampNow':
-      return stamp(stampNow(local(a[0]) + (a[1] as number) * 1000));
+      return stamp(h.stampNow(local(a[0]) + (a[1] as number) * 1000));
     case 'withReading': {
       const read = (r: { at: string; f: number }): BulkReading => ({ at: local(r.at), f: r.f });
-      return withReading((a[0] as { at: string; f: number }[]).map(read), read(a[1])).map((r) => ({
-        at: stamp(r.at),
-        f: r.f,
-      }));
+      return h
+        .withReading((a[0] as { at: string; f: number }[]).map(read), read(a[1]))
+        .map((r) => ({ at: stamp(r.at), f: r.f }));
     }
     case 'toF':
-      return toF(a[0], a[1]);
+      return h.toF(a[0], a[1]);
     case 'fromF':
-      return fromF(a[0], a[1]);
+      return h.fromF(a[0], a[1]);
     case 'inTempRange':
-      return inTempRange(a[0], a[1]);
+      return h.inTempRange(a[0], a[1]);
     default:
       throw new Error(`Unknown helper ${fn}`);
   }
