@@ -366,6 +366,37 @@ test.describe('flows', () => {
     await expect(page.getByText('Skipped', { exact: true })).toHaveCount(12);
   });
 
+  test('Tartine Olive lists its add-ins scaled to the loaves, and the list fits a phone', async ({ page }) => {
+    await page.setViewportSize(widths.phone);
+    await open(page, 'recipe-olive');
+    await page.getByRole('tab', { name: 'Ingredients' }).click();
+    const addIns = page.locator('.work-card', { hasText: '03 / Add-ins' }).getByRole('listitem');
+    await expect(addIns).toHaveText([
+      '3 cups pitted olives, coarsely chopped',
+      '2 cups toasted walnuts or hazelnuts, coarsely chopped (optional)',
+      '2 teaspoons dried herbes de Provence',
+      'Grated zest of 1 lemon',
+    ]);
+    const loaves = page.getByLabel('Number of loaves');
+    await loaves.fill('3');
+    await loaves.blur();
+    await expect(addIns).toHaveText([
+      '4½ cups pitted olives, coarsely chopped',
+      '3 cups toasted walnuts or hazelnuts, coarsely chopped (optional)',
+      '3 teaspoons dried herbes de Provence',
+      'Grated zest of 1½ lemons',
+    ]);
+    await loaves.fill('1');
+    await loaves.blur();
+    await expect(addIns.first()).toHaveText('1½ cups pitted olives, coarsely chopped');
+    // Every line wraps inside the screen.
+    for (const item of await addIns.all()) {
+      const box = (await item.boundingBox())!;
+      expect(box.x + box.width, await item.textContent()).toBeLessThanOrEqual(widths.phone.width);
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(widths.phone.width);
+  });
+
   test('Clear checklist clears the checks and the dough temperatures', async ({ page }) => {
     await open(page, 'mid-bulk');
     await page.getByRole('button', { name: 'Clear checklist' }).click();

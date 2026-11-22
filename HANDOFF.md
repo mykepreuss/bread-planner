@@ -965,4 +965,20 @@ Evidence (this session, on `tartine-recipes` after the rebase onto `main`):
 | Country Rye's flours swapped | 4 | 1 |
 | The add-ins panel isn't shown | 0 | 2 |
 
+Independent check (the verifier, on `9668641`): every criterion passed on the evidence it could reach. The one exception was the #32 deployment sentence above, which needs Vercel access; I had confirmed it through the Vercel API after the merge.
+- In the built app at 390 and 1280 px:
+  - the six-recipe menu, and the book's weights for Whole Wheat and Country Rye;
+  - Olive and Sesame add-ins at 1, 2 and 3 loaves;
+  - the add-in, toast and longer-rest steps;
+  - whole bakes of Olive and Sesame through Up next;
+  - no console errors and nothing wider than the screen.
+- Preuss House and Original Tartine produced byte-identical output at `main` and here across about 2,600 settings combinations.
+- A save written by production today opened with all six recipes on the menu and its data intact.
+- The record, the 32 new snapshot files and the four saved plans held as described. The new tests fail on `main`, and the break table reproduced.
+- Three of its 13 breaks survived, all in the Ingredients add-ins panel: the panel unscaled, the panel shown only at 2 loaves, and lines that don't wrap. A new browser flow, "Tartine Olive lists its add-ins scaled to the loaves, and the list fits a phone", checks 2, 3 and 1 loaves and every line's width at phone size. It passed 3 of 3 runs, and fails under each of the three breaks. Under Michael's lighter process from this point, this fix was not sent back to the verifier.
+- What Michael should know:
+  - Once bulk has started, the add-in step counts like a turn, so checking preshape skips "Add the olive mixture" without asking.
+  - Checking "Add salt and final water" before the toast step marks the toast step Skipped; it can still be checked.
+  - Country Rye's flour reads "Rye flour", the House rye, rather than "medium-fine whole rye".
+
 Not verified: how the add-ins and toast step read on Michael's iPhone, and whether the book's whole-wheat and rye pages intend 50 g of water to wait for the salt.
