@@ -22,7 +22,6 @@ const sliderRanges: Record<string, { min: number; max: number; step: number }> =
 function Amount({
   value,
   onChange,
-  onBlur,
   label,
   id,
   min = 0,
@@ -31,7 +30,6 @@ function Amount({
 }: {
   value: number;
   onChange: (n: number) => void;
-  onBlur: () => void;
   label: string;
   id?: string;
   min?: number;
@@ -78,7 +76,6 @@ function Amount({
         onBlur={() => {
           setFocused(false);
           if (invalid) setDraft(String(round(value, 3)));
-          onBlur();
         }}
       />
       {invalid && (
@@ -124,7 +121,6 @@ export function NumberField({
           max={spec.cell === 'reserve' ? 100 : undefined}
           step={spec.step ?? 0.001}
           onChange={onChange}
-          onBlur={() => {}}
         />
         <span className="unit">{spec.unit}</span>
       </div>

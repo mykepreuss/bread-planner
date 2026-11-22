@@ -17,7 +17,7 @@ This checkpoint is documentation following the functional release. Subsequent do
 
 User requested an Astro rebuild, Vercel release and Cloudflare setup for bread.assemblydigital.com. The app has never been used in production. User explicitly excluded any transfer/migration features; temporary backup/import controls and transfer page were removed. The release starts fresh with the established recipes and browser-local editing.
 
-Astro7.4.1 statically builds the page shell, metadata and404 page. One React island retains shadcn/Radix, TanStack Form/Table and the existing calculator behavior. No backend, database, authentication or analytics were added. Preuss House remains the default, with six distinct editable recipes, exact staged quantities, leaven made/used/reserved, independent saved settings/checklists, multi-loaf forward/backward schedules, overnight proof, readiness cues, quiet-hour alerts and synchronized percentage sliders/exact inputs. Existing decisions and source math are archived in docs/SITES_HISTORY.md.
+Astro7.4.1 statically builds the page shell, metadata and404 page. One React island retains shadcn/Radix and the existing calculator behavior (TanStack Form and Table were removed in rebuild step 3b). No backend, database, authentication or analytics were added. Preuss House remains the default, with six distinct editable recipes, exact staged quantities, leaven made/used/reserved, independent saved settings/checklists, multi-loaf forward/backward schedules, overnight proof, readiness cues, quiet-hour alerts and synchronized percentage sliders/exact inputs. Existing decisions and source math are archived in docs/SITES_HISTORY.md.
 
 Vercel framework is Astro, Node24, install npm ci, build npm test && npm run build, output dist. Git integration is connected. Local .env.local and .vercel files are ignored and excluded from source uploads. The source repository is PRIVATE. Vercel's immutable/team/branch preview aliases retain their default authentication; the production domain is public.
 
@@ -438,5 +438,21 @@ Evidence (this session, on `rebuild-switch`):
 | Saving under another key | 8 or more browser flows |
 
 - Production for 3a was checked before this work (above).
+
+Independent check (the verifier, on `fda25ac`): criteria 1 to 7 met, criterion 8 (docs) not met.
+- It built the old and new apps side by side and drove both with the same scripts: 21 saved plans on both tabs, 14 scenarios and 165 step snapshots, all identical. After each scenario, the new app's version 6 save held the same planner as the old app's version 5 save.
+- Storage failures, decision 4 across reloads, a clean `npm ci` without TanStack, and every claim above reproduced.
+- Not met: the README said the bulk estimate "does not change the planned steps"; it moves preshape and every later step. That sentence predates step 3b.
+- It also found eight deliberate breaks that no test caught (the behaviour was right in each), Timeline still working out the total time and "All batches done" itself, the TanStack mention in this file's scope section, and an unwritten consequence of a rollback.
+
+Fixed on the same branch:
+- The README sentence, and the scope section above.
+- `Timeline.tsx` shows the view's `totalMinutes` and `allDone`, so the record tests what the screen shows. Breaking either in the view now fails 3 tests.
+- New checks for each surviving break, all of which now fail the build or the browser record:
+  - four browser flows: the plan time, each leaven build field and Restore defaults on a recipe other than House, the hydration minimum and its slider, and storage that cannot be read or written;
+  - `src/view/schedule.test.ts`: the checked count leaves out checks for steps no longer on the schedule.
+- `docs/BEHAVIOUR.md` notes that edits made after a rollback stay in version 5, as decision 6.
+- Two nits: an unused blur handler in `NumberField.tsx`, and a repeated import in `src/view/schedule.ts`.
+- After the fixes: `npm test` passed 148 of 148 in both zones, the browser record 42 of 42 with no record file changed, and the build and format check passed.
 
 Not done here: step 3c deletes `src/lib/`. The old core still runs in the tests, and `app.test.ts` still uses the old loader to decide which recorded plans saved data can hold.

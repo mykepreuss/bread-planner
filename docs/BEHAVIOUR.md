@@ -68,7 +68,7 @@ Times below are for a 9:00 AM leaven start with two loaves baked together. Durat
 ## Saved data
 
 - Everything is saved in the browser under `bread-planner.v6` on every change, as `{version: 6, plan}`. Each recipe keeps its own settings, checklist, check-off times, dough temperature and readings. The selected recipe, date, time, plan-around choice, Tartine proof, loaves at once, reheat time and temperature unit are shared. The save also keeps the date and time the plan was first made, which nothing on screen changes.
-- Changed in step 3b of the rebuild: until then the planner saved version 5 under `bread-planner.v5`. When there is no usable version 6 save, the planner upgrades the version 5 one. It never writes or removes `bread-planner.v5`, so a rollback to an earlier release finds the plan as it was when it was upgraded.
+- Changed in step 3b of the rebuild: until then the planner saved version 5 under `bread-planner.v5`. When there is no usable version 6 save, the planner upgrades the version 5 one. It never writes or removes `bread-planner.v5`, so a rollback to an earlier release finds the plan as it was when it was upgraded. Edits made on that earlier release go only to version 5, so moving forward again opens the version 6 save without them (decision 6).
 - Not saved: the open tab and the open sections. A reload opens the Schedule tab with every section closed.
 - When browser storage can't be read, the planner starts fresh. When it can't be written, the planner keeps working without saving.
 - On loading either version, a value that is missing or invalid falls back to its default:
@@ -98,3 +98,4 @@ The rebuild keeps each of these as it is unless you choose otherwise.
 3. **Checklists per recipe.** Each recipe keeps its own checklist and temperatures, while the date and time are shared.
 4. **A corrupt saved date** falls back to the date the save was first created. The rebuild would use tomorrow instead, as for a new plan.
 5. **38°C is accepted, then lost.** The °C field accepts 10–38°C, but saved temperatures must be 50–100°F, and 38°C is 100.4°F. A 38°C reading works until the page reloads, then disappears. The fix would be to accept up to 37.7°C. This is a defect in the current app, so the rebuild keeps it until you decide.
+6. **Moving forward after a rollback.** If the site is rolled back to a release before step 3b and then moved forward again, edits made in between are in version 5 only, and the planner opens its version 6 save without them. The alternative is to open whichever save changed last, which needs a time saved with each. This only matters if a release is rolled back.

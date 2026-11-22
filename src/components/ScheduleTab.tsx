@@ -107,9 +107,9 @@ export function ScheduleTab({ onViewIngredients }: { onViewIngredients: () => vo
           nightIds={v.nightIds}
           gaps={v.gaps}
           completed={v.completed}
-          firstStep={v.firstStep}
+          totalMinutes={v.totalMinutes}
+          allDone={v.allDone}
           doneStep={v.doneStep}
-          remaining={v.remaining}
           book={book}
           proofWindow={v.proofWindow}
           onClear={() => update(act.clearChecklist)}

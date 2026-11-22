@@ -32,7 +32,7 @@ Preuss House is the default. Six distinct editable recipes retain independent se
 
 On bake day, an "Up next" card shows the next step with a countdown. Checking a step records when it was done, and later steps move to keep their planned spacing from it. Turns are the exception: they are recorded but move nothing, so bulk always runs its planned length from when it started.
 
-Entering the dough temperature after mixing gives a bulk estimate: the planned bulk counts as 78°F dough, and time doubles for every 15°F cooler and halves for every 15°F warmer. It advises when to start checking; it does not change the planned steps.
+Entering the dough temperature after mixing gives a bulk estimate: the planned bulk counts as 78°F dough, and time doubles for every 15°F cooler and halves for every 15°F warmer. Preshape and every later step move to the estimated end of bulk, and the note says when to start checking the dough.
 
 Browser storage uses `bread-planner.v6`. A `bread-planner.v5` save from an earlier release is upgraded on first load and left as it was, so a rollback still finds it. Each browser starts with the default recipes and remembers edits locally. The first release starts fresh; no data transfer or account system is included.
 

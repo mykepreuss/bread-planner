@@ -7,10 +7,10 @@ import {
   bulkAdvice,
   bulkDoneText,
   fromF,
+  stepGaps,
   type LiveStep,
 } from '../domain/bakeday.ts';
 import { quietHourActions } from '../domain/quiet.ts';
-import { stepGaps } from '../domain/bakeday.ts';
 import { dateString, round } from '../domain/text.ts';
 import { planOf, selected, type PlannerState } from '../state/schema.ts';
 
@@ -76,7 +76,6 @@ export function scheduleView(state: PlannerState, now: number, when: (d: Date) =
     bulkMinutes,
     checkFrom,
     doneStep,
-    firstStep,
     skipped,
     settled,
     remaining,
