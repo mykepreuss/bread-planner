@@ -8,7 +8,7 @@ import { dateString } from './text.ts';
 
 /**
  * A plan for a recipe at its default settings, with the leaven started at 9:00 AM on October 21, 2026, and one loaf
- * baked at a time, changed as given. Red Spring & Rye is the old spreadsheet's own recipe.
+ * baked at a time, changed as given. These tests used Red Spring & Rye until it was removed; it scheduled as House does.
  */
 function plan(id: string, change: Partial<PlanInput> = {}, settings: Partial<Settings> = {}): PlanInput {
   const recipe = recipeById(id)!;

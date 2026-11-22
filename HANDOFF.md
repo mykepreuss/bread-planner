@@ -842,7 +842,7 @@ Second check (the verifier, on `022d29d`): FAIL on two small items.
 - What Michael should know, from its notes:
   - Once bulk is due, a tap past preshape still skips quietly: "Basket rest" at the start of bulk skips 10 steps, all turns and shaping, without asking.
   - Whether a tap asks depends on the clock while the start of bulk is unchecked.
-  - A two-batch bake with the 30-minute reheat and only its bake steps checked asks "Skip 5" at Batch 2.
+  - A two-batch bake with only its bake steps checked can ask at Batch 2, depending on the reheat time. Two checks disagreed on which reheat times, so no count is given here.
 
 Third check (the verifier, on `217e136`): PASS. Every time source other than the tap that it tried fails a browser flow (seven variants). It noted that a check that doesn't ask could be recorded at the screen's clock without any test noticing, as already on `main` before this PR: a proposal for later is to move the clock between drawing the page and a plain check, and assert the Done at time.
 
@@ -866,7 +866,7 @@ Change:
   - A save whose selected recipe was removed opens on Preuss House.
   - House and Tartine keep their settings and checklists.
   - The removed recipes' data is dropped at the next save. A version 5 save is never written, so its copy stays as it was.
-- docs/BEHAVIOUR.md records it as decision 9 and marks decision 2, Red Spring & Rye's cold-proof wording, superseded. Its record counts, and the README's, are updated. The README and BEHAVIOUR.md had said 16 browser actions since step 0; there are now 29.
+- docs/BEHAVIOUR.md records it as decision 9 and marks decision 2, Red Spring & Rye's cold-proof wording, superseded. Its record counts, and the README's, are updated. The README and BEHAVIOUR.md had said 16 browser actions since step 0; there are now 30.
 
 Tests:
 - New, each failing before the change:
@@ -898,3 +898,20 @@ Evidence (this session, on `remove-four-recipes`, rebased onto `main` at `0b9245
 - `npm test` passed 130 of 130 with the host zone and with `BASELINE_ZONE=rule`, and `npm run baseline:update` left the record unchanged.
 - `npm run test:browser` passed 44 of 44: 14 screens and 30 flows. One earlier full run failed once on "The method guide for house"; it passed alone, 30 of 30 times for both method-guide flows under load, and in the next full run. The verifier saw the same one-off on the Tartine method guide earlier today. It is a flaky flow, not a change.
 - After the rebase, HANDOFF.md needed a hand merge: both sections are kept.
+
+Independent check (the verifier, on `2267301`): FAIL on criterion 6 only, three doc sentences, now corrected.
+- Passed:
+  - In the built app at 375 and 1280 px, only the two recipes show, with no trace of the four or their flours.
+  - A save written by production today, with Red Spring & Rye selected, opens on Preuss House with House and Tartine as saved. The next save holds only those two, and no version 5 key is written.
+  - The record holds exactly as described, and the 45 texts used only by removed plans left the text table.
+  - No test was weakened, the new tests fail on `main`, all 8 of its breaks were caught, the commands pass with the stated counts, and the method-guide flows passed 30 of 30.
+- Not met, each corrected:
+  - Decision 9 said every other case was unchanged; the saved-data cases changed.
+  - BEHAVIOUR.md still said Red Spring & Rye calls its proof "Overnight cold proof", in the present tense.
+  - This section said 29 browser actions; there are 30.
+- Also corrected:
+  - a stale comment in `schedule.test.ts`;
+  - the "Skip 5" sentence in the previous section, which this check couldn't reproduce at the 30-minute reheat.
+- It noted for Michael:
+  - Rolling back to `0b92450` after the new build has saved won't bring the four recipes back, except at their defaults after clearing storage.
+  - A hand-made saved order can leave a recipe off the menu. The loader adds missing recipes back from the next change, the Tartine recipes.
