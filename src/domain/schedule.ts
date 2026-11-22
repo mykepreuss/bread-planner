@@ -109,6 +109,11 @@ export type PlanInput = {
 
 const LEAVEN_CUE =
   'Use when aerated and puffy, and a spoonful floats in room-temperature water. If it sinks, allow more fermentation before mixing.';
+/** The Basic Country Bread's initial mix and rest, for a Tartine recipe without its own `initialMix`. */
+const TARTINE_MIX = {
+  rest: TARTINE.rest,
+  note: 'Disperse the leaven used in the initial water, about 80°F / 27°C. Add white and whole-wheat flour; mix until no dry flour remains. Cover for 25 to 40 minutes.',
+};
 const gram = (n: number) => `${Math.round(n * 10) / 10} g`;
 const listed = (rows: [string, number][]) =>
   rows.map(([name, n]) => `${inSentence(name)} (${Math.round(n * 10) / 10} g)`).join(', ');
@@ -160,18 +165,12 @@ export function schedule(input: PlanInput): Step[] {
   const later = single ? '' : ' Keep later batches chilled until their own warm-up.';
   let firstBake: number, preheat: number, covered: number, uncovered: number, warmup: number;
   if (tartine) {
-    const t = TARTINE;
+    const t = TARTINE,
+      initial = recipe.initialMix ?? TARTINE_MIX;
     push('leaven', 'leaven', 'Make leaven', 0, t.leaven, leavenNote(recipe, r), LEAVEN_CUE);
     let at = t.leaven;
-    push(
-      'autolyse',
-      'autolyse',
-      'Mix dough and rest',
-      at,
-      t.rest,
-      'Disperse the leaven used in the initial water, about 80°F / 27°C. Add white and whole-wheat flour; mix until no dry flour remains. Cover for 25 to 40 minutes.',
-    );
-    at += t.rest;
+    push('autolyse', 'autolyse', 'Mix dough and rest', at, initial.rest, initial.note);
+    at += initial.rest;
     push(
       'mix',
       'mix',

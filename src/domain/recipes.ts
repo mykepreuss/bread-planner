@@ -7,12 +7,13 @@ import type { AddIns } from './addins.ts';
  * history. The same day he asked for three more from Tartine Bread: Tartine Olive, Tartine Sesame and Tartine Whole Wheat.
  */
 
-export type FlourKey = 'anita' | 'white' | 'wheat' | 'rye';
+export type FlourKey = 'anita' | 'white' | 'wheat' | 'rye' | 'ap';
 export const FLOUR_NAMES: Record<FlourKey, string> = {
   anita: "Anita's all-purpose flour",
   white: 'White-bread flour',
   wheat: 'Whole-wheat flour',
   rye: 'Rye flour',
+  ap: 'All-purpose flour',
 };
 
 /** A flour name as it reads mid-sentence: lowercase, except a name that starts with a proper noun. */
@@ -39,7 +40,8 @@ export type Settings = {
 /**
  * `method` is how the dough is mixed and timed (see methods.ts). `late` flours go into the final mix. `buildFlour`
  * is the flour in the leaven build besides whole wheat. `addIns`, for Tartine recipes only, are worked in after the
- * first turn (see addins.ts).
+ * first turn (see addins.ts). `initialMix`, for Tartine recipes only, replaces the Basic Country Bread's initial mix:
+ * the rest after it, in minutes, and its step's note. Every later step moves with the rest.
  */
 export type Recipe = {
   id: string;
@@ -50,6 +52,7 @@ export type Recipe = {
   late: FlourKey[];
   buildFlour: FlourKey;
   addIns?: AddIns;
+  initialMix?: { rest: number; note: string };
   defaults: Settings;
 };
 
@@ -165,6 +168,34 @@ export const RECIPES: Recipe[] = [
       salt: 2,
       reserve: share(50, 750),
       flours: { white: 90, wheat: 10 },
+      build: { starter: 15, flour: 100, wheat: 100, water: 200 },
+    },
+  },
+  {
+    id: 'whole-wheat',
+    name: 'Tartine Whole Wheat',
+    description:
+      'The book’s 70/30 whole-wheat and all-purpose loaf, mixed with cooler water and rested longer before the salt. If the dough runs lively, lower the leaven toward 15%.',
+    method: 'tartine',
+    flours: ['wheat', 'ap'],
+    late: [],
+    buildFlour: 'white',
+    // Whole wheat takes up more water, so the rest is 50 minutes, the middle of the book's 40 to 60.
+    initialMix: {
+      rest: 50,
+      note: 'Stir the leaven used into the initial water, about 75°F / 24°C, until it disperses. Add the whole-wheat and all-purpose flour and mix by hand until no dry flour is left. Cover and rest for 40 to 60 minutes while the whole wheat soaks up the water.',
+    },
+    // Tartine Bread, page 114: 700 g whole wheat, 300 g all-purpose; 800 g water; 200 g leaven, built as for Original
+    // Tartine; 20 g salt. The page doesn't say how much water waits for the salt; 50 g is assumed, as for the Basic
+    // Country Bread.
+    defaults: {
+      count: 2,
+      weight: 1010,
+      hydration: 80,
+      leaven: 20,
+      salt: 2,
+      reserve: share(50, 800),
+      flours: { wheat: 70, ap: 30 },
       build: { starter: 15, flour: 100, wheat: 100, water: 200 },
     },
   },

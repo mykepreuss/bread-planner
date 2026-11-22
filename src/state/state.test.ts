@@ -431,7 +431,7 @@ test('every temperature the °C field accepts is kept on reload, from 10°C to 3
   }
 });
 
-test('a save with one of the four removed recipes selected opens on Preuss House, keeps House and Tartine as saved, and gives Tartine Olive its defaults', () => {
+test('a save with one of the four removed recipes selected opens on Preuss House, keeps House and Tartine as saved, and starts the new Tartine recipes at their defaults', () => {
   const six = ['house', 'tartine', 'white-wheat', 'red-rye', 'five-flour', 'four-flour'];
   const checked = { done: ['leaven'], doneAt: { leaven: NOW }, doughTemp: 78, bulkTemps: [] };
   const recipes = Object.fromEntries(
@@ -454,7 +454,7 @@ test('a save with one of the four removed recipes selected opens on Preuss House
     // from it does not list Tartine Olive.
     assert.deepEqual(
       [s.recipe, s.order, Object.keys(s.recipes)],
-      ['house', ['house', 'tartine'], ['house', 'tartine', 'olive', 'sesame']],
+      ['house', ['house', 'tartine'], ['house', 'tartine', 'olive', 'sesame', 'whole-wheat']],
       name,
     );
     assert.equal(s.recipes.tartine.settings.count, 3, `${name}: Tartine keeps its settings`);
@@ -471,6 +471,15 @@ test('a save with one of the four removed recipes selected opens on Preuss House
       s.recipes.sesame,
       { settings: recipeById('sesame')!.defaults, bake: { done: [], doneAt: {}, doughTemp: null, bulkTemps: [] } },
       `${name}: Tartine Sesame, which the save doesn't hold, starts at its defaults`,
+    );
+    // `white-wheat` was White & Whole Wheat, not Tartine Whole Wheat (`whole-wheat`): nothing saved for it carries over.
+    assert.deepEqual(
+      s.recipes['whole-wheat'],
+      {
+        settings: defaultSettings(recipeById('whole-wheat')!),
+        bake: { done: [], doneAt: {}, doughTemp: null, bulkTemps: [] },
+      },
+      `${name}: Tartine Whole Wheat is at its defaults`,
     );
   }
 });
