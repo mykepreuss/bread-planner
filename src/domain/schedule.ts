@@ -185,7 +185,7 @@ function leavenNote(recipe: Recipe, r: Formula, bowls: number) {
       : r.shortfall > 0
         ? ` This makes ${gram(r.shortfall)} less than the ${gram(r.used)} the dough needs; increase the build.`
         : ` All ${gram(r.used)} goes into the dough.`;
-  const split = bowls > 1 && r.used > 0 ? ` That is ${gram(r.used / bowls)} for each of the ${bowls} bowls.` : '';
+  const split = bowls > 1 && r.used > 0 ? ` Each of the ${bowls} bowls gets ${gram(r.used / bowls)}.` : '';
   return recipe.method === 'tartine'
     ? `Mix ${gram(starter)} (about 1 tbsp) of mature starter with ${gram(water)} water, then add ${gram(flour)} ${buildFlour} and ${gram(wheat)} whole-wheat flour. Cover at room temperature.${keep}${split}`
     : `Mix ${gram(starter)} mature starter, ${gram(flour)} ${buildFlour}, ${gram(wheat)} whole-wheat flour and ${gram(water)} water. Keep it separate from the autolyse and cover.${keep}${split}`;

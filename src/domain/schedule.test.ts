@@ -376,7 +376,7 @@ test('a doubled batch is mixed in 2 bowls and a tripled one in 3, each with its 
     step('rest').note,
     'Combine both bowls in one container. Keep covered in a warm place, about 75°F to 80°F / 24°C to 27°C.',
   );
-  assert.match(step('leaven').note, / That is 200 g for each of the 2 bowls\.$/);
+  assert.match(step('leaven').note, / Each of the 2 bowls gets 200 g\.$/);
   // Six loaves make three bowls, each the default batch again.
   const six = schedule(plan('house', {}, { count: 6 }));
   assert.match(find(six, 'autolyse').note, /^In each of 3 bowls, mix Anita's all-purpose flour \(800 g\)/);

@@ -467,6 +467,20 @@ test.describe('flows', () => {
     // A bowl that holds all four loaves mixes once, with the whole batch's weights.
     await page.getByLabel('Loaves per mix').fill('4');
     await expect(page.getByText('1 bowl', { exact: true })).toBeVisible();
+    // Back to 2 per mix: the Ingredients tab lists one bowl's weights, not the whole batch's.
+    await page.getByRole('tab', { name: 'Ingredients' }).click();
+    await expect(page.getByText('Weights for each of 2 bowls.', { exact: false })).toHaveCount(0);
+    await page.getByRole('tab', { name: 'Schedule' }).click();
+    await page.getByLabel('Loaves per mix').fill('2');
+    await page.getByRole('tab', { name: 'Ingredients' }).click();
+    const autolyse = page.locator('.weights').first(),
+      finalMix = page.locator('.weights').nth(1);
+    await expect(page.getByText('Weights for each of 2 bowls.', { exact: false })).toHaveCount(2);
+    await expect(autolyse).toContainText("Anita's all-purpose flour800 g");
+    await expect(autolyse).toContainText('Water680 g');
+    await expect(finalMix).toContainText('Salt20 g');
+    await page.getByRole('tab', { name: 'Schedule' }).click();
+    await page.getByLabel('Loaves per mix').fill('4');
     await expect(
       upNext(page).getByRole('list', { name: 'Add to the dough' }).getByRole('checkbox', { name: 'Salt 40 g' }),
     ).toBeVisible();
