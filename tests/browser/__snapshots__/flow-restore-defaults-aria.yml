@@ -1,0 +1,7 @@
+- main:
+  - tabpanel "Ingredients": 2,000g
+- alertdialog "Restore Preuss House defaults?":
+  - heading "Restore Preuss House defaults?" [level=2]
+  - paragraph: This resets this recipe's quantities and checklist. The other recipes, your schedule and oven settings are retained.
+  - button "Keep my changes"
+  - button "Restore defaults"

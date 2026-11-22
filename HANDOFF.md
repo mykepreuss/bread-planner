@@ -247,3 +247,27 @@ Michael's decision: Preuss House uses Anita's all-purpose flour instead of red s
 Evidence: 96 of 96 tests pass. The House name, leaven and dedup tests were updated, and a new test covers the saved-blend carry-over. The build had 0 errors, 0 warnings and the 4 existing hints. In the dev server, the saved local plan loaded with 80/10/10 Anita's, whole-wheat and rye parts, its checked leaven intact, and Anita's in the leaven step, autolyse step, flour table, weighing lists and leaven build, with no "red spring" left on the House page. A fresh plan listed the same six recipes. The console had no errors.
 
 Not verified: a saved plan carrying over on Michael's phone. Once a browser has loaded this version, an older version of the app would reset the House blend to its defaults (80/10/10) because it does not know `flour_anita`.
+
+## Rebuild step 0: today's behaviour recorded, November 21, 2026: locally verified, not committed
+
+Michael asked for a review of the whole codebase and then approved step 0 of the five-step rebuild plan: record what the app does before changing how it is built. Branch `rebuild-baseline`, from `main` at `34699a7`. No file under `src/` changed.
+
+- `docs/BEHAVIOUR.md`: the behaviour, written from the code and checked against the records, with four decisions for Michael at the end.
+- `tests/baseline`: `npm test` now also compares the code's output with `baseline.json`. The record holds 214 plans (the schedule matrix, 36 bake-day scenarios and 80 seeded random bakes), 45 recipe calculations, 24 kinds of saved data and 53 helper results, in America/Vancouver. `npm run baseline:update` rewrites it.
+- `tests/browser`: `npm run test:browser` builds the site and compares 22 screens at 375 px and 1280 px, all with the clock frozen. Each screen is recorded as an accessibility snapshot, a layout snapshot (every element's tag, classes and data attributes) and a first-screen screenshot; five also get whole-page screenshots. It also compares 15 actions, with reloads. `@playwright/test` 1.63.0 is a new dev dependency, matching the other mp-hq projects, and uses the Chromium already cached here. Its packages have no install scripts, so Vercel's `npm ci` downloads no browser. The browser tests stay in the Vercel upload because `astro check` type-checks `tests/baseline/update.ts`, which imports from them.
+- Not carried into the rebuild, because no saved data on this site can reach them: the hidden `manual-rye` recipe, upgrades from saved versions 1 to 4, and the spreadsheet cells inside each save. Every App.tsx revision in this repository saves version 5.
+- Astro 7 runs `astro preview` in the background when it detects an AI agent. The Playwright server command passes `--ignore-lock` to keep it in the foreground.
+
+Evidence (this session, uncommitted tree on `rebuild-baseline`):
+- `git status --short -- src` is empty.
+- `npm test` passed 115 of 115 in America/Vancouver and in UTC: the 111 existing tests plus the 4 baseline sections. `npm run build` had 0 errors, 0 warnings and the 4 existing hints.
+- The browser record passed twice: 59 passed and 15 skipped (the phone copies of the flows). `npm run baseline:update` rewrites both JSON files byte for byte.
+- Deliberate one-line breaks, each reverted:
+  - A shorter dough-check window and a reworded bench-rest note both failed the baseline. The note change failed only the baseline; the 111 existing tests passed.
+  - A renamed timeline class failed only the browser layout snapshots.
+  - A paler skipped step and a disabled phone reorder failed only the whole-page screenshots.
+- The `verifier` agent checked the work independently. It found that excluding `tests/browser/` from Vercel would break the build, which is now fixed. It also found three wrong claims in the spec, now corrected, and gaps in the browser record: no styling below the first screen and no method guide, both now recorded.
+
+Not verified: a Vercel build of this branch, which a PR preview would show; the records on any machine but this Mac (the screenshots are Mac-specific).
+
+Decisions for Michael are listed at the end of `docs/BEHAVIOUR.md`, including one defect found here: 38°C is accepted, then lost on reload.

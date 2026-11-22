@@ -1,0 +1,223 @@
+- banner:
+  - heading "Bread Planner" [level=1]
+- main:
+  - tablist:
+    - tab "Schedule" [selected]
+    - tab "Ingredients"
+  - text: Recipe
+  - combobox "Recipe": Four-Flour Sourdough
+  - paragraph: All-purpose, red spring, whole wheat and rye, with more whole wheat than the five-flour recipe.
+  - tabpanel "Schedule":
+    - region "Up next":
+      - text: Up next in 6h 40m
+      - heading "Feed starter" [level=2]
+      - paragraph:
+        - time: 10:00 PM
+      - paragraph: Keep an established starter on its regular feeding routine.
+      - button "Done"
+      - paragraph: "Then: Start leaven · Sunday, Nov 22 at 9:00 AM"
+    - text: When are we baking? Plan around
+    - combobox "Plan around": Starting the leaven
+    - text: Leaven date
+    - textbox "Leaven date": 2026-11-22
+    - text: Time
+    - textbox "Time": 09:00
+    - text: Baking complete
+    - strong: 10:46 AM
+    - text: Monday, Nov 23 Your batch Number of loaves
+    - spinbutton "Number of loaves": "3"
+    - text: loaves
+    - strong: 1,010 g
+    - text: per loaf
+    - strong: 3,030 g
+    - text: total dough
+    - strong: 82%
+    - text: total hydration
+    - button "View ingredients"
+    - text: Oven and proof Loaves baked at once
+    - combobox "Loaves baked at once": 2 loaves
+    - text: Reheat between batches
+    - spinbutton "Reheat between batches": "30"
+    - text: min
+    - paragraph:
+      - strong: 2 batches
+      - text: for 3 loaves.
+    - strong: Cold proof, 12h 30m
+    - paragraph: Sunday, Nov 22 at 7:20 PM to Monday, Nov 23 at 7:50 AM
+    - text: Overnight cold ferment
+    - paragraph: Readiness comes before the clock. Wait until the dough is ready, then check the step. Later steps move to match.
+    - region "Bake schedule":
+      - heading "Bake schedule" [level=2]
+      - text: 36h 46m total 0 of 29 steps checked
+      - button "Clear checklist" [disabled]
+      - text: Day 1
+      - heading "Saturday, Nov 21" [level=3]
+      - checkbox "Complete Feed starter"
+      - time: 10:00 PM
+      - text: Feed starter Up next
+      - paragraph: Keep an established starter on its regular feeding routine.
+      - text: Next step in 11h Day 2
+      - heading "Sunday, Nov 22" [level=3]
+      - checkbox "Complete Start leaven"
+      - time: 9:00 AM
+      - text: Start leaven
+      - paragraph: Mix 42 g mature starter, 106.5 g red spring flour, 106.5 g whole-wheat flour and 213 g water. Keep it separate from the autolyse and cover. You use 300 g in the dough and keep 168 g.
+      - paragraph:
+        - strong: "Ready when:"
+        - text: Use when aerated and puffy, and a spoonful floats in room-temperature water. If it sinks, allow more fermentation before mixing.
+      - text: Next step in 30 min
+      - checkbox "Complete Start autolyse"
+      - time: 9:30 AM
+      - text: Start autolyse
+      - paragraph: Mix all-purpose flour (500 g), red spring flour (600 g), whole-wheat flour (250 g), water (1125 g). Cover. Keep the remaining ingredients for the final mix.
+      - text: Next step in 4h 30m
+      - checkbox "Complete Mix final dough"
+      - time: 2:00 PM
+      - text: Mix final dough
+      - paragraph: Add rye flour (150 g), leaven used (300 g), salt (30 g), water (75 g) after the autolyse. Mix until incorporated.
+      - text: Next step in 15 min
+      - checkbox "Complete Start bulk fermentation"
+      - time: 2:15 PM
+      - text: Start bulk fermentation
+      - paragraph: Keep covered in a warm place, about 75°F to 80°F / 24°C to 27°C.
+      - text: Dough temperature after mixing
+      - spinbutton "Dough temperature after mixing"
+      - combobox "Temperature unit": °F
+      - paragraph: Measure the dough after mixing to estimate how long bulk will take. The plan counts 78°F / 26°C as normal.
+      - text: Next step in 30 min
+      - checkbox "Complete Turn 1"
+      - time: 2:45 PM
+      - text: Turn 1
+      - paragraph: With wet hands, stretch and fold all four sides vigorously, then go around a second time. These early turns build the gluten structure.
+      - text: Next step in 30 min
+      - checkbox "Complete Turn 2"
+      - time: 3:15 PM
+      - text: Turn 2
+      - paragraph: "Vigorously again: stretch and fold all four sides twice, with wet hands."
+      - text: Next step in 30 min
+      - checkbox "Complete Turn 3"
+      - time: 3:45 PM
+      - text: Turn 3
+      - paragraph: "Vigorously again: stretch and fold all four sides twice, with wet hands."
+      - text: Next step in 30 min
+      - checkbox "Complete Turn 4"
+      - time: 4:15 PM
+      - text: Turn 4
+      - paragraph: "From here, one round: stretch and fold all four sides once, with wet hands."
+      - text: Next step in 30 min
+      - checkbox "Complete Turn 5"
+      - time: 4:45 PM
+      - text: Turn 5
+      - paragraph: Stretch and fold all four sides once, with wet hands.
+      - text: Next step in 30 min
+      - checkbox "Complete Turn 6"
+      - time: 5:15 PM
+      - text: Turn 6
+      - paragraph: Stretch and fold all four sides once, with wet hands.
+      - text: Next step in 30 min
+      - checkbox "Complete Turn 7"
+      - time: 5:45 PM
+      - text: Turn 7
+      - paragraph: Stretch and fold all four sides once, with wet hands.
+      - text: Next step in 30 min
+      - checkbox "Complete Cut and preshape"
+      - time: 6:15 PM
+      - text: Cut and preshape
+      - paragraph: Turn the dough out of its container onto your work surface. Cut it into equal pieces and shape each into a taut round.
+      - paragraph:
+        - strong: "Ready when:"
+        - text: Look for a billowy dough and 20% to 30% volume increase.
+      - text: Next step in 10 min
+      - checkbox "Complete Bench rest"
+      - time: 6:25 PM
+      - text: Bench rest
+      - paragraph: Cover the rounds. Prepare towel-lined baskets dusted with rice flour.
+      - text: Next step in 30 min
+      - checkbox "Complete Final shape"
+      - time: 6:55 PM
+      - text: Final shape
+      - paragraph: Fold the edges toward the center and roll into a taut round. Place it seam-side up in a prepared basket.
+      - text: Next step in 5 min
+      - checkbox "Complete Basket rest"
+      - time: 7:00 PM
+      - text: Basket rest
+      - paragraph: Leave the baskets covered at room temperature.
+      - text: Next step in 20 min
+      - checkbox "Complete Overnight cold proof"
+      - time: 7:20 PM
+      - text: Overnight cold proof
+      - paragraph: Cover the shaped loaves in their baskets and refrigerate overnight. Keep later batches chilled until their own warm-up.
+      - text: Next step in 12h 30m Day 3
+      - heading "Monday, Nov 23" [level=3]
+      - checkbox "Complete Take batch 1 out of fridge"
+      - time: 7:50 AM
+      - text: Take batch 1 out of fridge
+      - paragraph: Allow the first batch to warm while the oven and pots heat.
+      - checkbox "Complete Preheat oven and Dutch oven"
+      - time: 7:50 AM
+      - text: Preheat oven and Dutch oven
+      - paragraph: Place the lidded Dutch oven or pots in the oven and heat to 540°F / 282°C. Use one suitable pot per loaf baked at once.
+      - text: Next step in 1h
+      - 'checkbox "Complete Batch 1: bake covered (loaves 1 to 2)"'
+      - time: 8:50 AM
+      - text: "Batch 1: bake covered (loaves 1 to 2)"
+      - paragraph: Dust the loaf tops. Carefully turn seam-side down into the hot pot, score with a lame or razor, and cover. Reduce oven to 460°F / 238°C.
+      - text: Next step in 13 min
+      - checkbox "Complete Warm batch 2 (loaf 3)"
+      - time: 9:03 AM
+      - text: Warm batch 2 (loaf 3)
+      - paragraph: Remove only this batch from the refrigerator. Later loaves have a longer cold proof.
+      - paragraph:
+        - strong: "Ready when:"
+        - text: Bring the dough back to room temperature before its own bake.
+      - text: Next step in 7 min
+      - 'checkbox "Complete Batch 1: remove lid"'
+      - time: 9:10 AM
+      - text: "Batch 1: remove lid"
+      - paragraph: "Remove lid carefully: hot steam can escape. Continue at 460°F / 238°C."
+      - paragraph:
+        - strong: "Ready when:"
+        - text: Bake until the crust is a rich golden brown; extend the uncovered bake if needed.
+      - text: Next step in 23 min
+      - checkbox "Complete Batch 1 out of the oven"
+      - time: 9:33 AM
+      - text: Batch 1 out of the oven
+      - paragraph: Transfer to a wire rack. The base should sound hollow when tapped. Cool each loaf at least 15 minutes before slicing.
+      - checkbox "Complete Reheat for batch 2"
+      - time: 9:33 AM
+      - text: Reheat for batch 2
+      - paragraph: Clean the pot, replace its lid and return the oven to 540°F / 282°C. Load the next batch once the pot and oven are hot.
+      - text: Next step in 15 min
+      - 'checkbox "Complete Batch 1: 15-minute cooling mark"'
+      - time: 9:48 AM
+      - text: "Batch 1: 15-minute cooling mark"
+      - paragraph: This batch is ready to slice.
+      - text: Next step in 15 min
+      - 'checkbox "Complete Batch 2: bake covered (loaf 3)"'
+      - time: 10:03 AM
+      - text: "Batch 2: bake covered (loaf 3)"
+      - paragraph: Dust the loaf tops. Carefully turn seam-side down into the hot pot, score with a lame or razor, and cover. Reduce oven to 460°F / 238°C.
+      - text: Next step in 20 min
+      - 'checkbox "Complete Batch 2: remove lid"'
+      - time: 10:23 AM
+      - text: "Batch 2: remove lid"
+      - paragraph: "Remove lid carefully: hot steam can escape. Continue at 460°F / 238°C."
+      - paragraph:
+        - strong: "Ready when:"
+        - text: Bake until the crust is a rich golden brown; extend the uncovered bake if needed.
+      - text: Next step in 23 min
+      - checkbox "Complete All loaves out of the oven"
+      - time: 10:46 AM
+      - text: All loaves out of the oven
+      - paragraph: Transfer to a wire rack. The base should sound hollow when tapped. Cool each loaf at least 15 minutes before slicing.
+      - text: Next step in 15 min
+      - 'checkbox "Complete Last batch: 15-minute cooling mark"'
+      - time: 11:01 AM
+      - text: "Last batch: 15-minute cooling mark"
+      - paragraph: This batch is ready to slice.
+  - heading "Mature starter and readiness guide" [level=3]:
+    - button "Mature starter and readiness guide"
+  - heading "Establishing a starter from scratch" [level=3]:
+    - button "Establishing a starter from scratch"
+  - heading "Shaping, basket preparation and baking" [level=3]:
+    - button "Shaping, basket preparation and baking"

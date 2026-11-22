@@ -1,0 +1,49 @@
+- region "Quiet hours warning":
+  - heading "14 actions need you during quiet hours" [level=2]
+  - paragraph: Hands-on work is scheduled after 10:30 PM or before 7:00 AM. Try an earlier start or a different finish time. Overnight rests are fine.
+  - heading "View affected steps" [level=3]:
+    - button "View affected steps" [expanded]
+  - region "View affected steps":
+    - list:
+      - listitem:
+        - time: Saturday, Nov 21 at 5:01 AM
+        - text: Start leaven
+      - listitem:
+        - time: Saturday, Nov 21 at 5:31 AM
+        - text: Start autolyse
+      - listitem:
+        - time: Sunday, Nov 22 at 3:51 AM
+        - text: Take batch 1 out of fridge
+      - listitem:
+        - time: Sunday, Nov 22 at 3:51 AM
+        - text: Preheat oven and Dutch oven
+      - listitem:
+        - time: Sunday, Nov 22 at 4:51 AM
+        - text: "Batch 1: bake covered (loaves 1 to 2)"
+      - listitem:
+        - time: Sunday, Nov 22 at 5:04 AM
+        - text: Warm batch 2 (loaves 3 to 4)
+      - listitem:
+        - time: Sunday, Nov 22 at 5:11 AM
+        - text: "Batch 1: remove lid"
+      - listitem:
+        - time: Sunday, Nov 22 at 5:34 AM
+        - text: Batch 1 out of the oven
+      - listitem:
+        - time: Sunday, Nov 22 at 5:34 AM
+        - text: Reheat for batch 2
+      - listitem:
+        - time: Sunday, Nov 22 at 6:04 AM
+        - text: "Batch 2: bake covered (loaves 3 to 4)"
+      - listitem:
+        - time: Sunday, Nov 22 at 6:17 AM
+        - text: Warm batch 3 (loaf 5)
+      - listitem:
+        - time: Sunday, Nov 22 at 6:24 AM
+        - text: "Batch 2: remove lid"
+      - listitem:
+        - time: Sunday, Nov 22 at 6:47 AM
+        - text: Batch 2 out of the oven
+      - listitem:
+        - time: Sunday, Nov 22 at 6:47 AM
+        - text: Reheat for batch 3

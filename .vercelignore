@@ -7,3 +7,5 @@ artifacts/
 docs/
 *.log
 dist/
+test-results/
+playwright-report/
