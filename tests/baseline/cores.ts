@@ -1,7 +1,7 @@
 /**
- * The two cores the baseline can observe: the old one in src/lib, which the app uses until step 3 of the rebuild,
- * and the new one in src/domain. Each takes a v5 planner, the shape saved data has today, and answers the same
- * questions, so one observation (observe.ts) can be compared across them.
+ * The two cores the baseline can observe: the old one in src/lib, which the app used until step 3b of the rebuild,
+ * and the new one in src/domain with the Schedule tab's view (src/view). Each takes a v5 planner, the shape the
+ * record's inputs have, and answers the same questions, so one observation (observe.ts) can be compared across them.
  */
 import {
   calculateRecipe,
@@ -10,7 +10,7 @@ import {
   totalHydration,
   type Planner,
 } from '../../src/lib/recipes.ts';
-import { coldProofWindow, durationText } from '../../src/lib/model.ts';
+import { coldProofWindow, dateString, durationText, round } from '../../src/lib/model.ts';
 import * as old from '../../src/lib/bakeday.ts';
 import { recipeById, type FlourKey, type Recipe, type Settings } from '../../src/domain/recipes.ts';
 import { formula, totalHydration as domainTotalHydration } from '../../src/domain/formula.ts';
@@ -18,6 +18,8 @@ import { schedule, coldProofWindow as domainColdProofWindow, type Step } from '.
 import { quietHourActions as domainQuietHourActions } from '../../src/domain/quiet.ts';
 import * as next from '../../src/domain/bakeday.ts';
 import * as text from '../../src/domain/text.ts';
+import { scheduleView } from '../../src/view/schedule.ts';
+import type { PlannerState } from '../../src/state/schema.ts';
 
 export type ViewStep = {
   id: string;
@@ -39,8 +41,39 @@ export type Estimate = {
 type Turns = { planned: number; now: number; capped?: boolean } | null;
 type Weighed = [string, number];
 
+/** What the Schedule tab works out for the selected recipe at a moment. */
+export type View = {
+  steps: ViewStep[];
+  shift: number;
+  estimate: Estimate | null;
+  turns: Turns;
+  bulkMinutes: number | null;
+  checkFrom: Date | null;
+  checks: string[];
+  doneStep?: ViewStep;
+  skipped: string[];
+  remaining: ViewStep[];
+  completed: number;
+  next?: ViewStep;
+  then?: ViewStep;
+  stale: boolean;
+  advice?: string;
+  doughCheck: boolean;
+  temperatureField: 'now' | 'after mixing' | null;
+  night: { step: { id: string }; continues: boolean }[];
+  gaps: Map<string, number>;
+  proofWindow: { start: Date; end: Date; minutes: number; overnight: boolean } | null;
+  batches: number;
+  days: string[];
+  underway: boolean;
+  allDone: boolean;
+  totalMinutes: number | null;
+};
+
 export interface Core {
   name: 'old' | 'new';
+  /** The Schedule tab: the old core's rules as ScheduleTab held them, or the new view module. */
+  view(plan: Planner, now: number, when: (d: Date) => string): View;
   /** The live schedule for the selected recipe: its plan, moved by check-offs and the dough temperature. */
   follow(plan: Planner): {
     steps: ViewStep[];
@@ -98,8 +131,73 @@ export interface Core {
 /** Each core is handed back only the steps and estimates it made itself. */
 const own = <T>(x: unknown) => x as T;
 
+/** The Schedule tab's rules as the old ScheduleTab (src/components/ScheduleTab.tsx before step 3b) held them. */
+function oldView(core: Core, plan: Planner, now: number, when: (d: Date) => string): View {
+  const profile = plan.recipes[plan.recipe],
+    checks = profile.done;
+  const { steps, shift, estimate, turns, bulkMinutes, checkFrom } = core.follow(plan);
+  const doneStep = steps.find((s) => s.id === 'done'),
+    first = steps[0];
+  const skipped = core.skipped(steps, checks),
+    settled = [...checks, ...skipped];
+  const remaining = steps.filter((s) => !settled.includes(s.id)),
+    completed = steps.filter((s) => checks.includes(s.id)).length,
+    next = remaining[0];
+  const stale = doneStep !== undefined && +doneStep.at < now && (completed === 0 || remaining.length === 0);
+  const tempText = (f: number) =>
+    `${round(core.helpers.fromF(f, plan.tempUnit), plan.tempUnit === 'C' ? 1 : 0)}°${plan.tempUnit}`;
+  const advice =
+    bulkMinutes !== null
+      ? core.bulkDone(bulkMinutes, estimate)
+      : estimate
+        ? core.advice(estimate, when, { turns, hold: core.hold(estimate, now), temp: tempText })
+        : undefined;
+  const shape = steps.find((s) => s.id === 'shape');
+  const during = next !== undefined && (next.id === 'shape' || core.turnNumber(next.id) > 0);
+  return {
+    steps,
+    shift,
+    estimate,
+    turns,
+    bulkMinutes,
+    checkFrom,
+    checks,
+    doneStep,
+    skipped,
+    remaining,
+    completed,
+    next,
+    then: remaining[1],
+    stale,
+    advice,
+    doughCheck:
+      next !== undefined &&
+      core.turnNumber(next.id) > 0 &&
+      shape !== undefined &&
+      checkFrom !== null &&
+      now >= +checkFrom,
+    temperatureField:
+      next === undefined
+        ? null
+        : during && profile.doughTemp !== null
+          ? 'now'
+          : during || next.id === 'rest'
+            ? 'after mixing'
+            : null,
+    night: core.quiet(steps, settled),
+    gaps: core.gaps(steps),
+    proofWindow: core.coldProof(steps),
+    batches: Math.ceil(profile.params.count / plan.ovenCapacity),
+    days: [...new Set(steps.map((s) => dateString(s.at)))],
+    underway: checks.length > 0 && !stale,
+    allDone: remaining.length === 0 && steps.length > 0,
+    totalMinutes: first && doneStep ? (+doneStep.at - +first.at) / 60000 : null,
+  };
+}
+
 export const oldCore: Core = {
   name: 'old',
+  view: (plan, now, when) => oldView(oldCore, plan, now, when),
   follow(plan) {
     const p = plan.recipes[plan.recipe];
     return old.followDough(recipeSchedule(plan), p.done, p.doneAt, p.doughTemp, p.bulkTemps);
@@ -149,8 +247,35 @@ export function settingsOf(plan: Planner): Settings {
   };
 }
 
+/** The new planner state for a v5 planner, taken as it is: loading would correct a few recorded plans, which the record keeps. */
+function stateOf(plan: Planner): PlannerState {
+  const p = plan.recipes[plan.recipe];
+  return {
+    recipe: plan.recipe,
+    order: plan.order,
+    date: plan.date,
+    time: plan.time,
+    anchor: plan.anchor,
+    proof: plan.proof,
+    ovenCapacity: plan.ovenCapacity,
+    reheat: plan.reheat,
+    tempUnit: plan.tempUnit,
+    recipes: {
+      [plan.recipe]: {
+        settings: settingsOf(plan),
+        bake: { done: p.done, doneAt: p.doneAt, doughTemp: p.doughTemp, bulkTemps: p.bulkTemps },
+      },
+    },
+    created: { date: plan.legacy.date, time: plan.legacy.time },
+  };
+}
+
 export const newCore: Core = {
   name: 'new',
+  view(plan, now, when) {
+    const v = scheduleView(stateOf(plan), now, when);
+    return { ...v, checks: v.bake.done };
+  },
   follow(plan) {
     const p = plan.recipes[plan.recipe];
     const planned = schedule({

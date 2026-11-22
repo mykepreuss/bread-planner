@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
-import { useSelector } from '@tanstack/react-form';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
-import { round, type InputSpec } from '@/lib/model';
-import { totalHydration, addedHydration } from '@/lib/recipes';
-import { useCalc } from './calculator';
+import { round } from '@/domain/text';
+import type { FlourKey } from '@/domain/recipes';
+import { setSetting, type SettingKey } from '@/state/actions';
+import { usePlanner } from './calculator';
 import { g } from './text';
+
+/** A field's id (`field-<cell>`), label, unit and limits. */
+export type FieldSpec = { cell: string; label: string; unit: string; min?: number; step?: number };
 
 const sliderRanges: Record<string, { min: number; max: number; step: number }> = {
   hydration: { min: 50, max: 100, step: 1 },
@@ -87,87 +90,98 @@ function Amount({
     </>
   );
 }
-/** A setting of the selected recipe: a number field, with a slider for the percentages. Total hydration is shown and typed as total, and saved as added hydration. */
+/**
+ * A number field, with a slider for the percentages. It shows `value`, calls `onChange` with each valid entry, and
+ * accepts nothing below `min` (the spec's minimum unless given).
+ */
 export function NumberField({
   spec,
+  value,
+  onChange,
+  min = spec.min ?? 0,
   compact = false,
   context,
-  hydrationParams,
 }: {
-  spec: InputSpec;
+  spec: FieldSpec;
+  value: number;
+  onChange: (n: number) => void;
+  min?: number;
   compact?: boolean;
   context?: string;
-  hydrationParams?: Record<string, number>;
 }) {
-  const form = useCalc(),
-    id = useSelector(form.store, (s) => s.values.recipe);
-  const name = spec.cell === 'reheat' ? spec.cell : (`recipes.${id}.params.${spec.cell}` as const);
   const range = compact ? undefined : sliderRanges[spec.cell];
+  const rangeMin = range ? Math.max(min, Math.min(range.min, Math.floor(value / 10) * 10)) : 0,
+    rangeMax = range ? Math.max(range.max, Math.ceil(value / 10) * 10, rangeMin + 10) : 0;
   return (
-    <form.Field
-      name={name}
-      validators={{
-        onChange: ({ value }) =>
-          Number.isFinite(value) && value >= (spec.min ?? 0) ? undefined : 'Enter a valid amount',
-      }}
-    >
-      {(field) => {
-        const value = hydrationParams ? Math.round(totalHydration(hydrationParams)) : field.state.value,
-          min = hydrationParams ? Math.ceil(totalHydration({ ...hydrationParams, hydration: 0 })) : (spec.min ?? 0),
-          rangeMin = range ? Math.max(min, Math.min(range.min, Math.floor(value / 10) * 10)) : 0,
-          rangeMax = range ? Math.max(range.max, Math.ceil(value / 10) * 10, rangeMin + 10) : 0;
-        const change = (next: number) =>
-          field.handleChange(hydrationParams ? Math.max(0, addedHydration(next, hydrationParams)) : next);
-        return (
-          <div className={compact ? 'cell-control' : 'number-field'}>
-            {!compact && <Label htmlFor={`field-${spec.cell}`}>{spec.label}</Label>}
-            <div className="amount-wrap">
-              <Amount
-                id={`field-${spec.cell}`}
-                label={context ? `${spec.label} (${context})` : spec.label}
-                value={value}
-                min={min}
-                max={spec.cell === 'reserve' ? 100 : undefined}
-                step={spec.step ?? 0.001}
-                onChange={change}
-                onBlur={field.handleBlur}
-              />
-              <span className="unit">{spec.unit}</span>
-            </div>
-            {range && (
-              <div className="range-control">
-                <Slider
-                  aria-label={`Adjust ${spec.label.toLowerCase()}`}
-                  aria-valuetext={`${value.toLocaleString(undefined, { maximumFractionDigits: 3 })} percent`}
-                  value={[value]}
-                  min={rangeMin}
-                  max={rangeMax}
-                  step={range.step}
-                  onValueChange={([next]) => change(next)}
-                  onValueCommit={field.handleBlur}
-                />
-                <div className="range-limits" aria-hidden="true">
-                  <span>{g(rangeMin)}%</span>
-                  <span>{g(rangeMax)}%</span>
-                </div>
-              </div>
-            )}
+    <div className={compact ? 'cell-control' : 'number-field'}>
+      {!compact && <Label htmlFor={`field-${spec.cell}`}>{spec.label}</Label>}
+      <div className="amount-wrap">
+        <Amount
+          id={`field-${spec.cell}`}
+          label={context ? `${spec.label} (${context})` : spec.label}
+          value={value}
+          min={min}
+          max={spec.cell === 'reserve' ? 100 : undefined}
+          step={spec.step ?? 0.001}
+          onChange={onChange}
+          onBlur={() => {}}
+        />
+        <span className="unit">{spec.unit}</span>
+      </div>
+      {range && (
+        <div className="range-control">
+          <Slider
+            aria-label={`Adjust ${spec.label.toLowerCase()}`}
+            aria-valuetext={`${value.toLocaleString(undefined, { maximumFractionDigits: 3 })} percent`}
+            value={[value]}
+            min={rangeMin}
+            max={rangeMax}
+            step={range.step}
+            onValueChange={([next]) => onChange(next)}
+          />
+          <div className="range-limits" aria-hidden="true">
+            <span>{g(rangeMin)}%</span>
+            <span>{g(rangeMax)}%</span>
           </div>
-        );
-      }}
-    </form.Field>
+        </div>
+      )}
+    </div>
   );
 }
-export function FieldGroup({ specs }: { specs: InputSpec[] }) {
+
+/** Field names of the leaven build, as the page's ids use them. */
+const BUILD = { buildSeed: 'starter', buildBread: 'flour', buildWheat: 'wheat', buildWater: 'water' } as const;
+/** The selected recipe's setting behind a field: its value and the change that sets it. */
+function useSetting(cell: string) {
+  const { state, update } = usePlanner(),
+    settings = state.recipes[state.recipe].settings;
+  const key: SettingKey = Object.hasOwn(BUILD, cell)
+    ? `build:${BUILD[cell as keyof typeof BUILD]}`
+    : cell.startsWith('flour_')
+      ? `flour:${cell.slice(6) as FlourKey}`
+      : (cell as SettingKey);
+  const value = key.startsWith('build:')
+    ? settings.build[key.slice(6) as keyof typeof settings.build]
+    : key.startsWith('flour:')
+      ? (settings.flours[key.slice(6) as FlourKey] ?? 0)
+      : settings[key as 'count' | 'weight' | 'leaven' | 'salt' | 'reserve'];
+  return { value, onChange: (n: number) => update((s) => setSetting(s, key, n)) };
+}
+/** A number field for one of the selected recipe's settings. */
+export function SettingField({ spec, compact }: { spec: FieldSpec; compact?: boolean }) {
+  const { value, onChange } = useSetting(spec.cell);
+  return <NumberField spec={spec} value={value} onChange={onChange} compact={compact} />;
+}
+export function FieldGroup({ specs }: { specs: FieldSpec[] }) {
   return (
     <div className="field-grid">
       {specs.map((spec) => (
-        <NumberField key={spec.cell} spec={spec} />
+        <SettingField key={spec.cell} spec={spec} />
       ))}
     </div>
   );
 }
-/** The spec for a recipe setting's field. */
-export function spec(cell: string, label: string, unit: string, min = 0, step = 0.001): InputSpec {
-  return { key: cell, cell, label, unit, value: 0, min, step };
+/** The spec for a setting's field. */
+export function spec(cell: string, label: string, unit: string, min = 0, step = 0.001): FieldSpec {
+  return { cell, label, unit, min, step };
 }

@@ -6,8 +6,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { calendarText, dateString, durationText, timeText, type coldProofWindow } from '@/lib/model';
-import { stepPhase, clockText, type BulkReading, type LiveStep } from '@/lib/bakeday';
+import { clockText, dateString, durationText } from '@/domain/text';
+import type { coldProofWindow } from '@/domain/schedule';
+import type { BulkReading, LiveStep } from '@/domain/bakeday';
+import { calendarText, timeText } from './text';
 
 /** What a step row needs: its state, and the actions it can take. */
 type StepActions = {
@@ -43,7 +45,7 @@ function TimelineStep({
 }) {
   return (
     <div
-      className={`timeline-step phase-${stepPhase(step.id)} ${done ? 'is-done' : ''} ${skip ? 'is-skipped' : ''} ${isNext ? 'is-next' : ''}`}
+      className={`timeline-step phase-${step.phase} ${done ? 'is-done' : ''} ${skip ? 'is-skipped' : ''} ${isNext ? 'is-next' : ''}`}
     >
       <div className="step-check">
         <Checkbox

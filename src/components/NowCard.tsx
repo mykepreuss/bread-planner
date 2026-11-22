@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import { Clock3, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { stepPhase, untilText, shiftText, type LiveStep } from '@/lib/bakeday';
+import type { LiveStep } from '@/domain/bakeday';
+import { untilText, shiftText } from '@/domain/text';
 import { whenText } from './text';
 
 /**
@@ -27,7 +28,7 @@ export function NowCard({
 }) {
   const due = +next.at <= now;
   return (
-    <section className={`now-card phase-${stepPhase(next.id)}${due ? ' is-due' : ''}`} aria-label="Up next">
+    <section className={`now-card phase-${next.phase}${due ? ' is-due' : ''}`} aria-label="Up next">
       <div className="now-when">
         <span className="eyebrow">Up next</span>
         <span className="now-countdown">{untilText(+next.at - now)}</span>

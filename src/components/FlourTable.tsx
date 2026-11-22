@@ -1,76 +1,46 @@
-import { useMemo } from 'react';
-import { useTable, tableFeatures, flexRender, type ColumnDef } from '@tanstack/react-table';
 import { Table, TableHeader, TableHead, TableBody, TableRow, TableCell } from '@/components/ui/table';
-import { definitions, flourNames, calculateRecipe, type Planner } from '@/lib/recipes';
-import { NumberField } from './NumberField';
+import { FLOUR_NAMES } from '@/domain/recipes';
+import { formula } from '@/domain/formula';
+import { selected } from '@/state/schema';
+import { usePlanner } from './calculator';
+import { SettingField } from './NumberField';
 import { g } from './text';
 
-const features = tableFeatures({});
 /** The flour blend: each flour's parts, and what they come to in this batch. */
-export function FlourTable({ values }: { values: Planner }) {
-  const r = calculateRecipe(values),
-    d = definitions[values.recipe];
-  const rows = d.flours.map((key) => ({
-    key,
-    grams: r?.flours.find((f) => f.key === key)?.grams ?? 0,
-    percent: r?.flours.find((f) => f.key === key)?.percent ?? 0,
-  }));
-  type Row = (typeof rows)[number];
-  const columns = useMemo<ColumnDef<typeof features, Row>[]>(
-    () => [
-      {
-        id: 'flour',
-        header: 'Flour',
-        cell: (ctx) => (
-          <span className="flour-name">
-            {flourNames[ctx.row.original.key]}
-            <small>
-              {ctx.row.original.grams > 0
-                ? `${g(ctx.row.original.grams)} g in this batch · ${g(ctx.row.original.percent)}%`
-                : 'Optional · not used'}
-            </small>
-          </span>
-        ),
-      },
-      {
-        id: 'parts',
-        header: 'Blend parts',
-        cell: (ctx) => (
-          <NumberField
-            compact
-            spec={{
-              key: ctx.row.original.key,
-              cell: `flour_${ctx.row.original.key}`,
-              label: `${flourNames[ctx.row.original.key]} proportion`,
-              value: 0,
-              unit: 'parts',
-            }}
-          />
-        ),
-      },
-    ],
-    [],
-  );
-  const table = useTable({ features, columns, data: rows });
+export function FlourTable() {
+  const { state } = usePlanner(),
+    { recipe, settings } = selected(state),
+    r = formula(recipe, settings);
   return (
     <Table className="flour-table">
       <TableHeader>
-        {table.getHeaderGroups().map((group) => (
-          <TableRow key={group.id}>
-            {group.headers.map((h) => (
-              <TableHead key={h.id}>{flexRender(h.column.columnDef.header, h.getContext())}</TableHead>
-            ))}
-          </TableRow>
-        ))}
+        <TableRow>
+          <TableHead>Flour</TableHead>
+          <TableHead>Blend parts</TableHead>
+        </TableRow>
       </TableHeader>
       <TableBody>
-        {table.getRowModel().rows.map((row) => (
-          <TableRow key={row.id}>
-            {row.getAllCells().map((cell) => (
-              <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
-            ))}
-          </TableRow>
-        ))}
+        {recipe.flours.map((key) => {
+          const flour = r?.flours.find((f) => f.key === key),
+            grams = flour?.grams ?? 0,
+            percent = flour?.percent ?? 0;
+          return (
+            <TableRow key={key}>
+              <TableCell>
+                <span className="flour-name">
+                  {FLOUR_NAMES[key]}
+                  <small>{grams > 0 ? `${g(grams)} g in this batch · ${g(percent)}%` : 'Optional · not used'}</small>
+                </span>
+              </TableCell>
+              <TableCell>
+                <SettingField
+                  compact
+                  spec={{ cell: `flour_${key}`, label: `${FLOUR_NAMES[key]} proportion`, unit: 'parts' }}
+                />
+              </TableCell>
+            </TableRow>
+          );
+        })}
       </TableBody>
     </Table>
   );

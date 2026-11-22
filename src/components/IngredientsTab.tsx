@@ -13,12 +13,15 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
-import { loafText } from '@/lib/model';
-import { definitions, buildFlourName, calculateRecipe, type Planner } from '@/lib/recipes';
+import { FLOUR_NAMES } from '@/domain/recipes';
+import { formula, totalHydration } from '@/domain/formula';
+import { selected } from '@/state/schema';
+import { restoreDefaults, setTotalHydration } from '@/state/actions';
+import { usePlanner } from './calculator';
 import { Panel } from './Panel';
 import { FieldGroup, NumberField, spec } from './NumberField';
 import { FlourTable } from './FlourTable';
-import { g } from './text';
+import { g, loafText } from './text';
 
 /** A list of ingredient weights, with an optional total. */
 function Weights({ rows, totalLabel, total }: { rows: [string, number][]; totalLabel?: string; total?: number }) {
@@ -74,12 +77,12 @@ function LeavenBalance({
   );
 }
 /** The Ingredients tab: the batch, the flour blend, the leaven and the weights for each stage. */
-export function IngredientsTab({ values, onReset }: { values: Planner; onReset: () => void }) {
-  const r = calculateRecipe(values),
-    d = definitions[values.recipe],
-    p = values.recipes[values.recipe].params,
+export function IngredientsTab() {
+  const { state, update } = usePlanner(),
+    { recipe: d, settings: p } = selected(state),
+    r = formula(d, p),
     book = d.method === 'tartine';
-  const buildFlour = buildFlourName(d);
+  const buildFlour = FLOUR_NAMES[d.buildFlour];
   return (
     <>
       <div className="formula-layout">
@@ -92,7 +95,12 @@ export function IngredientsTab({ values, onReset }: { values: Planner; onReset: 
               ]}
             />
             <div className="hydration-control">
-              <NumberField spec={spec('hydration', 'Total hydration', '%', 0, 1)} hydrationParams={p} />
+              <NumberField
+                spec={spec('hydration', 'Total hydration', '%', 0, 1)}
+                value={Math.round(totalHydration(p))}
+                min={Math.ceil(totalHydration({ ...p, hydration: 0 }))}
+                onChange={(n) => update((s) => setTotalHydration(s, n))}
+              />
               <p className="field-note">Includes the flour and water in the leaven used.</p>
             </div>
           </Panel>
@@ -100,7 +108,7 @@ export function IngredientsTab({ values, onReset }: { values: Planner; onReset: 
             title="Flour blend"
             description="Parts set the balance between flours. The gram weights scale to your batch."
           >
-            <FlourTable values={values} />
+            <FlourTable />
             {!r && (
               <p className="notice" role="alert">
                 Add at least one flour part to calculate this recipe.
@@ -171,7 +179,7 @@ export function IngredientsTab({ values, onReset }: { values: Planner; onReset: 
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Keep my changes</AlertDialogCancel>
-                        <AlertDialogAction onClick={onReset}>Restore defaults</AlertDialogAction>
+                        <AlertDialogAction onClick={() => update(restoreDefaults)}>Restore defaults</AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>

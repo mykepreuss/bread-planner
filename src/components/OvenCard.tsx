@@ -1,15 +1,20 @@
 import { Snowflake } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { calendarText, durationText, loafText, timeText, type coldProofWindow } from '@/lib/model';
+import { durationText } from '@/domain/text';
+import type { coldProofWindow } from '@/domain/schedule';
 import { Panel } from './Panel';
 import { NumberField } from './NumberField';
-import { useCalc } from './calculator';
+import { calendarText, loafText, timeText } from './text';
 
 /** "Oven and proof": loaves baked at once, the reheat between batches, and the cold proof or Tartine's final proof. */
 export function OvenCard({
   ovenCapacity,
   proof,
+  reheat,
+  onCapacity,
+  onReheat,
+  onProof,
   book,
   batches,
   count,
@@ -17,18 +22,21 @@ export function OvenCard({
 }: {
   ovenCapacity: number;
   proof: 'cold' | 'warm';
+  reheat: number;
+  onCapacity: (capacity: number) => void;
+  onReheat: (minutes: number) => void;
+  onProof: (proof: 'cold' | 'warm') => void;
   book: boolean;
   batches: number;
   count: number;
   proofWindow: ReturnType<typeof coldProofWindow>;
 }) {
-  const form = useCalc();
   return (
     <Panel title="Oven and proof" className="setup-card">
       <div className="field-grid">
         <div className="number-field">
           <Label htmlFor="oven-capacity">Loaves baked at once</Label>
-          <Select value={String(ovenCapacity)} onValueChange={(v) => form.setFieldValue('ovenCapacity', Number(v))}>
+          <Select value={String(ovenCapacity)} onValueChange={(v) => onCapacity(Number(v))}>
             <SelectTrigger id="oven-capacity">
               <SelectValue />
             </SelectTrigger>
@@ -40,14 +48,9 @@ export function OvenCard({
         </div>
         {batches > 1 && (
           <NumberField
-            spec={{
-              key: 'reheat',
-              cell: 'reheat',
-              label: 'Reheat between batches',
-              value: 30,
-              unit: 'min',
-              step: 1,
-            }}
+            spec={{ cell: 'reheat', label: 'Reheat between batches', unit: 'min', step: 1 }}
+            value={reheat}
+            onChange={onReheat}
           />
         )}
       </div>
@@ -79,7 +82,7 @@ export function OvenCard({
       {book && (
         <>
           <Label className="proof-label">Final proof</Label>
-          <Select value={proof} onValueChange={(v) => form.setFieldValue('proof', v as 'cold' | 'warm')}>
+          <Select value={proof} onValueChange={(v) => onProof(v as 'cold' | 'warm')}>
             <SelectTrigger aria-label="Final proof">
               <SelectValue />
             </SelectTrigger>

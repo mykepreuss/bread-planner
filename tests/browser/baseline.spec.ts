@@ -175,6 +175,15 @@ test.describe('flows', () => {
     await expect(upNext(page)).toContainText('Running 40 min behind plan');
     expect(await aria(page)).toMatchSnapshot('flow-done.aria.yml');
     await expectSameAfterReload(page);
+    // The planner saves version 6 and leaves the version 5 save as it was, for a rollback (docs/BEHAVIOUR.md).
+    const [five, six] = await page.evaluate(() => [
+      localStorage.getItem('bread-planner.v5'),
+      localStorage.getItem('bread-planner.v6'),
+    ]);
+    expect(five, 'the version 5 save is untouched').toBe(JSON.stringify(plans.get('leaven-late')!.saved));
+    expect(JSON.parse(six ?? 'null')?.plan.recipes.house.bake.done, 'the check is saved as version 6').toContain(
+      'leaven',
+    );
   });
 
   test('The dough temperature after mixing re-times bulk, and °C shows the same reading', async ({ page }) => {

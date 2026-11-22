@@ -94,10 +94,19 @@ function bakeFrom(source: Raw): Bake {
   };
 }
 
-/** The shared fields and every recipe, from either version, with `fallback` for a missing or invalid date and time. */
+/** A saved date and time, each checked, or `now`'s fallback: tomorrow at 9:00 AM. */
+function createdFrom(saved: unknown, now: number) {
+  const c = isObject(saved) ? saved : {};
+  return {
+    date: typeof c.date === 'string' && DATE.test(c.date) ? c.date : tomorrow(now),
+    time: typeof c.time === 'string' && TIME.test(c.time) ? c.time : '09:00',
+  };
+}
+
+/** The shared fields and every recipe, from either version. A missing or invalid date or time falls back to `created`. */
 function assemble(
   p: Raw,
-  fallback: { date: string; time: string },
+  created: { date: string; time: string },
   settingsReader: (recipe: Recipe, source: Raw) => (field: string) => unknown,
   bakeSource: (source: Raw) => Raw,
 ): PlannerState {
@@ -118,8 +127,8 @@ function assemble(
   return {
     recipe: typeof p.recipe === 'string' && order.includes(p.recipe) ? p.recipe : order[0],
     order,
-    date: typeof p.date === 'string' && DATE.test(p.date) ? p.date : fallback.date,
-    time: typeof p.time === 'string' && TIME.test(p.time) ? p.time : fallback.time,
+    date: typeof p.date === 'string' && DATE.test(p.date) ? p.date : created.date,
+    time: typeof p.time === 'string' && TIME.test(p.time) ? p.time : created.time,
     anchor: p.anchor === 'done' ? 'done' : 'leaven',
     proof: p.proof === 'warm' ? 'warm' : 'cold',
     ovenCapacity:
@@ -127,24 +136,20 @@ function assemble(
     reheat: isFinite(p.reheat) && p.reheat >= 0 ? p.reheat : 30,
     tempUnit: p.tempUnit === 'C' ? 'C' : 'F',
     recipes,
+    created,
   };
 }
 
 /**
- * A version 5 save, upgraded. A missing or invalid date or time falls back to the one the save was first created
- * with (decision 4 in docs/BEHAVIOUR.md), and then to tomorrow at 9:00 AM. Anything that is not a version 5 save
- * starts fresh.
+ * A version 5 save, upgraded. The date and time it was first created with, kept in its `legacy` block, become
+ * `created`. Anything that is not a version 5 save starts fresh.
  */
 export function fromV5(saved: unknown, now: number): PlannerState {
   if (!isObject(saved) || saved.version !== 5 || !isObject(saved.plan)) return freshState(now);
-  const p = saved.plan,
-    legacy = isObject(p.legacy) ? p.legacy : {};
+  const p = saved.plan;
   return assemble(
     p,
-    {
-      date: typeof legacy.date === 'string' && DATE.test(legacy.date) ? legacy.date : tomorrow(now),
-      time: typeof legacy.time === 'string' && TIME.test(legacy.time) ? legacy.time : '09:00',
-    },
+    createdFrom(p.legacy, now),
     (recipe, source) => fromV5Params(recipe, source.params),
     // Version 5 kept the bake beside the settings.
     (source) => source,
@@ -156,7 +161,7 @@ export function fromV6(saved: unknown, now: number): PlannerState | null {
   if (!isObject(saved) || saved.version !== 6 || !isObject(saved.plan)) return null;
   return assemble(
     saved.plan,
-    { date: tomorrow(now), time: '09:00' },
+    createdFrom(saved.plan.created, now),
     (_, source) => fromV6Settings(source.settings),
     (source) => (isObject(source.bake) ? source.bake : {}),
   );

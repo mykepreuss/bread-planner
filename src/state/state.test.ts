@@ -4,7 +4,7 @@ import { RECIPES, recipeById } from '../domain/recipes.ts';
 import { formula, totalHydration } from '../domain/formula.ts';
 import { schedule } from '../domain/schedule.ts';
 import { freshState, planOf, selected, tomorrow, type PlannerState } from './schema.ts';
-import { loadState, serialize, fromV6, STORAGE_V5, STORAGE_V6 } from './load.ts';
+import { loadState, serialize, fromV5, fromV6, STORAGE_V5, STORAGE_V6 } from './load.ts';
 import * as act from './actions.ts';
 
 // Times here are built and read in the same local zone, so these tests hold in any time zone.
@@ -38,6 +38,7 @@ test('a fresh planner opens Preuss House tomorrow at 9:00 AM, with every recipe 
   );
   assert.equal(s.date, '2026-11-22');
   assert.equal(s.time, '09:00');
+  assert.deepEqual(s.created, { date: '2026-11-22', time: '09:00' });
   assert.deepEqual([s.anchor, s.proof, s.ovenCapacity, s.reheat, s.tempUnit], ['leaven', 'cold', 2, 30, 'F']);
   for (const r of RECIPES) {
     assert.deepEqual(s.recipes[r.id].settings, r.defaults, r.id);
@@ -219,6 +220,27 @@ test('readings in the same minute replace each other, stay in time order, and ca
   ]);
 });
 
+test('an invalid saved date or time falls back to the one the plan was first made with (decision 4)', () => {
+  const upgraded = fromV5(
+    { version: 5, plan: { date: '', time: '9:00', legacy: { date: '2026-10-20', time: '07:30' } } },
+    NOW,
+  );
+  assert.deepEqual(
+    [upgraded.date, upgraded.time, upgraded.created],
+    ['2026-10-20', '07:30', { date: '2026-10-20', time: '07:30' }],
+  );
+  // Saved as version 6 with the date field cleared, it reloads on the creation date, as version 5 did.
+  const six = JSON.parse(serialize(act.setDate(act.planNextBake(upgraded, NOW), '')));
+  const reloaded = fromV6(six, NOW)!;
+  assert.deepEqual([reloaded.date, reloaded.time, reloaded.created], ['2026-10-20', '07:30', upgraded.created]);
+  // Without a usable creation date or time, each falls back to tomorrow at 9:00 AM.
+  six.plan.created = { date: '2026-2-1', time: null };
+  assert.deepEqual(fromV6(six, NOW)!.created, { date: tomorrow(NOW), time: '09:00' });
+  delete six.plan.created;
+  assert.deepEqual(fromV6(six, NOW)!.created, { date: tomorrow(NOW), time: '09:00' });
+  assert.deepEqual(fromV5({ version: 5, plan: { legacy: 'x' } }, NOW).created, { date: tomorrow(NOW), time: '09:00' });
+});
+
 test('typing a total hydration keeps the dough weight and shows the total typed', () => {
   for (const id of RECIPES.map((r) => r.id)) {
     const s = act.selectRecipe(plan(), id),
@@ -229,6 +251,8 @@ test('typing a total hydration keeps the dough weight and shows the total typed'
       assert.ok(Math.abs(r.total - before.total) < 1e-9, `${id} weight`);
       assert.ok(Math.abs(totalHydration(selected(after).settings) - total) < 1e-9, `${id} ${total}%`);
     }
+    // A total below what the leaven and starter build already bring stops at no added water.
+    assert.equal(selected(act.setTotalHydration(s, 0)).settings.hydration, 0, `${id} at 0%`);
   }
 });
 

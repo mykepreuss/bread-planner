@@ -18,6 +18,8 @@ export type RecipeState = { settings: Settings; bake: Bake };
 /**
  * Everything the planner saves (version 6). Each recipe keeps its own settings and bake; the rest is shared: the
  * selected recipe, the menu order, when the bake is planned, the Tartine proof, the oven and the temperature unit.
+ * `created` is the date and time the plan first had. Nothing changes it; an invalid saved date or time falls back to
+ * it (decision 4 in docs/BEHAVIOUR.md).
  */
 export type PlannerState = {
   recipe: string;
@@ -30,6 +32,7 @@ export type PlannerState = {
   reheat: number;
   tempUnit: TempUnit;
   recipes: Record<string, RecipeState>;
+  created: { date: string; time: string };
 };
 
 export const emptyBake = (): Bake => ({ done: [], doneAt: {}, doughTemp: null, bulkTemps: [] });
@@ -43,17 +46,20 @@ export function tomorrow(now: number) {
 
 /** A new planner: Preuss House, every recipe at its defaults, the leaven at 9:00 AM tomorrow. */
 export function freshState(now: number): PlannerState {
+  const date = tomorrow(now),
+    time = '09:00';
   return {
     recipe: 'house',
     order: RECIPES.map((r) => r.id),
-    date: tomorrow(now),
-    time: '09:00',
+    date,
+    time,
     anchor: 'leaven',
     proof: 'cold',
     ovenCapacity: 2,
     reheat: 30,
     tempUnit: 'F',
     recipes: Object.fromEntries(RECIPES.map((r) => [r.id, { settings: defaultSettings(r), bake: emptyBake() }])),
+    created: { date, time },
   };
 }
 

@@ -1,10 +1,10 @@
 import { Moon } from 'lucide-react';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
-import { calendarText, timeText } from '@/lib/model';
-import type { quietHourActions } from '@/lib/recipes';
+import type { LiveStep } from '@/domain/bakeday';
+import { calendarText, timeText } from './text';
 
 /** The warning above the schedule when hands-on steps fall after 10:30 PM or before 7:00 AM. */
-export function QuietWarning({ actions }: { actions: ReturnType<typeof quietHourActions> }) {
+export function QuietWarning({ actions }: { actions: { step: LiveStep; continues: boolean }[] }) {
   return (
     <section className="quiet-warning" role="region" aria-label="Quiet hours warning">
       <Moon size={22} />
