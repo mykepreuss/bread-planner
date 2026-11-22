@@ -17,10 +17,17 @@ export type AddIn = {
 };
 
 /**
- * A recipe's add-ins and the step that works them in, right after Turn 1. `note` is the step's note; `{list}` in it
- * becomes the scaled amounts.
+ * Oven work the add-ins need before they go in, such as toasting seeds: a step with id `toast` and kind `prep` that
+ * starts `minutesBefore` minutes (more than 0) ahead of the add-in step, so they are ready and cool by then. Added for
+ * Tartine Sesame on November 22, 2026.
  */
-export type AddIns = { title: string; note: string; items: AddIn[] };
+export type Prep = { title: string; note: string; minutesBefore: number };
+
+/**
+ * A recipe's add-ins and the step that works them in, right after Turn 1, with any `prep` they need first. `note` is
+ * the step's note; `{list}` in it becomes the scaled amounts.
+ */
+export type AddIns = { title: string; note: string; items: AddIn[]; prep?: Prep };
 
 const FRACTIONS: Record<number, string> = { 0: '', 1: '¼', 2: '½', 3: '¾' };
 

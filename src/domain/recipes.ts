@@ -1,10 +1,10 @@
 import type { AddIns } from './addins.ts';
 
 /**
- * The recipes, Preuss House, Original Tartine and Tartine Olive, as data. Each default is written as the sum it came
- * from in the source spreadsheet or the book, so it equals the value the app has always started with. White & Whole
- * Wheat, Red Spring & Rye, Five-Flour and Four-Flour Sourdough were removed at Michael's request on November 22, 2026,
- * with the flours only they used; they are in git history.
+ * The recipes, as data. Each default is written as the sum it came from in the source spreadsheet or the book, so it
+ * equals the value the app has always started with. White & Whole Wheat, Red Spring & Rye, Five-Flour and Four-Flour
+ * Sourdough were removed at Michael's request on November 22, 2026, with the flours only they used; they are in git
+ * history. The same day he asked for three more from Tartine Bread: Tartine Olive, Tartine Sesame and Tartine Whole Wheat.
  */
 
 export type FlourKey = 'anita' | 'white' | 'wheat' | 'rye';
@@ -123,6 +123,40 @@ export const RECIPES: Recipe[] = [
     },
     // As Original Tartine: 900 g white, 100 g whole wheat; 750 g water with 50 g held back; 200 g leaven; 20 g salt;
     // 1 tbsp (15 g) starter.
+    defaults: {
+      count: 2,
+      weight: 985,
+      hydration: 75,
+      leaven: 20,
+      salt: 2,
+      reserve: share(50, 750),
+      flours: { white: 90, wheat: 10 },
+      build: { starter: 15, flour: 100, wheat: 100, water: 200 },
+    },
+  },
+  {
+    // Tartine Bread page 90, "Sesame": one batch of the Basic Country Bread dough with 1 cup of seeds, for 2 loaves.
+    id: 'sesame',
+    name: 'Tartine Sesame',
+    description:
+      'Original Tartine’s dough and timing, with toasted sesame seeds worked in after the first turn. The seeds toast while the dough rests.',
+    method: 'tartine',
+    flours: ['white', 'wheat'],
+    late: [],
+    buildFlour: 'white',
+    addIns: {
+      title: 'Add the toasted sesame seeds',
+      note: 'Scatter over the dough {list}. Wet them with a splash of water, then work them in by hand, pinching the dough through your fingers and slicing through it with the side of your hand until the seeds are evenly spread. Bulk then carries on as planned.',
+      items: [{ amount: 1, unit: ['cup', 'cups'], what: 'unhulled sesame seeds, toasted and cooled' }],
+      // 10 minutes, a stir, 10 to 15 minutes more, then 20 minutes to cool: ready by Turn 1.
+      prep: {
+        title: 'Toast the sesame seeds',
+        note: 'Heat the oven to 400°F / 204°C. Give the seeds 10 minutes on a rimmed baking sheet in a single layer, then stir them so the darker ones at the edges move to the middle. Return them for another 10 to 15 minutes, until thoroughly toasted, and let them cool for 20 minutes. They go into the dough at Turn 1.',
+        minutesBefore: 45,
+      },
+    },
+    // Original Tartine's defaults, copied: 900 g white, 100 g whole wheat; 750 g water with 50 g held back; 200 g
+    // leaven; 20 g salt; 1 tbsp (15 g) starter.
     defaults: {
       count: 2,
       weight: 985,

@@ -12,6 +12,7 @@ export type Kind =
   | 'mix'
   | 'bulk'
   | 'turn'
+  | 'prep'
   | 'addin'
   | 'preshape'
   | 'bench'
@@ -33,8 +34,8 @@ export type Phase = 'room' | 'cold' | 'oven';
  * A step and the facts about it:
  * - `handsOn`: someone has to do something then, so it counts for quiet hours; `activeMinutes` is how long that work
  *   lasts, for mixing and shaping that can run past the cutoff.
- * - `movesPlan`: checking it late or early moves the steps after it. The starter feed, the autolyse and the turns
- *   record their time but move nothing.
+ * - `movesPlan`: checking it late or early moves the steps after it. The starter feed, the autolyse, the turns, and
+ *   the add-ins and their prep record their time but move nothing.
  * - `bulk`: the start of bulk, a turn, or working in a Tartine recipe's add-ins. Bulk never ends before the latest of
  *   them that is checked.
  * - `turn`: the turn's number, from 1, or 0.
@@ -62,6 +63,7 @@ const FACTS: Record<Kind, Pick<Step, 'phase' | 'handsOn' | 'movesPlan' | 'bulk'>
   mix: { phase: 'room', handsOn: true, movesPlan: true, bulk: false, active: true },
   bulk: { phase: 'room', handsOn: false, movesPlan: true, bulk: true },
   turn: { phase: 'room', handsOn: true, movesPlan: false, bulk: true },
+  prep: { phase: 'oven', handsOn: true, movesPlan: false, bulk: false },
   addin: { phase: 'room', handsOn: true, movesPlan: false, bulk: true },
   preshape: { phase: 'room', handsOn: true, movesPlan: true, bulk: false, active: true },
   bench: { phase: 'room', handsOn: true, movesPlan: true, bulk: false },
@@ -198,7 +200,15 @@ export function schedule(input: PlanInput): Step[] {
           : 'Repeat the four-sided stretch and fold, with wet hands.',
       );
       // The book works add-ins in right after the first turn, so the step starts with it.
-      if (n === 1 && recipe.addIns)
+      if (n === 1 && recipe.addIns) {
+        const { prep } = recipe.addIns;
+        if (prep) {
+          // Early enough to be ready by then. It lasts until the next step starts: this turn and every step before it
+          // are already on the plan, so the next one is among them.
+          const start = at + elapsed - prep.minutesBefore,
+            next = Math.min(...rows.map((r) => r.offset).filter((offset) => offset > start));
+          push('toast', 'prep', prep.title, start, next - start, prep.note);
+        }
         push(
           'addins',
           'addin',
@@ -207,6 +217,7 @@ export function schedule(input: PlanInput): Step[] {
           0,
           addInNote(recipe.addIns, addInLines(recipe.addIns, settings, recipe.defaults)),
         );
+      }
     }
     at += t.bulk;
     push(

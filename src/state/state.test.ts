@@ -454,7 +454,7 @@ test('a save with one of the four removed recipes selected opens on Preuss House
     // from it does not list Tartine Olive.
     assert.deepEqual(
       [s.recipe, s.order, Object.keys(s.recipes)],
-      ['house', ['house', 'tartine'], ['house', 'tartine', 'olive']],
+      ['house', ['house', 'tartine'], ['house', 'tartine', 'olive', 'sesame']],
       name,
     );
     assert.equal(s.recipes.tartine.settings.count, 3, `${name}: Tartine keeps its settings`);
@@ -466,6 +466,11 @@ test('a save with one of the four removed recipes selected opens on Preuss House
         bake: { done: [], doneAt: {}, doughTemp: null, bulkTemps: [] },
       },
       `${name}: Tartine Olive, which the save doesn't hold, starts at its defaults`,
+    );
+    assert.deepEqual(
+      s.recipes.sesame,
+      { settings: recipeById('sesame')!.defaults, bake: { done: [], doneAt: {}, doughTemp: null, bulkTemps: [] } },
+      `${name}: Tartine Sesame, which the save doesn't hold, starts at its defaults`,
     );
   }
 });
