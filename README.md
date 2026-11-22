@@ -14,7 +14,7 @@ npm run build
 npm run test:browser
 ```
 
-`docs/BEHAVIOUR.md` describes what the app does. Two records hold it to that. `npm test` includes `tests/baseline`, which compares the code's output for 214 plans, 45 recipe calculations and 24 kinds of saved data with `tests/baseline/baseline.json`. `npm run test:browser` builds the site and compares 22 screens at phone and desktop width, and 15 actions, with the records in `tests/browser`, using Playwright's Chromium. It runs on this Mac only, not in the Vercel build. After a deliberate change, rewrite the records with `npm run baseline:update` or `npm run test:browser -- --update-snapshots`, and review the diff.
+`docs/BEHAVIOUR.md` describes what the app does. Two records hold it to that. `npm test` includes `tests/baseline`, which compares the code's output for 214 plans, 45 recipe calculations and 24 kinds of saved data with `tests/baseline/baseline.json`. It also renders `App.tsx` itself for every plan and checks the Schedule tab shows the same, so it runs in every Vercel build. `npm run test:browser` builds the site and compares 22 screens, each at phone and desktop width, and 16 actions, with the records in `tests/browser`, using Playwright's Chromium. It runs on this Mac only, not in the Vercel build. After a deliberate change, rewrite the records with `npm run baseline:update` or `npm run test:browser -- --update-snapshots`, and review the diff.
 
 Astro statically builds the page shell, metadata and404 page. The calculator is one React island because its recipe inputs, ingredient weights, schedule and checklists share live state. There is no server or database.
 

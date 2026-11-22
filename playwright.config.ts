@@ -1,4 +1,5 @@
 import {defineConfig} from '@playwright/test';
+import {pageSettings,widths} from './tests/browser/context.ts';
 
 /**
  * The browser baseline: the planner's screens and main actions, recorded before the rebuild. `npm run test:browser`
@@ -12,13 +13,9 @@ export default defineConfig({
   forbidOnly:true,
   retries:0,
   reporter:[['list']],
-  // Text records are shared by both widths, which must show the same content; screenshots are per width and platform.
+  // Each screen test renders both widths itself, so one text record covers both; screenshots are per width and platform.
   snapshotPathTemplate:'{testDir}/__snapshots__/{arg}{ext}',
-  expect:{toHaveScreenshot:{pathTemplate:'{testDir}/__screenshots__/{arg}-{projectName}-{platform}{ext}'}},
-  use:{baseURL:'http://127.0.0.1:4329',timezoneId:'America/Vancouver',locale:'en-US',colorScheme:'light',deviceScaleFactor:1},
-  projects:[
-    {name:'phone',use:{viewport:{width:375,height:812}}},
-    {name:'desktop',use:{viewport:{width:1280,height:900}}},
-  ],
+  expect:{toHaveScreenshot:{pathTemplate:'{testDir}/__screenshots__/{arg}-{platform}{ext}'}},
+  use:{...pageSettings,viewport:widths.desktop},
   webServer:{command:'npx astro build && npx astro preview --host 127.0.0.1 --port 4329 --ignore-lock',url:'http://127.0.0.1:4329',reuseExistingServer:false,timeout:120000},
 });

@@ -126,7 +126,9 @@ function randomBakes(n:number):[string,PlanInput][]{
     }
     const rest=steps.find(s=>s.id==='rest'),now=last+int(-30,90)*60000;
     const doughTemp=r()<.5?pick([58,64,70,74,77,78,80,83,86,90,96]):null;
-    const bulkTemps=doughTemp!==null&&rest&&now>+rest.at?Array.from({length:int(0,2)},()=>({at:stamp(+rest.at+int(-20,Math.max(0,Math.round((now-+rest.at)/60000)))*60000).slice(0,16),f:pick([62,70,75,79,82,88])})):[];
+    // Readings are saved the way the app saves them: in time order, one per minute (the later one wins).
+    const bulkTemps=(doughTemp!==null&&rest&&now>+rest.at?Array.from({length:int(0,2)},()=>({at:stamp(+rest.at+int(-20,Math.max(0,Math.round((now-+rest.at)/60000)))*60000).slice(0,16),f:pick([62,70,75,79,82,88])})):[])
+      .map((reading,order)=>({reading,order})).sort((x,y)=>x.reading.at.localeCompare(y.reading.at)||x.order-y.order).map(x=>x.reading).filter((r,i,list)=>list[i+1]?.at!==r.at);
     out.push([`random bake ${k+1}`,{...base,done,doneAt,doughTemp,bulkTemps,now:stamp(now).slice(0,16)}]);
   }
   return out;
@@ -154,10 +156,7 @@ function formulas():[string,FormulaInput][]{
   return out;
 }
 
-/**
- * Saved browser data, as JSON.parse returns it. These use a past date: a plan without a valid saved date starts
- * tomorrow, so a saved date must never be able to equal tomorrow.
- */
+/** Saved browser data, as JSON.parse returns it. `observeRestore` loads it at a fixed moment, `LOADED_AT`. */
 function restores():[string,unknown][]{
   const SAVED='2026-11-13',p=createPlanner();p.date=SAVED;p.time='09:00';p.legacy.date=SAVED;
   const fresh=JSON.parse(JSON.stringify({version:5,plan:p}));

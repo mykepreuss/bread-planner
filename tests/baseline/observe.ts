@@ -23,6 +23,25 @@ export function stamp(t:Date|number){
   const offset=-d.getTimezoneOffset()/60;
   return `${dateString(d)} ${clockText(d)} ${offset<0?'-':'+'}${String(Math.abs(offset)).padStart(2,'0')}`;
 }
+/**
+ * Runs `run` with the clock stopped at `at`: `Date.now()` and `new Date()` give that moment, and dates built from a
+ * value work as usual. With `plainText`, a date's toLocaleTimeString and toLocaleDateString give `HH:MM` and
+ * `YYYY-MM-DD`, so times on the rendered screen read the same on any machine, whatever its locale.
+ */
+export function atMoment<T>(at:number,run:()=>T,plainText=false):T{
+  const Real=Date;
+  class Frozen extends Real{
+    constructor(...args:unknown[]){if(args.length)super(...(args as [number]));else super(at);}
+    static now(){return at;}
+  }
+  if(plainText){
+    Frozen.prototype.toLocaleTimeString=function(){return clockText(this);};
+    Frozen.prototype.toLocaleDateString=function(){return dateString(this);};
+  }
+  globalThis.Date=Frozen as DateConstructor;
+  try{return run();}finally{globalThis.Date=Real;}
+}
+
 /** Epoch milliseconds for a local `YYYY-MM-DD HH:MM`. */
 export function local(s:string){
   const v=+new Date(`${s.replace(' ','T')}:00`);
@@ -106,14 +125,18 @@ export function observeFormula(i:FormulaInput){
     made:r.made,madeParts:r.madeParts,reserve:r.reserve,shortfall:r.shortfall,dustingRice:r.dustingRice};
 }
 
+/**
+ * Saved data is loaded at this moment. Without a valid saved date a plan starts the next day, so loading at a fixed
+ * moment keeps that date the same on every run, and far from every date the cases save.
+ */
+export const LOADED_AT='2030-01-01 12:00';
+
 /** Saved browser data after loading: the settings, checklists and readings it gives every recipe, and the selected plan's times. */
 export function observeRestore(saved:unknown){
-  const p=restorePlanner(saved),tomorrow=new Date();tomorrow.setDate(tomorrow.getDate()+1);
-  // Without a valid saved date the plan starts tomorrow, which depends on when the test runs.
-  const date=p.date===dateString(tomorrow)?'<tomorrow>':p.date;
-  return {recipe:p.recipe,order:p.order,date,time:p.time,anchor:p.anchor,proof:p.proof,ovenCapacity:p.ovenCapacity,reheat:p.reheat,tempUnit:p.tempUnit,
+  const p=atMoment(local(LOADED_AT),()=>restorePlanner(saved));
+  return {recipe:p.recipe,order:p.order,date:p.date,time:p.time,anchor:p.anchor,proof:p.proof,ovenCapacity:p.ovenCapacity,reheat:p.reheat,tempUnit:p.tempUnit,
     recipes:Object.fromEntries(Object.entries(p.recipes).map(([id,r])=>[id,{params:r.params,done:r.done,doneAt:Object.fromEntries(Object.entries(r.doneAt).map(([k,t])=>[k,stamp(t)])),doughTemp:r.doughTemp,bulkTemps:r.bulkTemps.map(b=>({at:stamp(b.at),f:b.f}))}])),
-    schedule:date==='<tomorrow>'?null:recipeSchedule(p).map(s=>`${s.id} ${stamp(s.at)}`)};
+    schedule:recipeSchedule(p).map(s=>`${s.id} ${stamp(s.at)}`)};
 }
 
 /** Small helpers whose wording or rounding the screen shows directly. */

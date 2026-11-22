@@ -22,7 +22,8 @@ export function encode(b:Omit<Baseline,'texts'|'timeZone'>){
     if(!steps||row.output===null)return `  ${JSON.stringify(row)}`;
     const {steps:list,...rest}=row.output as {steps:StepOut[]};
     const head=JSON.stringify({name:row.name,input:row.input,output:{...rest,steps:'<steps>'}});
-    return `  ${head.replace('"<steps>"',list.length?`[\n${list.map(s=>`    ${JSON.stringify(store(s))}`).join(',\n')}\n  ]`:'[]')}`;
+    // A function, so `$&` or `$'` in a step is written as it is rather than read as a replacement pattern.
+    return `  ${head.replace('"<steps>"',()=>list.length?`[\n${list.map(s=>`    ${JSON.stringify(store(s))}`).join(',\n')}\n  ]`:'[]')}`;
   }).join(',\n');
   const plans=block(b.plans,true);
   return `{\n"about": ${JSON.stringify(b.about)},\n"recordedFrom": ${JSON.stringify(b.recordedFrom)},\n"timeZone": ${JSON.stringify(TIME_ZONE)},\n`

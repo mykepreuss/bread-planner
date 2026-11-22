@@ -1,6 +1,7 @@
 import {test as base,expect,type Page} from '@playwright/test';
 import {readFileSync} from 'node:fs';
 import type {SavedPlan} from './saved-plans.ts';
+import {pageSettings,widths} from './context.ts';
 
 /**
  * Screens: each saved plan opened at a frozen moment and recorded three ways, at phone and desktop width:
@@ -8,24 +9,33 @@ import type {SavedPlan} from './saved-plans.ts';
  * - a layout snapshot: every element's tag, classes and data attributes, which is what the stylesheet hangs on;
  * - a screenshot of the first screen, and for five screens of the whole page, so styling below the first screen is
  *   recorded too (including the phone layout that moves the steps up once a bake is underway).
- * Both widths must give the same two snapshots. Flows: the main actions, recorded as accessibility snapshots on
- * desktop, with a reload where the result must persist.
+ * Each screen test renders both widths and checks they give the same two snapshots before comparing one with the
+ * record. Flows: the main actions, recorded as accessibility snapshots at desktop width, with a reload where the
+ * result must persist.
  */
 const plans=new Map((JSON.parse(readFileSync(new URL('./saved-plans.json',import.meta.url),'utf8')) as SavedPlan[]).map(p=>[p.name,p]));
 const KEY='bread-planner.v5';
 
-/** Every test fails on a console error or warning. */
+/** Collects a page's console errors and warnings, and uncaught errors. */
+function watch(page:Page){
+  const problems:string[]=[];
+  page.on('console',m=>{if(m.type()==='error'||m.type()==='warning')problems.push(`${m.type()}: ${m.text()}`);});
+  page.on('pageerror',e=>problems.push(`page error: ${e.message}`));
+  return problems;
+}
+/** Every flow fails on a console error or warning. Screen tests open their own pages and check them the same way. */
 const test=base.extend<{consoleProblems:string[]}>({
   consoleProblems:[async({page},use)=>{
-    const problems:string[]=[];
-    page.on('console',m=>{if(m.type()==='error'||m.type()==='warning')problems.push(`${m.type()}: ${m.text()}`);});
-    page.on('pageerror',e=>problems.push(`page error: ${e.message}`));
+    const problems=watch(page);
     await use(problems);
     expect(problems,'console errors or warnings').toEqual([]);
   },{auto:true}],
 });
 
-/** Opens the planner on a saved plan with the clock frozen. The save is written once per tab, so a reload shows what the app saved itself. */
+/**
+ * Opens the planner on a saved plan with the clock frozen. The save is written once per tab, so a reload shows what the
+ * app saved itself; for the same reason, call it once per page.
+ */
 async function open(page:Page,name:string){
   const plan=plans.get(name);if(!plan)throw new Error(`No saved plan ${name}`);
   await page.clock.setFixedTime(plan.now);
@@ -78,19 +88,32 @@ const screens:{id:string;plan:string;ingredients?:boolean}[]=[
   {id:'leaven-short-ingredients',plan:'leaven-short',ingredients:true},
 ];
 
-for(const screen of screens)test(`screen: ${screen.id}`,async({page},info)=>{
-  await open(page,screen.plan);
-  if(screen.ingredients)await openIngredients(page);
-  expect(await aria(page)).toMatchSnapshot(`${screen.id}.aria.yml`);
-  expect(await layout(page)).toMatchSnapshot(`${screen.id}.layout.txt`);
-  await expect(page).toHaveScreenshot(`${screen.id}.png`);
-  if(wholePage[screen.id]?.includes(info.project.name))await expect(page).toHaveScreenshot(`${screen.id}-whole-page.png`,{fullPage:true});
-  expect(await page.evaluate(()=>document.documentElement.scrollWidth),'no sideways scrolling').toBe(page.viewportSize()!.width);
+for(const screen of screens)test(`screen: ${screen.id}`,async({browser})=>{
+  // Both widths are open and compared with each other before anything is compared with, or written to, the record.
+  const opened=await Promise.all(Object.entries(widths).map(async([width,viewport])=>{
+    const context=await browser.newContext({...pageSettings,viewport}),page=await context.newPage(),problems=watch(page);
+    await open(page,screen.plan);
+    if(screen.ingredients)await openIngredients(page);
+    return {width,viewport,context,page,problems,aria:await aria(page),layout:await layout(page)};
+  }));
+  try{
+    const [phone,desktop]=opened;
+    expect(phone.aria,'phone and desktop show the same content').toBe(desktop.aria);
+    expect(phone.layout,'phone and desktop have the same markup').toBe(desktop.layout);
+    for(const {width,viewport,page,problems} of opened){
+      expect(await page.evaluate(()=>document.documentElement.scrollWidth),`no sideways scrolling at ${width} width`).toBe(viewport.width);
+      expect(problems,`console errors or warnings at ${width} width`).toEqual([]);
+    }
+    expect(desktop.aria).toMatchSnapshot(`${screen.id}.aria.yml`);
+    expect(desktop.layout).toMatchSnapshot(`${screen.id}.layout.txt`);
+    for(const {width,page} of opened){
+      await expect(page).toHaveScreenshot(`${screen.id}-${width}.png`);
+      if(wholePage[screen.id]?.includes(width))await expect(page).toHaveScreenshot(`${screen.id}-whole-page-${width}.png`,{fullPage:true});
+    }
+  }finally{await Promise.all(opened.map(o=>o.context.close()));}
 });
 
 test.describe('flows',()=>{
-  test.beforeEach(({},info)=>{test.skip(info.project.name!=='desktop','The flows are width-independent; the screens cover the phone layout.');});
-
   test('Done on an overdue leaven moves the plan, and the check survives a reload',async({page})=>{
     await open(page,'leaven-late');
     await upNext(page).getByRole('button',{name:'Done'}).click();
@@ -234,13 +257,15 @@ test.describe('flows',()=>{
     await expectSameAfterReload(page);
   });
 
-  test('The method guide, with the House-method paragraph for every recipe except Tartine',async({page})=>{
+  // One test per recipe: `open` writes its save once per page.
+  for(const [name,houseParagraph] of [['house',true],['tartine',false]] as const)test(`The method guide for ${name}, ${houseParagraph?'with':'without'} the House-method paragraph`,async({page})=>{
+    await open(page,`recipe-${name}`);
+    await expect(page.getByRole('combobox',{name:'Recipe'})).toHaveText(name==='house'?'Preuss House':'Original Tartine');
     const guide=page.locator('.method-guide');
-    for(const [plan,name] of [['recipe-house','house'],['recipe-tartine','tartine']]){
-      await open(page,plan);
-      for(const section of ['Mature starter and readiness guide','Establishing a starter from scratch','Shaping, basket preparation and baking'])await guide.getByRole('button',{name:section}).click();
-      expect(await guide.ariaSnapshot()).toMatchSnapshot(`flow-method-guide-${name}.aria.yml`);
-    }
+    for(const section of ['Mature starter and readiness guide','Establishing a starter from scratch','Shaping, basket preparation and baking'])await guide.getByRole('button',{name:section}).click();
+    const paragraph=guide.getByText('This recipe uses a separate flour-and-water autolyse');
+    if(houseParagraph)await expect(paragraph).toBeVisible();else await expect(paragraph).toHaveCount(0);
+    expect(await guide.ariaSnapshot()).toMatchSnapshot(`flow-method-guide-${name}.aria.yml`);
   });
 
   test('The quiet-hours warning lists the affected steps',async({page})=>{
