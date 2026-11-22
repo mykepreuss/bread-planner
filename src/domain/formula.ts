@@ -84,7 +84,6 @@ export function formula(recipe: Recipe, s: Settings) {
     made,
     reserve: balance(made - used),
     shortfall: balance(used - made),
-    dustingRice: flour * 0.2,
   };
 }
 export type Formula = NonNullable<ReturnType<typeof formula>>;

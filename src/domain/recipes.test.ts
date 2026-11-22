@@ -185,7 +185,7 @@ test('base House stages, hydration and leaven reserve match the supplied recipe 
   grams(r.final, [100, 200, 20, 100]);
 });
 
-test('the book recipe keeps its quantities, leaven in the initial mix, and rice flour for dusting', () => {
+test('the book recipe keeps its quantities and leaven in the initial mix, and weighs no dusting flour', () => {
   const r = weigh(plan('tartine'));
   approx(r.total, 1970);
   approx(r.hydration, 75);
@@ -194,8 +194,9 @@ test('the book recipe keeps its quantities, leaven in the initial mix, and rice 
   grams(r.final, [20, 50]);
   approx(r.made, 415);
   approx(r.reserve, 215);
+  // The basket and dusting flour card was removed at Michael's request on November 22, 2026.
   assert.ok(!('dustingWheat' in r));
-  approx(r.dustingRice, 200);
+  assert.ok(!('dustingRice' in r));
 });
 
 test('every recipe conserves dough mass and scales count, loaf weight and hydration independently', () => {

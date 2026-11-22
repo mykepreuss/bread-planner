@@ -257,11 +257,6 @@ export function IngredientsTab() {
                   <strong>{g(r.used)} g</strong> leaven used
                 </span>
               </div>
-              {book && (
-                <Panel title="Basket and dusting flour" description="Separate supplies, outside dough weight.">
-                  <Weights rows={[['Rice flour', r.dustingRice]]} />
-                </Panel>
-              )}
             </>
           ) : (
             <p className="notice" role="alert">
