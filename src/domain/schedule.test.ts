@@ -163,19 +163,22 @@ test('parallel capacity and a partial final batch cover every loaf once', () => 
   assert.equal(all.filter((x) => x.id.startsWith('covered')).length, 1);
 });
 
-test('Tartine cold: a short rest with the leaven in, five folds before dividing, and the first and last bakes on time', () => {
+test('Tartine cold: a short rest with the leaven in, five folds before dividing, 18 hours in the fridge, and the first and last bakes on time', () => {
   const s = schedule(plan('tartine')),
     at = timeOf(s);
   assert.equal(at('autolyse'), '2026-10-21 21:00');
   assert.equal(at('mix'), '2026-10-21 21:30');
   assert.equal(at('shape'), '2026-10-22 00:30');
   assert.equal(at('fridge'), '2026-10-22 01:10');
+  // 18 hours rather than the book's 10 to 12 (decision 21).
+  assert.equal(find(s, 'fridge').minutes, 1080);
+  assert.match(find(s, 'fridge').note, /^Cover the baskets and refrigerate for about 18 hours\./);
   assert.equal(s.filter((x) => /^turn\d+$/.test(x.id)).length, 5);
   assert.ok(+find(s, 'turn5').at < +find(s, 'shape').at);
-  assert.equal(at('preheat'), '2026-10-22 13:40');
-  assert.equal(at('covered'), '2026-10-22 14:10');
-  assert.equal(at('out-1'), '2026-10-22 14:50');
-  assert.equal(at('done'), '2026-10-22 16:00');
+  assert.equal(at('preheat'), '2026-10-22 19:40');
+  assert.equal(at('covered'), '2026-10-22 20:10');
+  assert.equal(at('out-1'), '2026-10-22 20:50');
+  assert.equal(at('done'), '2026-10-22 22:00');
   assert.match(find(s, 'autolyse').note, /leaven used/);
   assert.match(find(s, 'preheat').note, /500°F/);
   assert.match(find(s, 'covered').note, /450°F/);

@@ -1083,7 +1083,7 @@ Independent check (the verifier, on `11cda78`): PASS on all seven criteria.
 
 Release, recorded on the `mixing-bowls` branch: Michael asked to merge, and pull request #36 merged as `7dfe425` once both Vercel checks passed on `b554c5a`. Production deployment `dpl_DdU4EkB3cy2nGS4JX94rUofusKNw` served the new bundle within about a minute. `node scripts/verify-deployment.mjs https://bread.assemblydigital.com` passed 9 checks and 7 assets, and the live bundle holds "Add to the dough" and the new House note. In the in-app browser at 375 px, the live site's saved plan (Original Tartine) showed Salt 20 g and Water 50 g as tick-offs under "Add salt and final water", with a document width of 375 and no console errors. Preuss House's list was not opened live, to leave that saved plan as it was.
 
-## Mixing bowls, November 22, 2026: committed, pull request open
+## Mixing bowls, November 22, 2026: merged and deployed
 
 Why: Michael mixes a doubled batch in two bowls and a tripled one in three, then puts everything in one container from bulk on, so the planner's single list of final-mix weights still needed dividing by hand. In session he chose: a "Loaves per mix" setting (default 2); the autolyse and final mix in each bowl, with the leaven built once and divided; and, for pizza dough, to enter all the dough he mixes (he bakes an odd count only when one loaf's worth becomes pizza). Branch `mixing-bowls`, from `main` at `7dfe425`.
 
@@ -1116,6 +1116,8 @@ Independent check (the verifier, on `05ff435`): PASS on all nine criteria, with 
 - Fixed from its nits: the leaven note's split now reads "Each of the 2 bowls gets 200 g." (it said "That is…", which read oddly after a short-build warning); HANDOFF says the field is under the loaf count and counts the 45 record files; the action count is 33, which was already one short before this change; and the Step notes bullet mentions the "to each bowl" wording.
 - Noted, not changed: a huge loaf count (2,000) makes 1,000 bowls of tick-offs and a slow page; a tick made with one bowl stays saved but hidden once there are several, so Clear checklist stays available with nothing visible ticked; uneven splits round to 0.1 g, so 5 loaves show 16.7 g of salt per bowl.
 
+Release: pull request 37 merged as `d8974e0` and has been in every production deployment since. This record has no check of the bowls on the live site.
+
 ## Preuss House: a 1½-hour autolyse, November 22, 2026: merged and verified live
 
 Why: after reviewing The Perfect Loaf's and SourdoughGuru's autolyse guides, Michael asked for a 1.5-hour autolyse for Preuss House, and to push it to production. Branch `preuss-autolyse`, from `main` at `d8974e0`. Pull requests 39 (the start suggestion) and 40 (Tartine Whole Wheat) are separate and not merged; they will be renumbered to decisions 16 and 17 when rebased.
@@ -1132,7 +1134,7 @@ Release: pull request 41 merged as `9342257`. Vercel production deployment `dpl_
 
 Not verified: a real phone, and a real bake with the shorter autolyse.
 
-## Olive and Sesame follow Preuss House, November 22, 2026: committed, pull request open
+## Olive and Sesame follow Preuss House, November 22, 2026: merged and verified live
 
 Why: Michael asked for Tartine Olive and Tartine Sesame to be just Olive and Sesame, and to follow the Preuss loaf where it is logical (hydration, autolyse and so on). Branch `preuss-olive-sesame`, from `main` at `9342257`, after the Preuss autolyse release.
 
@@ -1155,7 +1157,9 @@ Independent check (the verifier, on `1cbed1b`): PASS on all six criteria.
 
 Not verified: a real phone, and a real bake of either.
 
-## Recipe names, November 22, 2026: committed, pull request open
+Release, recorded with decision 21: pull request 42 merged as `924ca80`. Checked on production deployment `dpl_CDvEvDFYpTN5UD8fVDzPeG9GdapA`, READY with the `bread.assemblydigital.com` alias and holding all five of pull requests 42, 43, 39, 40 and 44. On the live site at phone width (390 px), with the clock at 3:20 PM on November 21 and a fresh save, Olive Bread followed Preuss Country Bread's timing with the olive mixture at 2:45 PM, and Sesame Bread toasted its seeds at 1:45 PM and added them at 2:45 PM; no console errors.
+
+## Recipe names, November 22, 2026: merged and verified live
 
 Why: Michael asked for Preuss House to be Preuss Country Bread, Original Tartine to be Tartine Country Bread, Olive to be Olive Bread and Sesame to be Sesame Bread. Branch `recipe-names`, from `preuss-olive-sesame` (pull request 42), so this pull request is based on it.
 
@@ -1167,7 +1171,9 @@ Verification: my own checks, not the verifier: only names changed.
 
 Not verified: a real phone.
 
-## A start with less night work, November 22, 2026: committed, pull request open
+Release, recorded with decision 21: pull request 43 merged as `5b500e1`. Checked on production deployment `dpl_CDvEvDFYpTN5UD8fVDzPeG9GdapA`, READY with the `bread.assemblydigital.com` alias and holding all five of pull requests 42, 43, 39, 40 and 44. On the live site at phone width (390 px), with the clock at 3:20 PM on November 21 and a fresh save, the recipe menu listed Preuss Country Bread, Tartine Country Bread, Olive Bread, Sesame Bread, Tartine Whole Wheat and Tartine Country Rye; no console errors.
+
+## A start with less night work, November 22, 2026: merged and verified live
 
 Why: Michael asked for Tartine start times that work around late nights, or slightly adjusted times. A first version (pull request 38) also gave every Tartine recipe a 2-hour autolyse alongside the leaven; he asked to keep the autolyse as it is for now, after reviewing The Perfect Loaf's autolyse guide, so that pull request is closed and this one has only the suggestion. He chose the quiet-hours warning over a fixed start in each recipe's description. Branch `quiet-start`, from `main` at `d8974e0`.
 
@@ -1196,7 +1202,9 @@ Not verified: a real phone.
 
 Rebased onto `main` at `5b500e1` (after pull requests 41, 42 and 43): the recorded records and browser snapshots were regenerated, the Tartine-only quiet-hours test no longer includes Olive and Sesame (now Preuss House variations with night-free starts), and 57 of the record's 161 plans now carry suggestions. The rest of the change is as verified.
 
-## Tartine Whole Wheat: a 2-hour autolyse and an 18½-hour cold final proof, November 22, 2026: committed, pull request open
+Release, recorded with decision 21: pull request 39 merged as `3599cf0`. Checked on production deployment `dpl_CDvEvDFYpTN5UD8fVDzPeG9GdapA`, READY with the `bread.assemblydigital.com` alias and holding all five of pull requests 42, 43, 39, 40 and 44. On the live site at phone width (390 px), with the clock at 3:20 PM on November 21 and a fresh save, Tartine Country Bread's warning offered "Start at 6:15 AM" and "Use a warm proof at 7:00 PM", and Tartine Whole Wheat's "Start at 10:30 PM" moved the leaven to 10:30 PM and cleared its warning; no console errors. Decision 21 has since changed what Tartine Country Bread is offered.
+
+## Tartine Whole Wheat: a 2-hour autolyse and an 18½-hour cold final proof, November 22, 2026: merged and verified live
 
 Why: after the start suggestion (pull request 39), Michael asked to take the Tartine recipes one at a time, starting with Whole Wheat, and to make its cold final proof fit a normal day. He chose a longer fridge ("which is fine"), and after reviewing The Perfect Loaf's and SourdoughGuru's autolyse guides, a true autolyse in place of the book's 50-minute rest with the leaven in ("option 2"). Branch `whole-wheat-autolyse`, from `quiet-start` at `f9f8f38`, so this pull request is based on pull request 39.
 
@@ -1220,7 +1228,9 @@ Not verified: a real phone, and a real bake with the 18½-hour fridge.
 
 Rebased onto `main` at `3599cf0` (after pull requests 41, 42, 43 and 39): the records and browser snapshots were regenerated, the Tartine-method tests no longer list Olive and Sesame, Country Rye's description compares its rest with Tartine Country Bread's, and the decision is renumbered 19. The rest of the change is as verified.
 
-## Tartine Country Rye: a 17½-hour cold final proof, November 22, 2026: committed, pull request open
+Release, recorded with decision 21: pull request 40 merged as `b31c6d2`. Checked on production deployment `dpl_CDvEvDFYpTN5UD8fVDzPeG9GdapA`, READY with the `bread.assemblydigital.com` alias and holding all five of pull requests 42, 43, 39, 40 and 44. On the live site at phone width (390 px), with the clock at 3:20 PM on November 21 and a fresh save, Whole Wheat showed the autolyse at 7:00 PM, "Add leaven, salt and final water" at 9:00 PM, the fridge at 12:40 AM, "Refrigerated, about 18½ hours" in the Final proof menu and all loaves out of the oven at 8:50 PM; after "Start at 10:30 PM", the autolyse was at 8:30 AM, all loaves were out of the oven at 10:20 AM and no warning showed; no console errors.
+
+## Tartine Country Rye: a 17½-hour cold final proof, November 22, 2026: merged and verified live
 
 Why: Michael asked to review Country Rye and decide its cold proof as for Whole Wheat, then chose the recommendation: keep the book's 50-minute rest with the leaven in, and lengthen the fridge. Both autolyse guides warn about rye's enzymes, and SourdoughGuru gives under-30% rye blends only 20 to 30 minutes of autolyse, so Whole Wheat's 2-hour autolyse wasn't proposed. Branch `country-rye-proof`, from `whole-wheat-autolyse` (pull request 40), whose recipe `coldProof` it uses.
 
@@ -1237,3 +1247,23 @@ Verification: my own checks, not the verifier, because the change is one value o
 Not verified: a real phone, and a real bake with the 17½-hour fridge.
 
 Rebased onto `main` at `b31c6d2` (after pull requests 41, 42, 43, 39 and 40): records and browser snapshots regenerated, the Tartine-method quiet-hours test lists Tartine Country Bread only, and the decision is renumbered 20.
+
+Release, recorded with decision 21: pull request 44 merged as `985e10f`. Checked on production deployment `dpl_CDvEvDFYpTN5UD8fVDzPeG9GdapA`, READY with the `bread.assemblydigital.com` alias and holding all five of pull requests 42, 43, 39, 40 and 44. On the live site at phone width (390 px), with the clock at 3:20 PM on November 21 and a fresh save, Country Rye's Final proof menu said "Refrigerated, about 17½ hours" and its warning offered "Start at 10:30 PM"; no console errors.
+
+## Tartine Country Bread: an 18-hour cold final proof, November 23, 2026: committed, pull request open
+
+Why: Michael asked to review Tartine Country Bread and decide its cold proof as for Whole Wheat and Country Rye, then chose the recommendation: keep the book's 30-minute rest with the leaven in, and lengthen the fridge to 18 hours. The alternative offered was a 1-hour true autolyse with an 18½-hour fridge; Preuss Country Bread is already this kind of dough with an autolyse, so keeping the rest leaves the fridge as the only change from the book. Branch `country-bread-proof`, from `main` at `985e10f`.
+
+Done means: Tartine Country Bread from a 9:30 PM leaven shows the initial mix at 9:30 AM, the salt at 10:00 AM, the fridge at 1:40 PM for "about 18 hours", and all loaves out of the oven at 9:20 AM two mornings later, with no quiet-hours warning; a 9:00 to 10:30 PM leaven is night-free with a cold proof; a fresh Country Bread plan's warning offers "Start at 10:30 PM", which clears it; the warm proof is unchanged; and `npm test`, the build and `npm run test:browser` pass.
+
+Change: Tartine Country Bread has `coldProof: 1080`, and its description says 18 hours in the fridge. Because it was the last recipe on the book's 12-hour fridge, tests that measured from it now say so:
+- The Whole Wheat and quiet-hours tests that need the book's times build Country Bread with `coldProof` removed.
+- The Country Bread, Country Rye and fridge-note tests expect the 18-hour fridge.
+- A quiet-hours test checks Country Bread's night-free starts: 9:00 to 10:30 PM cold, 7:00 to 10:30 PM warm.
+- The suggestion tests and the browser flow now use Country Bread's night-free "Start at 10:30 PM", then eight warm-proofed loaves baked one at a time, which are offered "Start at 6:00 PM" (two actions left) and "Use a cold proof at 9:00 PM" (none).
+
+`fixesFor`'s comment says when the other proof is offered now. docs/BEHAVIOUR.md records decision 21, marks decision 18 superseded in part, and updates the Tartine, Country Rye, Whole Wheat and suggestion passages. This entry also records the release of pull requests 42, 43, 39, 40 and 44 in their own sections, and corrects the Mixing bowls header, which still said the pull request was open.
+
+Record changes, checked by decoding both records against `main`: the 36 cold-proofed Tartine Country Bread plans changed, and the one saved-data case with its schedule; the 12 warm-proofed ones, all other plans, the calculations and the helpers are identical. Plans with a suggestion: 57 to 56 (an 8:00 PM leaven across the start of daylight saving no longer has quiet-hours steps); other-proof suggestions: 18 to 0.
+
+Not verified: a real phone, and a real bake with the 18-hour fridge.

@@ -111,17 +111,23 @@ test('default House schedule has no quiet-hour work; a late start and book sched
 const EARLY = new Date(2026, 9, 1).getTime();
 const local = (d: Date) => `${dateString(d)} ${clockText(d)}`;
 
-test('no start keeps a cold-proofed Tartine bake out of quiet hours on the book’s times; the quietest leaves only the leaven, as near the plan as it can', () => {
-  for (const id of ['tartine'])
-    for (let m = 0; m < 1440; m += 15) {
-      const time = clockText(new Date(2026, 9, 21, 0, m));
-      assert.ok(quietHourActions(schedule(plan(id, undefined, { time }))).length >= 1, `${id} ${time}`);
-    }
+/**
+ * Tartine Country Bread on the book's 10- to 12-hour fridge, as it was until decision 21: no recipe proofs this way
+ * now, but it shows how the quietest start is chosen when every start leaves some night work.
+ */
+const book = (input: Partial<PlanInput> = {}) =>
+  plan('tartine', undefined, { recipe: { ...recipeById('tartine')!, coldProof: undefined }, ...input });
+
+test('on the book’s 12-hour fridge no start keeps a cold-proofed Tartine bake out of quiet hours; the quietest leaves only the leaven, as near the plan as it can', () => {
+  for (let m = 0; m < 1440; m += 15) {
+    const time = clockText(new Date(2026, 9, 21, 0, m));
+    assert.ok(quietHourActions(schedule(book({ time }))).length >= 1, time);
+  }
   // A 12-hour leaven, about 4 hours of dough work and a 12-hour fridge: the latest start with one action builds the
   // leaven at 6:15 AM, so the loaves go into the fridge at 10:25 PM.
-  const best = quietestStart(plan('tartine'), EARLY)!;
+  const best = quietestStart(book(), EARLY)!;
   assert.deepEqual([local(best.at), best.actions], ['2026-10-21 06:15', 1]);
-  const steps = schedule(plan('tartine', undefined, { time: '06:15' }));
+  const steps = schedule(book({ time: '06:15' }));
   assert.deepEqual(
     quietHourActions(steps).map((a) => a.step.id),
     ['leaven'],
@@ -129,9 +135,27 @@ test('no start keeps a cold-proofed Tartine bake out of quiet hours on the book�
   assert.equal(clockText(steps.find((x) => x.id === 'fridge')!.at), '22:25');
   // From an 8:00 PM leaven, a 3:00 AM start is nearer and also leaves one action, but 4 hours into quiet hours; the
   // leaven at 6:15 AM is 45 minutes early.
-  const evening = quietestStart(plan('tartine', undefined, { time: '20:00' }), EARLY)!;
+  const evening = quietestStart(book({ time: '20:00' }), EARLY)!;
   assert.deepEqual([local(evening.at), evening.actions], ['2026-10-22 06:15', 1]);
-  assert.equal(quietHourActions(schedule(plan('tartine', undefined, { date: '2026-10-22', time: '03:00' }))).length, 1);
+  assert.equal(quietHourActions(schedule(book({ date: '2026-10-22', time: '03:00' }))).length, 1);
+});
+
+test('Tartine Country Bread, with its 18-hour fridge, avoids quiet hours from a 9:00 to 10:30 PM leaven with a cold proof, and from 7:00 PM with a warm one', () => {
+  const free = (proof: 'cold' | 'warm') => {
+    const times: string[] = [];
+    for (let m = 0; m < 1440; m += 15) {
+      const time = clockText(new Date(2026, 9, 21, 0, m));
+      if (!quietHourActions(schedule(plan('tartine', undefined, { proof, time }))).length) times.push(time);
+    }
+    return times;
+  };
+  // Before 9:00 PM the loaves would come out of the fridge before 7:00 AM; after 10:30 PM the leaven is in quiet hours.
+  assert.deepEqual(free('cold'), ['21:00', '21:15', '21:30', '21:45', '22:00', '22:15', '22:30']);
+  assert.deepEqual(free('warm')[0], '19:00');
+  assert.deepEqual(free('warm').at(-1), '22:30');
+  // From a 9:00 AM leaven, the nearest is 10:30 PM the evening before.
+  const best = quietestStart(plan('tartine'), EARLY)!;
+  assert.deepEqual([local(best.at), best.actions], ['2026-10-20 22:30', 0]);
 });
 
 test('Tartine Country Rye, with its 17½-hour fridge, avoids quiet hours from a 9:00 to 10:30 PM leaven with a cold proof, and from 7:00 PM with a warm one', () => {

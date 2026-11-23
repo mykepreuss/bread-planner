@@ -360,7 +360,7 @@ test('step notes speak to the baker, and mention later batches only when there a
   const one = plan('tartine', (s) => {
     s.count = 1;
   });
-  assert.equal(note(one, 'fridge'), 'Cover the baskets and refrigerate for 10 to 12 hours.');
+  assert.equal(note(one, 'fridge'), 'Cover the baskets and refrigerate for about 18 hours.');
 });
 
 // Moved from tests/baseline/agree.test.ts in step 3c: it tests only the new code.
