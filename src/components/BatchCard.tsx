@@ -7,7 +7,7 @@ import { g } from './text';
 
 /**
  * "Your batch" on the Schedule tab: the loaf count, how many loaves one bowl mixes, the autolyse, and the dough it
- * makes. `leavenFirst` is a recipe with the leaven in its initial mix, whose setting is the rest after that mix.
+ * makes. `leavenFirst` is a recipe with the leaven in its initial mix, whose autolyse is the rest after that mix.
  */
 export function BatchCard({
   weight,
@@ -40,7 +40,7 @@ export function BatchCard({
         <SettingField
           spec={{
             cell: 'autolyse',
-            label: leavenFirst ? 'Rest after mixing' : 'Autolyse',
+            label: 'Autolyse',
             unit: 'min',
             min: 0,
             max: MAX_AUTOLYSE,
@@ -50,7 +50,7 @@ export function BatchCard({
       </div>
       <p className="field-note">
         {leavenFirst
-          ? 'The leaven is in this mix, so the steps after it move with the rest.'
+          ? 'The leaven is already in, so every later step moves with the autolyse.'
           : 'It ends as the leaven is ready, so only its start moves.'}
       </p>
       <div className="batch-facts">
