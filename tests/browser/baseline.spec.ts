@@ -500,10 +500,11 @@ test.describe('flows', () => {
     await expectSameAfterReload(page);
   });
 
-  test('Plan the next bake on an ended plan shows the suggested start', async ({ page }) => {
-    // Decision 23: at 3:20 PM, a starter feed at 9:15 PM and the leaven at 8:15 AM tomorrow leave no night work.
+  test('A plan that ended with nothing checked opens on the suggested start', async ({ page }) => {
+    // Decision 26: its start has passed, so the plan looks forward. At 3:20 PM, a starter feed at 9:15 PM and the
+    // leaven at 8:15 AM tomorrow leave no night work (decision 25).
     await open(page, 'ended');
-    await page.getByRole('button', { name: 'Plan the next bake' }).click();
+    await expect(page.getByRole('button', { name: 'Plan the next bake' })).toHaveCount(0);
     await expect(page.locator('#plan-date')).toHaveValue('2026-11-22');
     await expect(page.locator('#plan-time')).toHaveValue('08:15');
     await expect(upNext(page).getByText('Suggested start: the soonest with the least night work.')).toBeVisible();
@@ -522,6 +523,58 @@ test.describe('flows', () => {
     await expect(page.getByRole('button', { name: 'Plan the next bake' })).toHaveCount(0);
     expect(await aria(page)).toMatchSnapshot('flow-plan-next-bake.aria.yml');
     await expectSameAfterReload(page);
+  });
+
+  test('Use suggested start goes back to the suggestion from a chosen start still ahead', async ({ page }) => {
+    // Decision 26: Preuss Country Bread chosen for a 9:00 AM leaven tomorrow; the suggestion is 45 minutes earlier.
+    await open(page, 'recipe-house');
+    const use = page.getByRole('button', { name: 'Use suggested start' });
+    await expect(page.getByText('Feed starter · 9:15 PM', { exact: true })).toBeVisible();
+    await use.click();
+    await expect(page.locator('#plan-time')).toHaveValue('08:15');
+    await expect(upNext(page).getByText('Suggested start: the soonest with the least night work.')).toBeVisible();
+    await expect(use).toHaveCount(0);
+    await expectSameAfterReload(page);
+    // Chosen at another time, it offers the suggestion again; chosen at the suggested time, there is nothing to go back
+    // to.
+    const time = page.locator('#plan-time');
+    await time.fill('08:00');
+    await expect(use).toBeVisible();
+    await time.fill('08:15');
+    await time.blur();
+    await expect(page.getByText('Suggested. Change the date or time to choose your own.')).toHaveCount(0);
+    await expect(use).toHaveCount(0);
+  });
+
+  test('A date typed key by key keeps the plan as typed, though part of it is in the past', async ({ page }) => {
+    // Decision 26: while the field has focus the chosen start is held, so the year 2 on the way to 2026 doesn't give way to
+    // the suggestion.
+    await open(page, 'recipe-house');
+    const date = page.locator('#plan-date');
+    // The field reads year, month, day, with the year at its left edge.
+    await date.click({ position: { x: 16, y: 20 } });
+    await page.keyboard.type('2026');
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.type('1125');
+    await page.locator('#plan-time').click();
+    await expect(date).toHaveValue('2026-11-25');
+    await expect(page.locator('#plan-time')).toHaveValue('09:00');
+    await page.locator('#plan-time').blur();
+    await expect(date).toHaveValue('2026-11-25');
+    await expect(page.getByText('Suggested. Change the date or time to choose your own.')).toHaveCount(0);
+  });
+
+  test('A chosen start that passes with nothing checked gives way to the suggestion', async ({ page }) => {
+    // Decision 26: the same plan opened at 10:20 PM, after its 10:00 PM starter feed, looks forward instead.
+    const plan = plans.get('recipe-house')!;
+    await page.clock.setFixedTime(new Date('2026-11-21T22:20:00-08:00'));
+    await page.addInitScript((value) => localStorage.setItem('bread-planner.v5', value), JSON.stringify(plan.saved));
+    await page.goto('/');
+    await ready(page);
+    await expect(upNext(page).getByRole('heading', { level: 2 })).toHaveText('Feed starter');
+    await expect(upNext(page).getByText('Suggested start: the soonest with the least night work.')).toBeVisible();
+    await expect(page.locator('#plan-date')).toHaveValue('2026-11-22');
+    await expect(page.locator('#plan-time')).not.toHaveValue('09:00');
   });
 
   test('A new date before anything is checked clears a planning temperature', async ({ page }) => {

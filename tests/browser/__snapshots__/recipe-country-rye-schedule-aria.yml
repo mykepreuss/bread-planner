@@ -33,6 +33,8 @@
     - textbox "Leaven date": 2026-11-22
     - text: Time
     - textbox "Time": 09:00
+    - button "Use suggested start"
+    - paragraph: Make leaven · 9:00 PM
     - text: Baking complete
     - strong: 8:40 PM
     - text: Monday, Nov 23 Your batch Number of loaves

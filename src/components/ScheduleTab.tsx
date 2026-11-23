@@ -12,7 +12,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import * as act from '@/state/actions';
 import { scheduleView, skipsOnCheck } from '@/view/schedule';
-import { coldProofText } from '@/domain/schedule';
+import { coldProofText, schedule } from '@/domain/schedule';
+import { planOf, selected } from '@/state/schema';
 import { usePlanner } from './calculator';
 import { useNow } from './useNow';
 import { whenText } from './text';
@@ -32,9 +33,30 @@ import { Timeline } from './Timeline';
 export function ScheduleTab({ onViewIngredients }: { onViewIngredients: () => void }) {
   const { state: saved, update } = usePlanner(),
     now = useNow();
-  // Until a start is chosen, the tab shows the planner's suggested one (decision 25).
-  const state = useMemo(() => act.shownState(saved, now), [saved, now]),
+  // While a plan-card field has focus, a chosen start is held as typed, so a date typed digit by digit doesn't give
+  // way to the suggestion part way through.
+  const [editing, setEditing] = useState(false);
+  // Until a start is chosen, or once the chosen one has passed, the tab shows the planner's suggested one (decisions 25
+  // and 26).
+  const state = useMemo(
+      () => (editing && saved.timeChosen ? saved : act.shownState(saved, now)),
+      [saved, now, editing],
+    ),
     suggested = state !== saved;
+  // A chosen start still ahead, with nothing checked and no bake under way, can go back to the suggested one when that
+  // differs.
+  const suggestion = useMemo(() => {
+    if (suggested || !saved.timeChosen || selected(saved).bake.done.length || act.bakeUnderway(saved, now))
+      return undefined;
+    const other = act.shownState(act.backToSuggestedStart(saved, now), now);
+    const first = schedule(planOf(other))[0],
+      mine = schedule(planOf(saved))[0];
+    if (!first || (mine && +first.at === +mine.at)) return undefined;
+    return {
+      text: `${first.title} · ${whenText(first.at, now)}`,
+      onUse: () => update((s) => act.backToSuggestedStart(s, now)),
+    };
+  }, [saved, now, suggested, update]);
   const v = useMemo(() => scheduleView(state, now, (at) => whenText(at, now)), [state, now]);
   const book = v.recipe.method === 'tartine',
     checks = v.bake.done;
@@ -115,9 +137,11 @@ export function ScheduleTab({ onViewIngredients }: { onViewIngredients: () => vo
             date={state.date}
             time={state.time}
             onAnchor={(anchor) => update((s) => act.setAnchor(s, anchor))}
-            onDate={(date) => update((s) => act.setDate(s, date, now))}
-            onTime={(time) => update((s) => act.setTime(s, time, now))}
+            onDate={(date) => update((s) => act.setDate(s, date, now, editing))}
+            onTime={(time) => update((s) => act.setTime(s, time, now, editing))}
+            onEditing={setEditing}
             suggested={suggested}
+            suggestion={suggestion}
             doneStep={v.doneStep}
           />
           <BatchCard

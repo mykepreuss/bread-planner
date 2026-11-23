@@ -10,6 +10,7 @@ import { plannerState, local, atMoment, useBaselineTimeZone, type PlanInput } fr
 import { dateString, durationText } from '../../src/domain/text.ts';
 import { recipeById } from '../../src/domain/recipes.ts';
 import { fromV6, serialize, STORAGE_V6 } from '../../src/state/load.ts';
+import { suggesting } from '../../src/state/actions.ts';
 import { g } from '../../src/components/text.ts';
 
 /**
@@ -245,6 +246,21 @@ const NOT_REACHABLE = [
   'zero loaves baked at once',
 ];
 
+/**
+ * Recorded plans with nothing checked, no dough temperature and nothing ticked, whose start had passed at their moment. Since decision 26 the screen shows the
+ * suggested start instead, so it checks that it does; baseline.test.ts still holds their schedules to the record.
+ */
+const SUGGESTED = [
+  'house across the end of daylight saving',
+  'tartine overnight across the end of daylight saving',
+  'house starting in the repeated hour on Nov 1',
+  'house finishing on the morning daylight saving ends',
+  'house cold proof across the start of daylight saving',
+  'tartine overnight across the start of daylight saving',
+  'a plan that ended with nothing checked',
+  'random bake 53',
+];
+
 test(`App.tsx shows every reachable recorded plan as the record says (${baseline.plans.length} plans)`, async () => {
   const vite = await createServer({
     root,
@@ -269,6 +285,7 @@ test(`App.tsx shows every reachable recorded plan as the record says (${baseline
       },
     };
     const unreachable: string[] = [],
+      suggested: string[] = [],
       changed: string[] = [];
     for (const { name, input, output } of baseline.plans) {
       const { saved, reachable } = savedAs(input);
@@ -278,10 +295,17 @@ test(`App.tsx shows every reachable recorded plan as the record says (${baseline
       }
       storage.set(STORAGE_V6, saved);
       const html = atMoment(local(input.now), () => renderToString(createElement(App as never)), true);
+      if (suggesting(plannerState(input), local(input.now))) {
+        suggested.push(name);
+        if (!html.includes('Suggested start: the soonest with the least night work.'))
+          changed.push(`${name}: no suggested start`);
+        continue;
+      }
       const d = difference(expected(input, output), shown(html), 'screen');
       if (d) changed.push(`${name}: ${d}`);
     }
     assert.deepEqual(unreachable, NOT_REACHABLE, 'the recorded plans that saved data cannot hold');
+    assert.deepEqual(suggested, SUGGESTED, 'the recorded plans whose start had passed with nothing checked');
     assert.equal(
       changed.length,
       0,

@@ -1396,7 +1396,7 @@ Independent check (the verifier, on `60dd8b2`): six of seven criteria passed.
 
 Not verified: a real phone, or a real bake. Emmer and einkorn have weaker gluten than wheat, so the 18-hour fridge is worth watching on the first bake.
 
-## A suggested start, November 23, 2026: committed, pull request open
+## A suggested start, November 23, 2026: released and verified live
 
 Why: Michael asked that when no bake has started and he hasn't chosen a future time, Up next show the best time to start the next step, so he can see when to start and how the schedule would run. Branch `suggested-start`, from `main` at `912e951` (after pull requests 47 and 48). Then brought up to date with `main` at `648b621` (pull request 49, Emmer/Einkorn, which took decision 24), so this change is now decision 25.
 
@@ -1415,3 +1415,30 @@ Independent check (the verifier): pass on all criteria. Its own search over 115,
 Known and left: over the end of daylight saving, with eight warm-proofed Tartine loaves baked one at a time, the quiet-hours warning can offer a start with one fewer night action than the suggestion, because it looks further ahead. While starting now is still best, the start moves forward 15 minutes each quarter hour until it is no longer best.
 
 Not verified: a real phone, and a real bake.
+
+Release: pull request 50 merged as `e3a9a93` on Michael's "Merge when green" and "Check and merge", after both Vercel checks passed on `95ee744`. That commit brought the branch up to date with `main` at `648b621`. On it, `npm test` passed 197 of 197 in both zone modes, the build passed with 0 errors, and `npm run test:browser` passed 61 of 61. The production deployment reported success. The live site served the new bundle (`App.BpNBiSZR.js`, with the Suggested line), and `node scripts/verify-deployment.mjs https://bread.assemblydigital.com` passed with 7 assets and the negative fixture rejected.
+
+In the in-app browser at 10:47 AM, the existing test save (Tartine Country Bread, Nov 8 at 9:00 AM, nothing checked) loaded as chosen and said "This plan ended". After "Plan the next bake", Up next showed "Make leaven · 9:00 PM · in 10h 12m", with both Suggested lines, the plan card at 2026-11-23 21:00, no quiet-hours warning and no console errors. The save was then restored byte for byte, and the page again showed Nov 8 at 9:00 AM, ended. GitHub auto-merge is turned off for this repository, so the merge was done by hand.
+
+## Always look forward, November 23, 2026: locally verified, not committed
+
+Why: at 11:03 AM Michael asked whether a refresh finds the best start from then on. It didn't: his save, from before decision 25, counted as chosen, and so did any start once chosen, however long ago it had passed. He decided the plan should always look forward unless a future date has been chosen. Branch `look-forward`, from `main` at `e3a9a93`.
+
+Change (decision 26 in docs/BEHAVIOUR.md):
+- With nothing checked, a chosen start whose first step is before the current quarter hour gives way to the suggestion. This covers a refresh, the planner left open, and a plan that ended with nothing checked, which no longer says "This plan ended".
+- A passed start stays while any recipe has a bake under way: a step checked, a dough temperature or reading, or a ticked ingredient, in a plan that hasn't ended. The date is shared, so this stops a suggestion in one recipe moving another recipe's bake.
+- While the date or time field has focus, a chosen start is held as typed, so a date typed key by key isn't replaced part way.
+- With a chosen start still ahead and nothing checked, the plan card offers "Use suggested start", with the suggested first step and its time, when that differs from the plan (`suggesting` and `backToSuggestedStart` in src/state/actions.ts).
+
+Record changes:
+- `tests/baseline/baseline.json` is unchanged.
+- Eight recorded plans have nothing checked, no bake data and a start already past at their moment: six across daylight-saving changes, "a plan that ended with nothing checked" and random bake 53. The app test now checks their screen shows the suggestion; baseline.test.ts still holds their schedules to the record.
+- In the browser record:
+  - the chosen-plan screens and flows gained the button;
+  - the ended screen, and Clear checklist on a bake under way, now open on the suggestion;
+  - the `quiet-batches` save moved from November 22 to 23, so its start is still ahead and its quiet-hours warning (13 actions) is still recorded;
+  - the ended-plan flow was rewritten, and three flows added, for 40 actions.
+
+Evidence (this session): `npm test` passed 200 of 200, also with `BASELINE_ZONE=rule`. `npm run build` passed with 0 errors. `npm run test:browser` passed 63 of 63. In the dev server, with an 11:00 PM leaven chosen and a quiet-hours warning showing, "Use suggested start" showed "Feed starter · 9:15 PM". Tapping it moved the plan to the 8:15 AM suggestion, cleared the warning and hid the button. The dev save was restored.
+
+Known: if a bake starts with nothing ticked, no temperature and no Done, a refresh more than 14 minutes after its start shows the suggestion instead of the bake's times. A date or time left in the past, with nothing checked, gives way to the suggestion once the field loses focus.

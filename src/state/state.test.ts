@@ -773,3 +773,71 @@ test('a save from before decision 25 keeps its date and time as chosen; a new on
   assert.equal(fromV6({ ...old, plan: { ...old.plan, timeChosen: 'no' } }, NOW)!.timeChosen, true);
   assert.equal(fromV5({ version: 5, plan: { date: '2026-11-22', time: '09:00' } }, NOW).timeChosen, true);
 });
+
+test('until a bake starts, a chosen start that has passed gives way to the suggestion; one still ahead stays (decision 26)', () => {
+  // House chosen for a leaven at 9:00 AM tomorrow: its starter feed is at 10:00 PM tonight.
+  const chosen = frozen({ ...freshState(NOW), timeChosen: true }),
+    feed = at(2026, 11, 21, 22, 0);
+  assert.equal(act.suggesting(chosen, NOW), false);
+  assert.equal(act.shownState(chosen, NOW), chosen);
+  // Up to 14 minutes after the feed it stays, as a suggestion would; from the next quarter hour it looks forward.
+  assert.equal(act.shownState(chosen, feed + 14 * 60000), chosen);
+  const late = act.shownState(chosen, feed + 15 * 60000);
+  assert.deepEqual([late.date, late.time, late.timeChosen], ['2026-11-22', '09:15', false]);
+  assert.equal(schedule(planOf(late))[0].at.getTime(), feed + 15 * 60000);
+  // A plan that ended with nothing checked, as after a refresh days later, shows the suggestion.
+  const ended = { ...chosen, date: '2026-11-08' };
+  assert.deepEqual([act.shownState(ended, NOW).date, act.shownState(ended, NOW).time], ['2026-11-22', '08:15']);
+  // Checking a step keeps the start shown, not the one that passed.
+  const fed = act.setChecked(ended, 'feed', true, NOW);
+  assert.deepEqual([fed.date, fed.time, fed.timeChosen], ['2026-11-22', '08:15', true]);
+  // A started bake keeps its plan however long ago it began.
+  assert.equal(act.shownState(fed, at(2026, 11, 30, 9, 0)), fed);
+});
+
+test('Use suggested start goes back to the suggestion from a chosen start, before anything is checked (decision 26)', () => {
+  const chosen = act.setTime(freshState(NOW), '13:00', NOW),
+    back = act.backToSuggestedStart(chosen, NOW);
+  assert.equal(back.timeChosen, false);
+  assert.deepEqual([act.shownState(back, NOW).date, act.shownState(back, NOW).time], ['2026-11-22', '08:15']);
+  const started = act.setChecked(chosen, 'feed', true, NOW);
+  assert.equal(act.backToSuggestedStart(started, NOW), started);
+});
+
+test('a chosen start that has passed stays once the bake has a dough temperature or a ticked ingredient (decision 26)', () => {
+  const passed = { ...freshState(NOW), timeChosen: true, date: '2026-11-21' },
+    later = at(2026, 11, 21, 17, 45);
+  assert.equal(act.suggesting(passed, later), true);
+  for (const begun of [
+    act.setDoughTemp(passed, 60),
+    act.addReading(passed, 76, later),
+    act.setAdded(passed, 'mix:salt', true),
+  ]) {
+    assert.equal(act.suggesting(begun, later), false);
+    assert.equal(act.shownState(begun, later), begun);
+  }
+});
+
+test('typing a date or time holds a chosen start as typed, and a bake under way anywhere holds a passed start (decision 26)', () => {
+  // A House plan chosen for 9:00 AM tomorrow; typed digit by digit, the date is November 2 for a moment.
+  const chosen = frozen({ ...freshState(NOW), timeChosen: true });
+  const typing = act.setDate(chosen, '2026-11-02', NOW, true);
+  assert.deepEqual([typing.date, typing.time], ['2026-11-02', '09:00']);
+  const typed = act.setDate(typing, '2026-11-25', NOW, true);
+  assert.deepEqual([typed.date, typed.time, typed.timeChosen], ['2026-11-25', '09:00', true]);
+  // Not editing, the same past date builds on what is shown, the suggestion.
+  assert.equal(act.setTime(typing, '10:00', NOW).date, '2026-11-22');
+  // House's starter feed checked last night at 10:00 PM: the next morning Tartine Country Bread, with nothing checked,
+  // keeps the shared start rather than suggesting one, so Done there can't move House's bake.
+  const morning = at(2026, 11, 22, 9, 20),
+    fed = act.setChecked(chosen, 'feed', true, at(2026, 11, 21, 22, 0)),
+    book = act.selectRecipe(fed, 'tartine');
+  assert.equal(act.bakeUnderway(book, morning), true);
+  assert.equal(act.suggesting(book, morning), false);
+  assert.equal(act.backToSuggestedStart(book, morning), book);
+  // Once House's plan is over, its checks no longer hold the start.
+  assert.equal(act.suggesting(book, at(2026, 11, 24, 9, 0)), true);
+  // A dough temperature left from a plan that has ended doesn't hold it either.
+  const leftover = act.setDoughTemp({ ...chosen, date: '2026-11-08' }, 76);
+  assert.equal(act.suggesting(leftover, NOW), true);
+});
