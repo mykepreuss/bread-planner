@@ -28,9 +28,9 @@ export function inSentence(name: string) {
 /**
  * What a baker sets for a recipe. Percentages are of added flour, except `reserve`, the share of added water held
  * back for the final mix. `hydration` is added water; the screen shows total hydration (see `totalHydration`). The
- * leaven build is in grams per 1,000 g of added flour. `autolyse` is in whole minutes from 0 to 720: the autolyse, which
- * ends as the leaven is ready, or for a recipe with the leaven in its initial mix, the rest after that mix, which every
- * later step follows (decision 22).
+ * leaven build is in grams per 1,000 g of added flour. `autolyse` is in whole minutes, from `MIN_AUTOLYSE` to the
+ * recipe's `maxAutolyse`: the autolyse, which ends as the leaven is ready, or for a recipe with the leaven in its initial
+ * mix, the rest after that mix, which every later step follows (decisions 22 and 23).
  */
 export type Settings = {
   count: number;
@@ -43,8 +43,16 @@ export type Settings = {
   build: { starter: number; flour: number; wheat: number; water: number };
   autolyse: number;
 };
-/** The longest autolyse or rest, 12 hours, so it never starts before a House starter feed or a Tartine leaven. */
-export const MAX_AUTOLYSE = 720;
+/**
+ * The shortest autolyse or rest, 15 minutes, for every recipe (decision 23): at 0 the step still told the baker to rest
+ * the flour while the leaven finished.
+ */
+export const MIN_AUTOLYSE = 15;
+/**
+ * The longest autolyse for mostly white flour, 2 hours: the guides Michael reviewed give about an hour, and SourdoughGuru
+ * 20 minutes to 2 hours (decisions 15 and 23). Preuss Country Bread, Olive Bread and Sesame Bread share it.
+ */
+const PREUSS_MAX_AUTOLYSE = 120;
 
 /**
  * `method` is how the dough is mixed and timed (see methods.ts). `late` flours go into the final mix. `buildFlour`
@@ -53,7 +61,8 @@ export const MAX_AUTOLYSE = 720;
  * initial mix. `autolyse`, for Tartine recipes only, replaces the initial mix and rest instead, with the note given:
  * the flour and first water rest on their own, ending as the leaven is ready, and the leaven then goes in with the salt
  * and reserved water. How long either rests is the setting `autolyse`. `coldProof`, for Tartine recipes only, is the
- * refrigerated final proof in minutes, in place of the book's 12 hours.
+ * refrigerated final proof in minutes, in place of the book's 12 hours. `maxAutolyse` is the longest `autolyse` the
+ * baker can set, in minutes: what the recipe's book pages or the autolyse guides give (decision 23).
  */
 export type Recipe = {
   id: string;
@@ -67,6 +76,7 @@ export type Recipe = {
   initialMix?: { note: string };
   autolyse?: { note: string };
   coldProof?: number;
+  maxAutolyse: number;
   defaults: Settings;
 };
 
@@ -99,6 +109,7 @@ export const RECIPES: Recipe[] = [
     flours: ['anita', 'wheat', 'rye'],
     late: ['rye'],
     buildFlour: 'anita',
+    maxAutolyse: PREUSS_MAX_AUTOLYSE,
     defaults: preussDefaults(),
   },
   {
@@ -115,6 +126,8 @@ export const RECIPES: Recipe[] = [
     // 30-minute rest with the leaven in stays, so the fridge is the only change from the book; Preuss Country Bread is
     // the version of this dough with an autolyse.
     coldProof: 1080,
+    // The book gives 25 to 40 minutes for the rest with the leaven in (decision 23).
+    maxAutolyse: 40,
     // 900 g white, 100 g whole wheat; 750 g water with 50 g held back; 200 g leaven; 20 g salt; 1 tbsp (15 g) starter.
     defaults: {
       count: 2,
@@ -151,6 +164,7 @@ export const RECIPES: Recipe[] = [
       ],
     },
     // Preuss House's defaults. The add-ins are the book's for its two loaves, scaled by dough weight against these.
+    maxAutolyse: PREUSS_MAX_AUTOLYSE,
     defaults: preussDefaults(),
   },
   {
@@ -176,13 +190,14 @@ export const RECIPES: Recipe[] = [
         minutesBefore: 60,
       },
     },
+    maxAutolyse: PREUSS_MAX_AUTOLYSE,
     defaults: preussDefaults(),
   },
   {
     id: 'whole-wheat',
     name: 'Tartine Whole Wheat',
     description:
-      'The book’s 70/30 whole-wheat and all-purpose loaf. The flour soaks in cool water for 2 hours before the leaven goes in, and the loaves proof 18½ hours in the fridge, so a leaven started in the evening bakes two mornings later. If the dough runs lively, lower the leaven toward 15%.',
+      'The book’s 70/30 whole-wheat and all-purpose loaf. The flour soaks in cool water, for 2 hours by default, before the leaven goes in, and the loaves proof 18½ hours in the fridge, so a leaven started in the evening bakes two mornings later. If the dough runs lively, lower the leaven toward 15%.',
     method: 'tartine',
     flours: ['wheat', 'ap'],
     late: [],
@@ -196,6 +211,8 @@ export const RECIPES: Recipe[] = [
       note: 'Mix the whole-wheat and all-purpose flour with the initial water, about 75°F / 24°C, by hand until no dry flour is left. Cover and rest while the leaven finishes, so the bran softens before the leaven goes in.',
     },
     coldProof: 1110,
+    // SourdoughGuru gives 1 to 2 hours at room temperature for dough that is half whole wheat or more (decision 23).
+    maxAutolyse: 120,
     // Tartine Bread, page 114: 700 g whole wheat, 300 g all-purpose; 800 g water; 200 g leaven, built as for Original
     // Tartine; 20 g salt. The page doesn't say how much water waits for the salt; 50 g is assumed, as for the Basic
     // Country Bread.
@@ -228,6 +245,8 @@ export const RECIPES: Recipe[] = [
     // rest with the leaven in stays: both autolyse guides he reviewed warn that rye is high in enzymes, and
     // SourdoughGuru gives a blend with under 30% rye only a 20- to 30-minute autolyse.
     coldProof: 1050,
+    // The book gives 40 to 60 minutes for the rest with the leaven in (decision 23).
+    maxAutolyse: 60,
     // Tartine Bread, page 118: 170 g medium-fine whole rye, 830 g white bread flour; 800 g water; 200 g leaven, built
     // as for Original Tartine; 20 g salt, added after the rest. As for Tartine Whole Wheat, 50 g of the water is
     // assumed to wait for the salt, as in the Basic Country Bread. Added at Michael's request on November 22, 2026.

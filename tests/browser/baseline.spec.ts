@@ -580,28 +580,33 @@ test.describe('flows', () => {
     await expect(field('Autolyse')).toHaveValue('90');
     await expect(page.getByText('It ends as the leaven is ready, so only its start moves.')).toBeVisible();
     await expect(at('autolyse')).toHaveText('12:30 PM');
-    await field('Autolyse').fill('270');
-    await expect(at('autolyse')).toHaveText('9:30 AM');
+    await field('Autolyse').fill('60');
+    await expect(at('autolyse')).toHaveText('1:00 PM');
     await expect(at('mix')).toHaveText('2:00 PM');
     await expect(at('done')).toHaveText('9:33 AM');
-    // More than 12 hours is refused, and the plan keeps the last valid length.
-    await field('Autolyse').fill('721');
-    await expect(page.getByText('Use a whole number from 0 to 720')).toBeVisible();
-    await expect(at('autolyse')).toHaveText('9:30 AM');
-    await field('Autolyse').fill('270');
+    // Outside 15 minutes to the guides' 2 hours is refused, and the plan keeps the last valid length (decision 23).
+    for (const refused of ['121', '14']) {
+      await field('Autolyse').fill(refused);
+      await expect(page.getByText('Use a whole number from 15 to 120')).toBeVisible();
+      await expect(at('autolyse')).toHaveText('1:00 PM');
+    }
+    await field('Autolyse').fill('60');
     // Tartine mixes the leaven in first, so its rest moves the salt and everything after it.
     await choose(page, 'Recipe', 'Tartine Country Bread');
     await expect(field('Rest after mixing')).toHaveValue('30');
     await expect(page.getByText('The leaven is in this mix, so the steps after it move with the rest.')).toBeVisible();
     await expect(at('mix')).toHaveText('9:30 PM');
-    await field('Rest after mixing').fill('60');
-    await expect(at('mix')).toHaveText('10:00 PM');
-    await expect(at('turn1')).toHaveText('10:30 PM');
+    // The book gives 25 to 40 minutes, so 40 is the longest.
+    await field('Rest after mixing').fill('41');
+    await expect(page.getByText('Use a whole number from 15 to 40')).toBeVisible();
+    await field('Rest after mixing').fill('40');
+    await expect(at('mix')).toHaveText('9:40 PM');
+    await expect(at('turn1')).toHaveText('10:10 PM');
     expect(await aria(page)).toMatchSnapshot('flow-autolyse-length.aria.yml');
     await expectSameAfterReload(page);
     // Preuss Country Bread kept its own length.
     await choose(page, 'Recipe', 'Preuss Country Bread');
-    await expect(field('Autolyse')).toHaveValue('270');
+    await expect(field('Autolyse')).toHaveValue('60');
   });
 
   test('Loaf count and oven capacity on the Schedule tab set the batches', async ({ page }) => {

@@ -1250,7 +1250,7 @@ Rebased onto `main` at `b31c6d2` (after pull requests 41, 42, 43, 39 and 40): re
 
 Release, recorded with decision 21: pull request 44 merged as `985e10f`. Checked on production deployment `dpl_CDvEvDFYpTN5UD8fVDzPeG9GdapA`, READY with the `bread.assemblydigital.com` alias and holding all five of pull requests 42, 43, 39, 40 and 44. On the live site at phone width (390 px), with the clock at 3:20 PM on November 21 and a fresh save, Country Rye's Final proof menu said "Refrigerated, about 17½ hours" and its warning offered "Start at 10:30 PM"; no console errors.
 
-## Tartine Country Bread: an 18-hour cold final proof, November 23, 2026: committed, pull request open
+## Tartine Country Bread: an 18-hour cold final proof, November 23, 2026: merged and verified live
 
 Why: Michael asked to review Tartine Country Bread and decide its cold proof as for Whole Wheat and Country Rye, then chose the recommendation: keep the book's 30-minute rest with the leaven in, and lengthen the fridge to 18 hours. The alternative offered was a 1-hour true autolyse with an 18½-hour fridge; Preuss Country Bread is already this kind of dough with an autolyse, so keeping the rest leaves the fridge as the only change from the book. Branch `country-bread-proof`, from `main` at `985e10f`.
 
@@ -1279,6 +1279,8 @@ Evidence after the fixes (this session, on `country-bread-proof`):
 - `npm run test:browser`: 56 of 56, no snapshot changed
 
 Not verified: a real phone, and a real bake with the 18-hour fridge.
+
+Release, recorded with decision 23: pull request 45 merged as `de1a050` on Michael's "Merge", after both Vercel checks passed on `e154948`. Its production deployment `dpl_7pYXyh5sDc8eczdgWXzUym9NzSsn` was READY, and pull request 46 (`5c6a522`), which contains it, was deployed about 2½ minutes later as `dpl_BwwMBKNFT45QqGrTLjuMHrDbfuX4`, the one checked. On the live site at phone width (390 px), with the clock at 3:20 PM on November 21 and a fresh save, Tartine Country Bread showed the new description, "Refrigerated, about 18 hours" and the fridge note, and from a 9:00 AM leaven the fridge at 1:10 AM and all loaves out at 8:50 PM; its warning offered "Start at 10:30 PM", which moved the leaven to 10:30 PM on November 21 and cleared it, with the loaves out at 10:20 AM two mornings later. With eight warm-proofed loaves baked one at a time it offered "Start at 6:00 PM" and "Use a cold proof at 10:30 PM", and the second set the cold proof and cleared the warning. Whole Wheat and Country Rye still said "about 18½ hours" and "about 17½ hours". No console errors.
 
 ## Autolyse length as a setting, November 23, 2026: committed, pull request open
 
@@ -1310,3 +1312,26 @@ Brought up to date with `main` at `de1a050` (pull request 45, Tartine Country Br
 
 Not verified: a real phone, and a real bake.
 
+## The autolyse's range, November 23, 2026: committed, pull request open
+
+Why: Michael asked to review Tartine Whole Wheat's autolyse setting. The review, on `main` at `5c6a522` and the live site, found the field took 0 to 720 minutes for every recipe, against his 4-hour maximum of November 22. A 0-minute autolyse left a "Start autolyse" step that contradicted itself, and Whole Wheat's description always said 2 hours. He chose to cap each recipe at what its guides and book recommend and to fix the other two. Branch `autolyse-range`, from `main` at `5c6a522`. The `autolyse-label` branch (another session's, not yet in a pull request) edits the same field's label and the same docs, so whichever merges second resolves the overlap.
+
+Done means:
+- The autolyse field refuses anything under 15 minutes or over the recipe's longest: 120 for Preuss Country Bread, Olive Bread, Sesame Bread and Tartine Whole Wheat, 40 for Tartine Country Bread, and 60 for Country Rye.
+- A saved length outside that range loads as the recipe's default.
+- Whole Wheat's description says "for 2 hours by default".
+- Every default plan is unchanged.
+- `npm test`, the UTC run, the build and `npm run test:browser` pass.
+
+Change:
+- `src/domain/recipes.ts` replaces `MAX_AUTOLYSE` (720) with `MIN_AUTOLYSE` (15) and a `maxAutolyse` on each recipe, citing its source.
+- The loader checks a saved length against the recipe's range.
+- The batch card's field takes its limits from the recipe.
+- The state test checks each recipe's range, its default inside it, and values just inside and outside.
+- The browser flow refuses 121, 14 and 41.
+- docs/BEHAVIOUR.md records decision 23 and marks decision 22 superseded in part.
+- This entry also records pull request 45's release in its own section.
+
+Record changes, checked by decoding both records: the 4½-hour Preuss autolyse and the 60-minute Tartine rest cases became a 2-hour autolyse and a 40-minute rest, and a 15-minute autolyse was added, giving 165 plans. No other plan, calculation, saved-data case or helper changed. In the browser record, Whole Wheat's two screens show the new description, and the autolyse flow's times moved with its 40-minute rest.
+
+Not verified: a real phone.
