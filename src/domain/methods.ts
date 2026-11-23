@@ -6,7 +6,11 @@
 export const HOUSE = {
   feed: 660,
   leaven: 300,
-  autolyse: 270,
+  /**
+   * The autolyse runs the leaven's last 90 minutes. Michael's change on November 22, 2026 (decision 15): it was 270,
+   * from 30 minutes after the leaven started. Both autolyse guides he reviewed put mostly white flour at 2 hours or less.
+   */
+  autolyse: 90,
   mix: 15,
   turnEvery: 30,
   turns: 7,

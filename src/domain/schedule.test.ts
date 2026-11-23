@@ -30,7 +30,7 @@ const local = (date: Date) =>
   `${dateString(date)} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 const timeOf = (s: Step[]) => (id: string) => local(find(s, id).at);
 
-test('with both loaves in the oven together, every step keeps its original time', () => {
+test('with both loaves in the oven together, every step keeps its original time but the autolyse (decision 15)', () => {
   const actual = Object.fromEntries(
     schedule(plan('house', { ovenCapacity: 2 }))
       .filter((s) => s.id !== 'warmup')
@@ -39,7 +39,7 @@ test('with both loaves in the oven together, every step keeps its original time'
   assert.deepEqual(actual, {
     feed: '2026-10-20 22:00',
     leaven: '2026-10-21 09:00',
-    autolyse: '2026-10-21 09:30',
+    autolyse: '2026-10-21 12:30',
     mix: '2026-10-21 14:00',
     rest: '2026-10-21 14:15',
     turn1: '2026-10-21 14:45',
@@ -212,12 +212,14 @@ test('instructions include readiness, pot preheating, scoring, steam, and batch 
   }
 });
 
-test('House autolyse overlaps the leaven, and the cold proof runs from evening to the next morning', () => {
+test('House autolyse is the leaven’s last 90 minutes, and the cold proof runs from evening to the next morning', () => {
   const s = schedule(plan('house')),
     at = timeOf(s),
     w = coldProofWindow(s)!;
   assert.equal(at('leaven'), '2026-10-21 09:00');
-  assert.equal(at('autolyse'), '2026-10-21 09:30');
+  // Decision 15: 90 minutes, ending as the leaven is ready; it was 4 hours 30 minutes from 9:30 AM.
+  assert.equal(at('autolyse'), '2026-10-21 12:30');
+  assert.equal(find(s, 'autolyse').minutes, 90);
   assert.equal(at('mix'), '2026-10-21 14:00');
   assert.equal(local(w.start), '2026-10-21 19:20');
   assert.equal(local(w.end), '2026-10-22 07:50');

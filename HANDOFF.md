@@ -1115,3 +1115,17 @@ Independent check (the verifier, on `05ff435`): PASS on all nine criteria, with 
 - Five of its six breaks were caught. The sixth, the Ingredients tab not dividing by bowls, passed every test; the browser flow now checks the tab's per-bowl weights (800 g and 680 g at the autolyse, 20 g of salt).
 - Fixed from its nits: the leaven note's split now reads "Each of the 2 bowls gets 200 g." (it said "That is…", which read oddly after a short-build warning); HANDOFF says the field is under the loaf count and counts the 45 record files; the action count is 33, which was already one short before this change; and the Step notes bullet mentions the "to each bowl" wording.
 - Noted, not changed: a huge loaf count (2,000) makes 1,000 bowls of tick-offs and a slow page; a tick made with one bowl stays saved but hidden once there are several, so Clear checklist stays available with nothing visible ticked; uneven splits round to 0.1 g, so 5 loaves show 16.7 g of salt per bowl.
+
+## Preuss House: a 1½-hour autolyse, November 22, 2026: committed, pull request open
+
+Why: after reviewing The Perfect Loaf's and SourdoughGuru's autolyse guides, Michael asked for a 1.5-hour autolyse for Preuss House, and to push it to production. Branch `preuss-autolyse`, from `main` at `d8974e0`. Pull requests 39 (the start suggestion) and 40 (Tartine Whole Wheat) are separate and not merged; they will be renumbered to decisions 16 and 17 when rebased.
+
+Done means: a House plan from a 9:00 AM leaven shows "Start autolyse" at 12:30 PM for 90 minutes and the final mix at 2:00 PM, with every other step where it was; `npm test`, the build and `npm run test:browser` pass; and production shows it.
+
+Change: `HOUSE.autolyse` in `src/domain/methods.ts` is 90 minutes, not 270. The autolyse still ends as the leaven is ready. Two schedule tests now expect 12:30 PM. docs/BEHAVIOUR.md records decision 15.
+
+Record changes, checked by decoding both records against `main`: 71 House plans changed, and only the autolyse's time, its gap and the leaven's gap to it, plus 12 planned and 18 checked autolyse times and three plans' quiet-hours count (a 5:00 AM start loses its 5:30 AM autolyse from quiet hours; 9:00 PM starts gain a 12:30 AM one). The inputs that moved are only check-off times taken from the planned autolyse. Calculations and helpers are identical; each saved-data case's schedule moved its autolyse only.
+
+Verification: by my own checks, not the verifier: the change is one constant, and Michael asked for it in production now. `npm test` and the rule-zone run, the build, the browser record and the decoded record comparison above.
+
+Not verified: a real phone, and a real bake with the shorter autolyse.

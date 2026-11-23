@@ -62,12 +62,12 @@
       - paragraph:
         - strong: "Ready when:"
         - text: Use when aerated and puffy, and a spoonful floats in room-temperature water. If it sinks, allow more fermentation before mixing.
-      - text: Next step in 30 min
+      - text: Next step in 3h 30m
       - checkbox "Complete Start autolyse"
-      - time: 9:30 AM
+      - time: 12:30 PM
       - text: Start autolyse
       - paragraph: Mix Anita's all-purpose flour (800 g), whole-wheat flour (100 g), water (680 g). Cover. Keep the remaining ingredients for the final mix.
-      - text: Next step in 4h 30m
+      - text: Next step in 1h 30m
       - checkbox "Complete Mix final dough"
       - time: 2:00 PM
       - text: Mix final dough
