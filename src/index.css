@@ -358,6 +358,19 @@ h2 {
   line-height: 1.6;
   margin: 8px 0 0;
 }
+.quiet-warning .quiet-fix {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-top: 14px;
+}
+.quiet-fix > span {
+  flex: 1 1 18rem;
+}
+.quiet-fix [data-slot='button'] {
+  background: var(--card);
+}
 .quiet-details [data-slot='accordion-item'] {
   border: 0;
 }

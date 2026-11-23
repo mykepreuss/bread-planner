@@ -21,7 +21,13 @@
       - paragraph: "Then: Mix dough and rest · Sunday, Nov 22 at 9:00 PM"
     - region "Quiet hours warning":
       - heading "8 actions need you during quiet hours" [level=2]
-      - paragraph: Hands-on work is scheduled after 10:30 PM or before 7:00 AM. Try an earlier start or a different finish time. Overnight rests are fine.
+      - paragraph: Hands-on work is scheduled after 10:30 PM or before 7:00 AM. Overnight rests are fine.
+      - paragraph:
+        - text: Start the leaven at 6:00 AM on Sunday, Nov 22 and 1 action falls in quiet hours.
+        - button "Start at 6:00 AM"
+      - paragraph:
+        - text: With a warm proof, start the leaven at 7:00 PM on Sunday, Nov 22 and nothing falls in quiet hours.
+        - button "Use a warm proof at 7:00 PM"
       - heading "View affected steps" [level=3]:
         - button "View affected steps"
     - text: When are we baking? Plan around
