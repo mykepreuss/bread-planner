@@ -155,7 +155,7 @@ test('a recipe keeps its added-water setting and shows the total hydration that 
   approx(r.totalHydration, 83 / 1.1);
 });
 
-test('the menu lists Preuss House, Original Tartine, Olive, Sesame, Tartine Whole Wheat, then Tartine Country Rye, House uses Anita’s flour, and the red-spring variation is not one of them', () => {
+test('the menu lists Preuss Country Bread, Tartine Country Bread, Olive Bread, Sesame Bread, Tartine Whole Wheat, then Tartine Country Rye, House uses Anita’s flour, and the red-spring variation is not one of them', () => {
   assert.deepEqual(
     RECIPES.map((r) => r.id),
     IDS,
@@ -386,14 +386,14 @@ test('a recipe is found only by its own id, and its defaults cannot be changed i
   assert.notEqual(defaultSettings(house), defaultSettings(house), 'each copy is new');
 });
 
-test('only Preuss House, Original Tartine, Olive, Sesame, Tartine Whole Wheat and Tartine Country Rye are on the menu, and the four removed recipes stay gone (Michael, November 22, 2026)', () => {
+test('only Preuss Country Bread, Tartine Country Bread, Olive Bread, Sesame Bread, Tartine Whole Wheat and Tartine Country Rye are on the menu (decision 17), and the four removed recipes stay gone (Michael, November 22, 2026)', () => {
   assert.deepEqual(
     RECIPES.map((r) => [r.id, r.name]),
     [
-      ['house', 'Preuss House'],
-      ['tartine', 'Original Tartine'],
-      ['olive', 'Olive'],
-      ['sesame', 'Sesame'],
+      ['house', 'Preuss Country Bread'],
+      ['tartine', 'Tartine Country Bread'],
+      ['olive', 'Olive Bread'],
+      ['sesame', 'Sesame Bread'],
       ['whole-wheat', 'Tartine Whole Wheat'],
       ['country-rye', 'Tartine Country Rye'],
     ],

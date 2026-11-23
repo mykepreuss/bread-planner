@@ -5,7 +5,7 @@
     - tab "Schedule"
     - tab "Ingredients" [selected]
   - text: Recipe
-  - combobox "Recipe": Preuss House
+  - combobox "Recipe": Preuss Country Bread
   - paragraph: Anita's all-purpose flour with whole wheat and rye. Autolyse, then an overnight cold proof.
   - tabpanel "Ingredients":
     - text: Your batch Each recipe remembers its own settings. Number of loaves

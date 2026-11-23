@@ -581,16 +581,16 @@ test.describe('flows', () => {
     await expectSameAfterReload(page);
   });
 
-  test('The recipe menu offers Preuss House, Original Tartine, Olive, Sesame and two more Tartine recipes', async ({
+  test('The recipe menu offers Preuss Country Bread, Tartine Country Bread, Olive Bread, Sesame Bread and two more Tartine recipes', async ({
     page,
   }) => {
     await open(page, 'fresh');
     await page.getByRole('combobox', { name: 'Recipe' }).click();
     await expect(page.getByRole('option')).toHaveText([
-      'Preuss House',
-      'Original Tartine',
-      'Olive',
-      'Sesame',
+      'Preuss Country Bread',
+      'Tartine Country Bread',
+      'Olive Bread',
+      'Sesame Bread',
       'Tartine Whole Wheat',
       'Tartine Country Rye',
     ]);
@@ -600,9 +600,9 @@ test.describe('flows', () => {
     await open(page, 'fresh');
     await page.getByRole('checkbox', { name: 'Complete Feed starter' }).click();
     await expect(page.getByText('1 of 22 steps checked')).toBeVisible();
-    await choose(page, 'Recipe', 'Original Tartine');
+    await choose(page, 'Recipe', 'Tartine Country Bread');
     await expect(page.getByText(/^0 of \d+ steps checked$/)).toBeVisible();
-    await choose(page, 'Recipe', 'Preuss House');
+    await choose(page, 'Recipe', 'Preuss Country Bread');
     await expect(page.getByText('1 of 22 steps checked')).toBeVisible();
     expect(await aria(page)).toMatchSnapshot('flow-recipe-checklists.aria.yml');
     await expectSameAfterReload(page);
@@ -618,7 +618,7 @@ test.describe('flows', () => {
     }) => {
       await open(page, `recipe-${name}`);
       await expect(page.getByRole('combobox', { name: 'Recipe' })).toHaveText(
-        name === 'house' ? 'Preuss House' : 'Original Tartine',
+        name === 'house' ? 'Preuss Country Bread' : 'Tartine Country Bread',
       );
       const guide = page.locator('.method-guide');
       for (const section of [
@@ -672,14 +672,14 @@ test.describe('flows', () => {
     await expect(made("Anita's all-purpose flour")).toHaveText('100 g');
     await expect(made('Whole-wheat flour')).toHaveText('50 g');
     await expect(made('Water')).toHaveText('150 g');
-    await choose(page, 'Recipe', 'Original Tartine');
+    await choose(page, 'Recipe', 'Tartine Country Bread');
     const weight = page.getByLabel('Dough weight per loaf'),
       tartineWeight = await weight.inputValue();
     await weight.fill('900');
     await page.getByRole('button', { name: 'Restore recipe defaults' }).click();
     await page.getByRole('button', { name: 'Restore defaults' }).click();
     await expect(weight).toHaveValue(tartineWeight);
-    await choose(page, 'Recipe', 'Preuss House');
+    await choose(page, 'Recipe', 'Preuss Country Bread');
     await expect(build.getByRole('spinbutton', { name: 'Water', exact: true })).toHaveValue('150');
   });
 

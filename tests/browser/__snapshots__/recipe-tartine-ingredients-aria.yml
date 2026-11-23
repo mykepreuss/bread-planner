@@ -5,7 +5,7 @@
     - tab "Schedule"
     - tab "Ingredients" [selected]
   - text: Recipe
-  - combobox "Recipe": Original Tartine
+  - combobox "Recipe": Tartine Country Bread
   - paragraph: The book’s 90/10 white and whole-wheat loaf, with leaven in the initial mix. Its 12-hour leaven suits an evening start.
   - tabpanel "Ingredients":
     - text: Your batch Each recipe remembers its own settings. Number of loaves
