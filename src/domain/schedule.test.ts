@@ -278,7 +278,8 @@ test('with the leaven in the initial mix, a longer rest moves every step after i
     const before = schedule(plan(id)),
       d = defaultSettings(recipeById(id)!).autolyse,
       after = schedule(plan(id, {}, { autolyse: d + 40 }));
-    // Oat Porridge's porridge is timed from Turn 2, so it moves too, and may then come after the initial mix.
+    // Oat Porridge's porridge is timed from Turn 2, so it moves too; a rest beyond the 40 minutes allowed, as here, puts
+    // it after the initial mix.
     assert.deepEqual(after.map((x) => x.id).sort(), before.map((x) => x.id).sort());
     after.forEach((x) => {
       const moved = (+x.at - +before.find((y) => y.id === x.id)!.at) / 60000;

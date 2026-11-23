@@ -1447,7 +1447,7 @@ Release: pull request 51 merged as `48cb27b` on Michael's "Check and merge", aft
 
 At 11:34 AM, the in-app browser's test save (Tartine Country Bread, chosen for Nov 8 at 9:00 AM, nothing checked) opened on a plain reload as "Make leaven · 9:00 PM · in 9h 25m". It showed the Suggested line, no "This plan ended", no quiet-hours warning or badges, and no console errors. The save itself was unchanged. Merged by hand, since GitHub auto-merge is turned off for this repository.
 
-## Tartine Oat Porridge, November 23, 2026: committed, verifier pending
+## Tartine Oat Porridge, November 23, 2026: committed, pull request open
 
 Why: Michael sent photos of Tartine Book No. 3, pages 168 to 171 and 178, and asked to add Oat Porridge "and update all relevant processes". Branch `oat-porridge`, from `main` at `48cb27b`. This entry also records pull request 51's release, in the section above.
 
@@ -1472,5 +1472,12 @@ Record changes, checked by decoding both records: 10 plans and 4 calculations we
 Evidence (this session): `npm test` passed 206 of 206, also with `BASELINE_ZONE=rule`. `npm run build` passed with 0 errors and 0 warnings. `npm run test:browser` passed 66 of 66 on its second run (the first wrote the new screens). In the dev server at 375 px, Oat Porridge showed "Cook the oat porridge" at 8:30 AM with 250 g oats and 500 g water, "Mix dough and rest" at 9:00 AM, "Add the oat porridge" at 10:30 AM after Turn 2 with Oat porridge 500 g, Almonds 200 g and Almond oil 50 g to tick, the oat coat at the final shape and 18 hours in the fridge, nothing wider than the screen and no console errors. The dev save was restored as it was after the new code first loaded it.
 
 Choices made for Michael, each easy to change: loaf weight includes the porridge and optional almonds and oil; the porridge is cooked on the day, not the day before; the almonds toast in the porridge step, with no temperature, since the pages give none; the "double fermented" overnight soak of the oats (page 169) is left out; 50 g of water waits for the salt. Pages 170 and 171 (soaked cracked and flaked grains) belong to other recipes and only inform how to chop oats for the coat.
+
+Independent check (the verifier, on `31d58c2`): PASS on all seven criteria.
+- Against Tartine Country Bread in 4,320 setups (both proofs and anchors, ovens of 1 to 4, 1 to 8 loaves, rests of 15, 30 and 40 minutes, dates across both clock changes), every step matched once the two new steps were set aside; the add-in step always followed Turn 2 and the porridge step was always 120 minutes before it.
+- 2,100 random settings for the other seven recipes gave byte-identical formula, schedule, quiet-hours, add-in and suggested-start output to `main`, apart from the new, empty `addIns` key.
+- A version 6 save written by `main` loaded with Oat Porridge last at its defaults and everything else intact.
+- All six of its breaks were caught: add-ins after Turn 1, add-ins left out of the dough weight, the porridge note unscaled, no tick-offs, the panel's wording (by the browser suite only), and Olive and Sesame moved to Turn 2.
+- Fixed from its nits without a re-check, under relaxed verification: BEHAVIOUR.md said a longer rest could move the porridge step past the initial mix; at the longest allowed rest, 40 minutes, it starts 20 minutes before it. The matching test comment now says so. Left as it is: the record's `recordedFrom` reads "with uncommitted changes", as `main`'s does.
 
 Not verified: a real phone, or a real bake. Porridge doughs are wetter; the 18-hour fridge is worth watching on the first bake.
