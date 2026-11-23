@@ -1,5 +1,5 @@
-import type { Step } from './schedule.ts';
-import { dateString } from './text.ts';
+import { schedule, type PlanInput, type Step } from './schedule.ts';
+import { clockText, dateString } from './text.ts';
 
 /** Quiet hours run from after 10:30 PM until 7:00 AM. */
 function isQuietTime(at: Date) {
@@ -20,4 +20,32 @@ export function quietHourActions<T extends Step>(steps: T[], completed: string[]
     const continues = step.activeMinutes > 0 && (isQuietTime(end) || dateString(step.at) !== dateString(end));
     return startsQuiet || continues ? [{ step, continues: !startsQuiet }] : [];
   });
+}
+
+const QUARTER = 15 * 60000,
+  HALF_DAY = 12 * 60 * 60000;
+
+/**
+ * The leaven start that leaves the fewest hands-on steps in quiet hours, and how many it leaves. Added at Michael's
+ * request on November 22, 2026, so a plan with night work can suggest a start without it. It tries every quarter hour
+ * from 12 hours before the planned leaven start (or from `from`, if later) to 24 hours after that, plans each with the
+ * leaven at that time, and keeps the one with the fewest quiet-hour actions; of those, the nearest to the planned start,
+ * and the later of two as near. Null when the plan has no leaven step.
+ */
+export function quietestStart(input: PlanInput, from: number): { at: Date; actions: number } | null {
+  const planned = schedule(input).find((s) => s.id === 'leaven');
+  if (!planned) return null;
+  const start = planned.at.getTime(),
+    first = Math.ceil(Math.max(start - HALF_DAY, from) / QUARTER) * QUARTER;
+  let best: { at: Date; actions: number } | null = null;
+  for (let i = 0; i < 96; i++) {
+    const at = new Date(first + i * QUARTER);
+    const steps = schedule({ ...input, anchor: 'leaven', date: dateString(at), time: clockText(at) });
+    // A start the clocks skip, such as 2:30 AM as summer time begins, has no plan.
+    if (!steps.length) continue;
+    const actions = quietHourActions(steps).length,
+      nearer = (a: Date, b: Date) => Math.abs(+a - start) <= Math.abs(+b - start);
+    if (!best || actions < best.actions || (actions === best.actions && nearer(at, best.at))) best = { at, actions };
+  }
+  return best;
 }

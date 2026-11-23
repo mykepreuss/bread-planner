@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { defaultSettings, recipeById, type Settings } from './recipes.ts';
 import { schedule, type PlanInput, type Step } from './schedule.ts';
-import { quietHourActions } from './quiet.ts';
+import { quietHourActions, quietestStart } from './quiet.ts';
+import { clockText, dateString } from './text.ts';
 
 // Ported from src/lib/recipes.test.ts. Quiet hours are local wall-clock rules, so every time here is built and read
 // in the local zone, and these tests hold in any time zone.
@@ -104,4 +105,63 @@ test('default House schedule has no quiet-hour work; a late start and book sched
     quietHourActions(schedule(plan('house', undefined, { time: '17:00' }))).some((x) => x.step.id === 'fridge'),
   );
   assert.ok(quietHourActions(schedule(plan('tartine'))).some((x) => x.step.id === 'fold'));
+});
+
+/** Long before every plan here, so no start is ruled out as past. */
+const EARLY = new Date(2026, 9, 1).getTime();
+const local = (d: Date) => `${dateString(d)} ${clockText(d)}`;
+
+test('no start keeps a cold-proofed Tartine bake out of quiet hours; the quietest leaves only the leaven, as near the plan as it can', () => {
+  for (let m = 0; m < 1440; m += 15) {
+    const time = clockText(new Date(2026, 9, 21, 0, m));
+    assert.ok(quietHourActions(schedule(plan('tartine', undefined, { time }))).length >= 1, time);
+  }
+  // A 12-hour leaven, about 4 hours of dough work and a 12-hour fridge: the latest start with one action builds the
+  // leaven at 6:45 AM, so the loaves go into the fridge at 10:25 PM.
+  const best = quietestStart(plan('tartine'), EARLY)!;
+  assert.deepEqual([local(best.at), best.actions], ['2026-10-21 06:45', 1]);
+  const steps = schedule(plan('tartine', undefined, { time: '06:45' }));
+  assert.deepEqual(
+    quietHourActions(steps).map((a) => a.step.id),
+    ['leaven'],
+  );
+  assert.equal(clockText(steps.find((x) => x.id === 'fridge')!.at), '22:25');
+});
+
+test('with a warm proof a Tartine bake can avoid quiet hours: the nearest such start, not before `from`, and the later of two as near', () => {
+  const warm = plan('tartine', undefined, { proof: 'warm' });
+  // From a 9:00 AM leaven, the nearest is 10:30 PM the evening before: quiet hours start after 10:30 PM.
+  const best = quietestStart(warm, EARLY)!;
+  assert.deepEqual([local(best.at), best.actions], ['2026-10-20 22:30', 0]);
+  assert.deepEqual(quietHourActions(schedule({ ...warm, date: '2026-10-20', time: '22:30' })), []);
+  // Once that evening has passed, it is that day's 9:00 PM, the earliest whose autolyse starts at 7:00 AM.
+  const later = quietestStart(warm, new Date(2026, 9, 20, 23, 0).getTime())!;
+  assert.deepEqual([local(later.at), later.actions], ['2026-10-21 21:00', 0]);
+  assert.equal(clockText(schedule({ ...warm, time: '21:00' }).find((x) => x.id === 'autolyse')!.at), '07:00');
+  // From 9:45 AM, 10:30 PM the evening before and 9:00 PM that evening are as near: the later wins.
+  assert.equal(local(quietestStart({ ...warm, time: '09:45' }, EARLY)!.at), '2026-10-21 21:00');
+});
+
+test('a House plan with night work finds the nearest start without any, by the leaven, however it is planned', () => {
+  assert.deepEqual(quietestStart(plan('house'), EARLY), { at: new Date(2026, 9, 21, 9, 0), actions: 0 });
+  const early = plan('house', undefined, { time: '05:00' });
+  assert.ok(quietHourActions(schedule(early)).length > 0);
+  const best = quietestStart(early, EARLY)!;
+  assert.deepEqual([local(best.at), best.actions], ['2026-10-21 08:15', 0]);
+  // The same plan made from its last loaf out searches from the same leaven start.
+  const done = schedule(early).find((x) => x.id === 'done')!.at;
+  assert.deepEqual(
+    quietestStart({ ...early, anchor: 'done', date: dateString(done), time: clockText(done) }, EARLY),
+    best,
+  );
+  // No flour, no plan, no start.
+  assert.equal(
+    quietestStart(
+      plan('house', (q) => {
+        q.flours = {};
+      }),
+      EARLY,
+    ),
+    null,
+  );
 });

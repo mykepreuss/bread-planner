@@ -7,7 +7,7 @@ import { schedule, type PlanInput } from './schedule.ts';
 /**
  * Tartine Country Rye, from Tartine Bread, page 118: the Basic Country Bread made with 170 g medium-fine whole-rye flour
  * and 830 g white bread flour, and 800 g water at about 75°F. Added at Michael's request on November 22, 2026. The book
- * rests it 40 to 60 minutes after the initial mix; since decision 13 it has the 2-hour autolyse alongside the leaven
+ * rests it 40 to 60 minutes after the initial mix; since decision 15 it has the 2-hour autolyse alongside the leaven
  * that every Tartine recipe has. Plans start the leaven at 9:00 AM on October 21, 2026, in the local zone.
  */
 

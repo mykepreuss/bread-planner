@@ -50,7 +50,7 @@ export function formula(recipe: Recipe, s: Settings) {
     grams: clean((flour * part(key)) / parts),
     percent: (100 * part(key)) / parts,
   }));
-  // Every recipe autolyses its flour and first water, then adds the leaven with the salt (decision 13).
+  // Every recipe autolyses its flour and first water, then adds the leaven with the salt (decision 15).
   const initial: Weighed[] = [
     ...flours.filter((f) => f.grams > 0 && !recipe.late.includes(f.key)).map((f): Weighed => [f.name, f.grams]),
     ['Water', water - finalWater],

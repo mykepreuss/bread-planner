@@ -18,7 +18,10 @@
       - paragraph: "Then: Start leaven · Sunday, Nov 22 at 9:00 PM"
     - region "Quiet hours warning":
       - heading "11 actions need you during quiet hours" [level=2]
-      - paragraph: Hands-on work is scheduled after 10:30 PM or before 7:00 AM. Try an earlier start or a different finish time. Overnight rests are fine.
+      - paragraph: Hands-on work is scheduled after 10:30 PM or before 7:00 AM. Overnight rests are fine.
+      - paragraph:
+        - text: Start the leaven at 8:15 AM on Monday, Nov 23 and nothing falls in quiet hours.
+        - button "Start at 8:15 AM"
       - heading "View affected steps" [level=3]:
         - button "View affected steps"
     - text: When are we baking? Plan around

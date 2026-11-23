@@ -227,7 +227,7 @@ export function schedule(input: PlanInput): Step[] {
     const t = TARTINE,
       autolyse = recipe.autolyse ?? TARTINE_AUTOLYSE;
     push('leaven', 'leaven', 'Make leaven', 0, t.leaven, leavenNote(recipe, r, bowls), LEAVEN_CUE);
-    // The autolyse ends as the leaven is ready; then the leaven goes in with the salt (decision 13).
+    // The autolyse ends as the leaven is ready; then the leaven goes in with the salt (decision 15).
     push(
       'autolyse',
       'autolyse',

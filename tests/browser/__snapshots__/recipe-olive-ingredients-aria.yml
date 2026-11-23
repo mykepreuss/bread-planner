@@ -85,16 +85,16 @@
       - button "Restore recipe defaults"
     - text: 1,970g
     - paragraph: Total dough for 2 loaves
-    - text: 77% total hydration 985 g per loaf 01 / Initial mix and rest Leaven goes into this mix before the initial rest.
-    - term: Leaven used
-    - definition: 200 g
+    - text: 77% total hydration 985 g per loaf 01 / Autolyse Mix the flour and first water addition. Keep the final-mix ingredients separate.
     - term: White-bread flour
     - definition: 900 g
     - term: Whole-wheat flour
     - definition: 100 g
     - term: Water
     - definition: 700 g
-    - text: 02 / Salt and remaining water Add after the initial rest, then begin bulk fermentation.
+    - text: 02 / Final mix Add after the autolyse, once the leaven is ready.
+    - term: Leaven used
+    - definition: 200 g
     - term: Salt
     - definition: 20 g
     - term: Water

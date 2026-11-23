@@ -6,7 +6,7 @@
     - tab "Ingredients" [selected]
   - text: Recipe
   - combobox "Recipe": Tartine Country Rye
-  - paragraph: "The book’s country rye: just enough medium-fine whole rye with white bread flour for a sweet rye flavour without much sourness. Cooler water and a longer rest after mixing, as for whole wheat."
+  - paragraph: "The book’s country rye: just enough medium-fine whole rye with white bread flour for a sweet rye flavour without much sourness. Mixed with cooler water, as for whole wheat."
   - tabpanel "Ingredients":
     - text: Your batch Each recipe remembers its own settings. Number of loaves
     - spinbutton "Number of loaves": "2"
@@ -85,16 +85,16 @@
       - button "Restore recipe defaults"
     - text: 2,020g
     - paragraph: Total dough for 2 loaves
-    - text: 82% total hydration 1,010 g per loaf 01 / Initial mix and rest Leaven goes into this mix before the initial rest.
-    - term: Leaven used
-    - definition: 200 g
+    - text: 82% total hydration 1,010 g per loaf 01 / Autolyse Mix the flour and first water addition. Keep the final-mix ingredients separate.
     - term: Rye flour
     - definition: 170 g
     - term: White-bread flour
     - definition: 830 g
     - term: Water
     - definition: 750 g
-    - text: 02 / Salt and remaining water Add after the initial rest, then begin bulk fermentation.
+    - text: 02 / Final mix Add after the autolyse, once the leaven is ready.
+    - term: Leaven used
+    - definition: 200 g
     - term: Salt
     - definition: 20 g
     - term: Water

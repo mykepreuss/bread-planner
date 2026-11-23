@@ -84,7 +84,7 @@ test('Original Tartine matches the book: its dough quantities, leaven build and 
   const r = weigh('tartine')!;
   assert.equal(grams(r, 'white'), 900);
   assert.equal(grams(r, 'wheat'), 100);
-  // The book's quantities; since decision 13 the leaven goes in with the salt, after the autolyse.
+  // The book's quantities; since decision 15 the leaven goes in with the salt, after the autolyse.
   stage(r.initial, [
     ['White-bread flour', 900],
     ['Whole-wheat flour', 100],

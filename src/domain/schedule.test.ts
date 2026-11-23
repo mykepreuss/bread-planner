@@ -166,7 +166,7 @@ test('parallel capacity and a partial final batch cover every loaf once', () => 
 test('Tartine cold: a 2-hour autolyse ends as the leaven is ready, five folds before dividing, and the first and last bakes on time', () => {
   const s = schedule(plan('tartine')),
     at = timeOf(s);
-  // Decision 13: the autolyse is the leaven's last 2 hours, and the leaven goes in with the salt.
+  // Decision 15: the autolyse is the leaven's last 2 hours, and the leaven goes in with the salt.
   assert.equal(at('autolyse'), '2026-10-21 19:00');
   assert.equal(find(s, 'autolyse').minutes, 120);
   assert.equal(at('mix'), '2026-10-21 21:00');

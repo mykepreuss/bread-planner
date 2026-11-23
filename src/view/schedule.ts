@@ -10,7 +10,7 @@ import {
   stepGaps,
   type LiveStep,
 } from '../domain/bakeday.ts';
-import { quietHourActions } from '../domain/quiet.ts';
+import { quietHourActions, quietestStart } from '../domain/quiet.ts';
 import { dateString, round } from '../domain/text.ts';
 import { planOf, selected, type PlannerState } from '../state/schema.ts';
 import { setChecked } from '../state/actions.ts';
@@ -63,6 +63,8 @@ export function scheduleView(state: PlannerState, now: number, when: (d: Date) =
           ? 'after mixing'
           : null;
   const night = quietHourActions(steps, settled);
+  // Before anything is checked, a plan with night work suggests a start with less (decision 16).
+  const quietFixes = night.length > 0 && bake.done.length === 0 ? fixesFor(state, night.length, now) : [];
   const count = settings.count;
   return {
     recipe,
@@ -91,6 +93,7 @@ export function scheduleView(state: PlannerState, now: number, when: (d: Date) =
     temperatureField,
     night,
     nightIds: new Set(night.map(({ step }) => step.id)),
+    quietFixes,
     gaps: stepGaps(steps),
     proofWindow: coldProofWindow(steps),
     days: Array.from(new Set(steps.map((s) => dateString(s.at)))),
@@ -106,6 +109,28 @@ export function scheduleView(state: PlannerState, now: number, when: (d: Date) =
   };
 }
 export type ScheduleView = ReturnType<typeof scheduleView>;
+
+/** A leaven start the quiet-hours warning suggests, with the proof it needs and the quiet-hour actions it leaves. */
+export type QuietFix = { at: Date; actions: number; proof: 'cold' | 'warm' };
+
+/**
+ * The starts the quiet-hours warning suggests for a plan with `actions` quiet-hour actions: the quietest leaven start
+ * with this proof, if it leaves fewer, and for a Tartine recipe the quietest with the other proof, if it leaves fewer
+ * still. Added at Michael's request on November 22, 2026: with the book's 12-hour leaven and 12-hour fridge, no start
+ * keeps a cold-proofed Tartine bake out of quiet hours, but an evening leaven with a warm proof does.
+ */
+function fixesFor(state: PlannerState, actions: number, now: number): QuietFix[] {
+  const input = planOf(state),
+    fixes: QuietFix[] = [];
+  const same = quietestStart(input, now);
+  if (same && same.actions < actions) fixes.push({ ...same, proof: state.proof });
+  if (input.recipe.method === 'tartine') {
+    const proof = state.proof === 'cold' ? 'warm' : 'cold',
+      other = quietestStart({ ...input, proof }, now);
+    if (other && other.actions < Math.min(actions, same?.actions ?? actions)) fixes.push({ ...other, proof });
+  }
+  return fixes;
+}
 
 /** One check asks first when it would skip more than this many earlier steps that count; see `skipsOnCheck`. */
 export const ASK_BEFORE_SKIPPING = 3;

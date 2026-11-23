@@ -189,7 +189,7 @@ test('the book recipe keeps its quantities, adds its leaven with the salt, and w
   const r = weigh(plan('tartine'));
   approx(r.total, 1970);
   approx(r.hydration, 75);
-  // Since decision 13 the leaven goes in after the autolyse, with the salt and the reserved water.
+  // Since decision 15 the leaven goes in after the autolyse, with the salt and the reserved water.
   assert.deepEqual(
     r.initial.map((x) => x[0]),
     ['White-bread flour', 'Whole-wheat flour', 'Water'],

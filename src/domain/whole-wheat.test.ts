@@ -8,9 +8,9 @@ import { dateString } from './text.ts';
 /**
  * Tartine Whole Wheat, from Tartine Bread, page 114: the Basic Country Bread made with 700 g whole wheat and 300 g
  * all-purpose flour and 800 g water at about 75°F. The book rests it 40 to 60 minutes after the initial mix; since
- * decision 13 every Tartine recipe has a 2-hour autolyse alongside the leaven instead, so its times are Original
+ * decision 15 every Tartine recipe has a 2-hour autolyse alongside the leaven instead, so its times are Original
  * Tartine's. Plans start the leaven at 9:00 AM on October 21, 2026; every time is built and read in the local zone, so
- * these tests hold in any time zone. Original Tartine is checked against its plan as it was before decision 13.
+ * these tests hold in any time zone. Original Tartine is checked against its plan as it was before decision 15.
  */
 
 const NOTE =
@@ -57,7 +57,7 @@ function later(at: string, minutes: number) {
 type Row = [id: string, at: string, minutes: number, title: string];
 const rows = (steps: Step[]): Row[] => steps.map((s) => [s.id, local(s.at), s.minutes, s.title]);
 
-/** Original Tartine's steps up to the final shape before decision 13, the same for either proof and oven capacity. */
+/** Original Tartine's steps up to the final shape before decision 15, the same for either proof and oven capacity. */
 const TO_SHAPE: Row[] = [
   ['leaven', '2026-10-21 09:00', 720, 'Make leaven'],
   ['autolyse', '2026-10-21 21:00', 30, 'Mix dough and rest'],
@@ -72,7 +72,7 @@ const TO_SHAPE: Row[] = [
   ['bench1', '2026-10-22 00:35', 30, 'Bench rest and prepare baskets'],
   ['fold', '2026-10-22 01:05', 5, 'Final shape'],
 ];
-/** Original Tartine's plan as it was before decision 13, for each proof and oven capacity. */
+/** Original Tartine's plan as it was before decision 15, for each proof and oven capacity. */
 const BOOK_PLANS: { name: string; change: Partial<PlanInput>; rows: Row[] }[] = [
   {
     name: 'cold proof, both loaves together',
@@ -180,11 +180,11 @@ const pick = (steps: Step[], all: Record<string, string>) =>
   Object.fromEntries(steps.filter((s) => s.id in all).map((s) => [s.id, all[s.id]]));
 
 /**
- * A plan of the book's from decision 13 on: the autolyse is the last 2 hours of the leaven, and the leaven goes in with
+ * A plan of the book's from decision 15 on: the autolyse is the last 2 hours of the leaven, and the leaven goes in with
  * the salt as the leaven is ready. The book's 30-minute rest after the initial mix is gone, so the final mix and every
  * step after it come 30 minutes earlier.
  */
-function decision13(book: Row[]): Row[] {
+function decision15(book: Row[]): Row[] {
   const i = book.findIndex(([id]) => id === 'autolyse');
   return book.map(([id, at, minutes, title], n): Row =>
     n < i
@@ -194,7 +194,7 @@ function decision13(book: Row[]): Row[] {
         : [id, later(at, -30), minutes, id === 'mix' ? 'Add leaven, salt and final water' : title],
   );
 }
-const TARTINE_PLANS = BOOK_PLANS.map((p) => ({ ...p, rows: decision13(p.rows) }));
+const TARTINE_PLANS = BOOK_PLANS.map((p) => ({ ...p, rows: decision15(p.rows) }));
 
 test('Tartine Whole Wheat is on the menu after the two Tartine variations, made the Tartine way', () => {
   assert.deepEqual(
@@ -254,7 +254,7 @@ test('the formula is the book’s table: 700 g whole wheat, 300 g all-purpose, 8
   approx(r.water, 800);
   approx(r.used, 200);
   approx(r.salt, 20);
-  // The leaven goes in with the salt, after the autolyse (decision 13).
+  // The leaven goes in with the salt, after the autolyse (decision 15).
   stage(r.initial, [
     ['Whole-wheat flour', 700],
     ['All-purpose flour', 300],
