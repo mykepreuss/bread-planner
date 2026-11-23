@@ -5,7 +5,7 @@ import type { AddIns } from './addins.ts';
  * equals the value the app has always started with. White & Whole Wheat, Red Spring & Rye, Five-Flour and Four-Flour
  * Sourdough were removed at Michael's request on November 22, 2026, with the flours only they used; they are in git
  * history. The same day he asked for four more from Tartine Bread: Tartine Olive, Tartine Sesame, Tartine Whole Wheat
- * and Tartine Country Rye.
+ * and Tartine Country Rye. Then he asked for Olive and Sesame, so named, to follow Preuss House where logical.
  */
 
 export type FlourKey = 'anita' | 'white' | 'wheat' | 'rye' | 'ap';
@@ -40,9 +40,9 @@ export type Settings = {
 
 /**
  * `method` is how the dough is mixed and timed (see methods.ts). `late` flours go into the final mix. `buildFlour`
- * is the flour in the leaven build besides whole wheat. `addIns`, for Tartine recipes only, are worked in after the
- * first turn (see addins.ts). `initialMix`, for Tartine recipes only, replaces the Basic Country Bread's initial mix:
- * the rest after it, in minutes, and its step's note. Every later step moves with the rest.
+ * is the flour in the leaven build besides whole wheat. `addIns` are worked in after the first turn, with either
+ * method (see addins.ts). `initialMix`, for Tartine recipes only, replaces the Basic Country Bread's initial mix: the
+ * rest after it, in minutes, and its step's note. Every later step moves with the rest.
  */
 export type Recipe = {
   id: string;
@@ -61,6 +61,20 @@ export type Recipe = {
 const share = (part: number, whole: number) => (part / whole) * 100;
 /** The House leaven build, per 1,000 g of added flour. */
 const houseBuild = { starter: 28, flour: 71, wheat: 71, water: 142 };
+/**
+ * Preuss House's defaults: 800 g Anita's, 100 g whole wheat, 100 g rye; 780 g water with 100 g held back; 200 g leaven;
+ * 20 g salt. Olive and Sesame use them too (decision 16).
+ */
+const preussDefaults = (): Settings => ({
+  count: 2,
+  weight: 1000,
+  hydration: 78,
+  leaven: 20,
+  salt: 2,
+  reserve: share(100, 780),
+  flours: { anita: 80, wheat: 10, rye: 10 },
+  build: { ...houseBuild },
+});
 
 export const RECIPES: Recipe[] = [
   {
@@ -71,17 +85,7 @@ export const RECIPES: Recipe[] = [
     flours: ['anita', 'wheat', 'rye'],
     late: ['rye'],
     buildFlour: 'anita',
-    // 800 g Anita's, 100 g whole wheat, 100 g rye; 780 g water with 100 g held back; 200 g leaven; 20 g salt.
-    defaults: {
-      count: 2,
-      weight: 1000,
-      hydration: 78,
-      leaven: 20,
-      salt: 2,
-      reserve: share(100, 780),
-      flours: { anita: 80, wheat: 10, rye: 10 },
-      build: { ...houseBuild },
-    },
+    defaults: preussDefaults(),
   },
   {
     id: 'tartine',
@@ -105,16 +109,17 @@ export const RECIPES: Recipe[] = [
     },
   },
   {
-    // Tartine Bread, page 88: the Basic Country Bread dough, method and defaults, with the olive mixture after the
-    // first turn. Added at Michael's request on November 22, 2026. The values are Original Tartine's, copied.
+    // The olive mixture from Tartine Bread, page 88, added at Michael's request on November 22, 2026. The same day he
+    // asked for it to follow Preuss House where that is logical (decision 16): its dough, leaven, 1½-hour autolyse,
+    // turns, overnight cold proof and oven, with the olive mixture worked in after the first turn, as the book does.
     id: 'olive',
-    name: 'Tartine Olive',
+    name: 'Olive',
     description:
-      'Original Tartine dough with olives, herbes de Provence, lemon zest and, if you like, toasted nuts, worked in after the first turn. A mix of green and oil-cured black olives works well.',
-    method: 'tartine',
-    flours: ['white', 'wheat'],
-    late: [],
-    buildFlour: 'white',
+      'Preuss House dough with olives, herbes de Provence, lemon zest and, if you like, toasted nuts, worked in after the first turn. A mix of green and oil-cured black olives works well.',
+    method: 'house',
+    flours: ['anita', 'wheat', 'rye'],
+    late: ['rye'],
+    buildFlour: 'anita',
     addIns: {
       title: 'Add the olive mixture',
       note: 'In a bowl, stir together {list}. Scatter the mixture over the dough, add a splash of water, and work it in by hand, cutting through and folding the dough until it is evenly spread. Then carry on with bulk as planned.',
@@ -125,53 +130,33 @@ export const RECIPES: Recipe[] = [
         { before: 'Grated zest of', amount: 1, unit: ['lemon', 'lemons'] },
       ],
     },
-    // As Original Tartine: 900 g white, 100 g whole wheat; 750 g water with 50 g held back; 200 g leaven; 20 g salt;
-    // 1 tbsp (15 g) starter.
-    defaults: {
-      count: 2,
-      weight: 985,
-      hydration: 75,
-      leaven: 20,
-      salt: 2,
-      reserve: share(50, 750),
-      flours: { white: 90, wheat: 10 },
-      build: { starter: 15, flour: 100, wheat: 100, water: 200 },
-    },
+    // Preuss House's defaults. The add-ins are the book's for its two loaves, scaled by dough weight against these.
+    defaults: preussDefaults(),
   },
   {
-    // Tartine Bread page 90, "Sesame": one batch of the Basic Country Bread dough with 1 cup of seeds, for 2 loaves.
+    // Tartine Bread page 90, "Sesame": 1 cup of seeds for the book's two loaves. Like Olive, it follows Preuss House
+    // where that is logical (decision 16): the seeds go into Preuss House's dough after the first turn.
     id: 'sesame',
-    name: 'Tartine Sesame',
+    name: 'Sesame',
     description:
-      'Original Tartine’s dough and timing, with toasted sesame seeds worked in after the first turn. The seeds toast while the dough rests.',
-    method: 'tartine',
-    flours: ['white', 'wheat'],
-    late: [],
-    buildFlour: 'white',
+      'Preuss House dough and timing, with toasted sesame seeds worked in after the first turn. The seeds toast as the autolyse finishes.',
+    method: 'house',
+    flours: ['anita', 'wheat', 'rye'],
+    late: ['rye'],
+    buildFlour: 'anita',
     addIns: {
       title: 'Add the toasted sesame seeds',
       note: 'Scatter over the dough {list}. Wet them with a splash of water, then work them in by hand, pinching the dough through your fingers and slicing through it with the side of your hand until the seeds are evenly spread. Bulk then carries on as planned.',
       items: [{ amount: 1, unit: ['cup', 'cups'], what: 'unhulled sesame seeds, toasted and cooled' }],
       // About 15 minutes to heat the oven, 10 minutes, a stir, 10 to 15 minutes more, then 20 minutes to cool: an hour,
-      // so the seeds are cool by Turn 1. It starts with the initial mix.
+      // so the seeds are cool by Turn 1. From a 9:00 AM leaven that is 1:45 PM, as the autolyse finishes.
       prep: {
         title: 'Toast the sesame seeds',
         note: 'Heat the oven to 400°F / 204°C. Give the seeds 10 minutes on a rimmed baking sheet in a single layer, then stir them so the darker ones at the edges move to the middle. Return them for another 10 to 15 minutes, until thoroughly toasted, and let them cool for 20 minutes. They go into the dough at Turn 1.',
         minutesBefore: 60,
       },
     },
-    // Original Tartine's defaults, copied: 900 g white, 100 g whole wheat; 750 g water with 50 g held back; 200 g
-    // leaven; 20 g salt; 1 tbsp (15 g) starter.
-    defaults: {
-      count: 2,
-      weight: 985,
-      hydration: 75,
-      leaven: 20,
-      salt: 2,
-      reserve: share(50, 750),
-      flours: { white: 90, wheat: 10 },
-      build: { starter: 15, flour: 100, wheat: 100, water: 200 },
-    },
+    defaults: preussDefaults(),
   },
   {
     id: 'whole-wheat',

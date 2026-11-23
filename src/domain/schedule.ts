@@ -224,6 +224,26 @@ export function schedule(input: PlanInput): Step[] {
   // Mixed in several bowls, the dough comes together in one container at the start of bulk.
   const bowls = mixingBowls(count, input.mixCapacity ?? 2),
     combine = bowls > 1 ? `Combine ${allBowls(bowls)} in one container. ` : '';
+  // Add-ins go in right after the first turn, as the book works them in, with any prep finished by then. The prep lasts
+  // until the next step starts: that turn and every step before it are already on the plan, so the next one is among
+  // them.
+  const addInsAfter = (turnAt: number) => {
+    if (!recipe.addIns) return;
+    const { prep } = recipe.addIns;
+    if (prep) {
+      const start = turnAt - prep.minutesBefore,
+        next = Math.min(...rows.map((r) => r.offset).filter((offset) => offset > start));
+      push('toast', 'prep', prep.title, start, next - start, prep.note);
+    }
+    push(
+      'addins',
+      'addin',
+      recipe.addIns.title,
+      turnAt,
+      0,
+      addInNote(recipe.addIns, addInLines(recipe.addIns, settings, recipe.defaults)),
+    );
+  };
   let firstBake: number, preheat: number, covered: number, uncovered: number, warmup: number;
   if (tartine) {
     const t = TARTINE,
@@ -272,25 +292,7 @@ export function schedule(input: PlanInput): Step[] {
           ? 'Wet your hand. Stretch one quadrant over the dough; rotate and repeat to fold all four sides.'
           : 'Repeat the four-sided stretch and fold, with wet hands.',
       );
-      // The book works add-ins in right after the first turn, so the step starts with it.
-      if (n === 1 && recipe.addIns) {
-        const { prep } = recipe.addIns;
-        if (prep) {
-          // Early enough to be ready by then. It lasts until the next step starts: this turn and every step before it
-          // are already on the plan, so the next one is among them.
-          const start = at + elapsed - prep.minutesBefore,
-            next = Math.min(...rows.map((r) => r.offset).filter((offset) => offset > start));
-          push('toast', 'prep', prep.title, start, next - start, prep.note);
-        }
-        push(
-          'addins',
-          'addin',
-          recipe.addIns.title,
-          at + elapsed,
-          0,
-          addInNote(recipe.addIns, addInLines(recipe.addIns, settings, recipe.defaults)),
-        );
-      }
+      if (n === 1) addInsAfter(at + elapsed);
     }
     at += t.bulk;
     push(
@@ -410,6 +412,7 @@ export function schedule(input: PlanInput): Step[] {
     at += h.turnEvery;
     for (let n = 1; n <= h.turns; n++) {
       push(`turn${n}`, 'turn', `Turn ${n}`, at, h.turnEvery, houseTurnNote(n));
+      if (n === 1) addInsAfter(at);
       at += h.turnEvery;
     }
     push(

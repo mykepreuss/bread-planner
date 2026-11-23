@@ -540,7 +540,7 @@ test('a save with one of the four removed recipes selected opens on Preuss House
         settings: defaultSettings(recipeById('olive')!),
         bake: { done: [], doneAt: {}, doughTemp: null, bulkTemps: [], added: [] },
       },
-      `${name}: Tartine Olive, which the save doesn't hold, starts at its defaults`,
+      `${name}: Olive, which the save doesn't hold, starts at its defaults`,
     );
     assert.deepEqual(
       s.recipes.sesame,
@@ -548,7 +548,7 @@ test('a save with one of the four removed recipes selected opens on Preuss House
         settings: recipeById('sesame')!.defaults,
         bake: { done: [], doneAt: {}, doughTemp: null, bulkTemps: [], added: [] },
       },
-      `${name}: Tartine Sesame, which the save doesn't hold, starts at its defaults`,
+      `${name}: Sesame, which the save doesn't hold, starts at its defaults`,
     );
     // `white-wheat` was White & Whole Wheat, not Tartine Whole Wheat (`whole-wheat`): nothing saved for it carries over.
     assert.deepEqual(
@@ -581,4 +581,41 @@ test('a saved menu keeps its own order and gains, at the end, every recipe it do
     NOW,
   );
   assert.equal(act.selectRecipe(s, 'whole-wheat').recipe, 'whole-wheat', 'a recipe added since the save can be chosen');
+});
+
+test('Olive and Sesame saved with Original Tartine’s dough load fresh at Preuss House’s; saved with the new dough, and every other recipe, they load as saved (decision 16)', () => {
+  // Before decision 16 they were Tartine variations: white and whole-wheat flour, 75% hydration, a Tartine leaven build.
+  const tartineDough = {
+    count: 3,
+    weight: 985,
+    hydration: 75,
+    leaven: 20,
+    salt: 2,
+    reserve: (50 / 750) * 100,
+    flours: { white: 90, wheat: 10 },
+    build: { starter: 15, flour: 100, wheat: 100, water: 200 },
+  };
+  const bake = { done: ['leaven', 'autolyse'], doneAt: { leaven: NOW - 3600000, autolyse: NOW }, doughTemp: 78 };
+  const edited = { ...defaultSettings(recipeById('olive')!), count: 3, hydration: 76 };
+  const plan = {
+    recipe: 'olive',
+    recipes: {
+      olive: { settings: tartineDough, bake },
+      sesame: { settings: edited, bake },
+      tartine: { settings: tartineDough, bake },
+    },
+  };
+  const s = loadState(storage({ [STORAGE_V6]: JSON.stringify({ version: 6, plan }) }), NOW);
+  assert.equal(s.recipe, 'olive');
+  assert.deepEqual(
+    s.recipes.olive.settings,
+    defaultSettings(recipeById('olive')!),
+    'the old dough is not carried over',
+  );
+  assert.deepEqual(s.recipes.olive.bake, { done: [], doneAt: {}, doughTemp: null, bulkTemps: [], added: [] });
+  assert.deepEqual(s.recipes.sesame.settings, edited, 'a save in the new dough keeps its edits');
+  assert.deepEqual(s.recipes.sesame.bake.done, ['leaven', 'autolyse']);
+  // Original Tartine still uses white and whole-wheat flour, so its save loads as it was.
+  assert.deepEqual(s.recipes.tartine.settings, tartineDough);
+  assert.equal(s.recipes.tartine.bake.doughTemp, 78);
 });

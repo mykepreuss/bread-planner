@@ -112,6 +112,18 @@ function bakeFrom(source: Raw): Bake {
 }
 
 /**
+ * Whether a saved recipe was saved for a dough it no longer has: its version 6 settings name a flour the recipe doesn't
+ * use. Olive and Sesame changed from Original Tartine's white and whole-wheat dough to Preuss House's (decision 16),
+ * so a save from before loads them fresh, settings and checklist, rather than mixing the old dough's values into the
+ * new one.
+ */
+function otherDough(recipe: Recipe, source: Raw) {
+  const settings = isObject(source.settings) ? source.settings : {},
+    flours = isObject(settings.flours) ? settings.flours : {};
+  return Object.keys(flours).some((k) => !(recipe.flours as string[]).includes(k));
+}
+
+/**
  * The shared fields and every recipe, from either version. A missing or invalid date falls back to the day after
  * `now`, and a time to 9:00 AM, as for a new plan (decision 4 in docs/BEHAVIOUR.md).
  */
@@ -125,7 +137,7 @@ function assemble(
   const recipes: Record<string, RecipeState> = Object.fromEntries(
     RECIPES.map((r) => {
       const source = Object.hasOwn(saved, r.id) ? saved[r.id] : undefined;
-      return isObject(source)
+      return isObject(source) && !otherDough(r, source)
         ? [r.id, { settings: settingsFrom(r, settingsReader(r, source)), bake: bakeFrom(bakeSource(source)) }]
         : [r.id, { settings: defaultSettings(r), bake: emptyBake() }];
     }),

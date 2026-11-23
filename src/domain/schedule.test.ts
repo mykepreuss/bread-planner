@@ -334,7 +334,7 @@ test('an ingredient the recipe has none of gets no tick-off, and a final mix wit
 });
 
 test("Tartine's second addition lists its salt and water as tick-offs, for every Tartine recipe, and keeps the book's note", () => {
-  for (const id of ['tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye']) {
+  for (const id of ['tartine', 'whole-wheat', 'country-rye']) {
     const steps = schedule(plan(id)),
       mix = find(steps, 'mix');
     assert.deepEqual(mix.additions, [
@@ -424,7 +424,7 @@ test('the loaves split equally between bowls, and a bowl that holds them all is 
 });
 
 test('Tartine recipes split the initial mix and the salt step between bowls, and combine them for bulk', () => {
-  for (const id of ['tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye']) {
+  for (const id of ['tartine', 'whole-wheat', 'country-rye']) {
     const steps = schedule(plan(id, {}, { count: 4 }));
     assert.match(
       find(steps, 'autolyse').note,

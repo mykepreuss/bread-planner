@@ -1116,7 +1116,7 @@ Independent check (the verifier, on `05ff435`): PASS on all nine criteria, with 
 - Fixed from its nits: the leaven note's split now reads "Each of the 2 bowls gets 200 g." (it said "That is…", which read oddly after a short-build warning); HANDOFF says the field is under the loaf count and counts the 45 record files; the action count is 33, which was already one short before this change; and the Step notes bullet mentions the "to each bowl" wording.
 - Noted, not changed: a huge loaf count (2,000) makes 1,000 bowls of tick-offs and a slow page; a tick made with one bowl stays saved but hidden once there are several, so Clear checklist stays available with nothing visible ticked; uneven splits round to 0.1 g, so 5 loaves show 16.7 g of salt per bowl.
 
-## Preuss House: a 1½-hour autolyse, November 22, 2026: committed, pull request open
+## Preuss House: a 1½-hour autolyse, November 22, 2026: merged and verified live
 
 Why: after reviewing The Perfect Loaf's and SourdoughGuru's autolyse guides, Michael asked for a 1.5-hour autolyse for Preuss House, and to push it to production. Branch `preuss-autolyse`, from `main` at `d8974e0`. Pull requests 39 (the start suggestion) and 40 (Tartine Whole Wheat) are separate and not merged; they will be renumbered to decisions 16 and 17 when rebased.
 
@@ -1128,4 +1128,22 @@ Record changes, checked by decoding both records against `main`: 71 House plans 
 
 Verification: by my own checks, not the verifier: the change is one constant, and Michael asked for it in production now. `npm test` and the rule-zone run, the build, the browser record and the decoded record comparison above.
 
+Release: pull request 41 merged as `9342257`. Vercel production deployment `dpl_GoucoQLmcuEN5aXrjmTKggbLnjMv` is READY with the `bread.assemblydigital.com` alias. On the live site at phone width, with the clock at 3:20 PM on November 21: Preuss House showed "Feed starter" 10:00 PM, "Start leaven" 9:00 AM, "Start autolyse" 12:30 PM, "Mix final dough" 2:00 PM, the cold proof at 7:20 PM and the loaves out at 9:33 AM, 0 of 22 steps checked and no quiet-hours warning; Original Tartine was unchanged (initial mix 9:00 PM, salt 9:30 PM, out 2:50 PM); no console errors.
+
 Not verified: a real phone, and a real bake with the shorter autolyse.
+
+## Olive and Sesame follow Preuss House, November 22, 2026: committed, pull request open
+
+Why: Michael asked for Tartine Olive and Tartine Sesame to be just Olive and Sesame, and to follow the Preuss loaf where it is logical (hydration, autolyse and so on). Branch `preuss-olive-sesame`, from `main` at `9342257`, after the Preuss autolyse release.
+
+Done means: from a 9:00 AM leaven, Olive and Sesame show Preuss House's plan step for step (starter feed 10:00 PM, autolyse 12:30 PM, final mix 2:00 PM, seven turns, overnight cold proof, out 9:33 AM), with "Add the olive mixture" or "Add the toasted sesame seeds" at Turn 1, 2:45 PM, and for Sesame "Toast the sesame seeds" at 1:45 PM; their Ingredients tab shows Preuss House's weights and the add-ins; a save holding them as Tartine variations loads them fresh; nothing else changes; and `npm test`, the build and `npm run test:browser` pass.
+
+Change:
+- `src/domain/recipes.ts`: Olive and Sesame are House-method recipes named "Olive" and "Sesame", with Preuss House's flours, late rye, leaven build and defaults (`preussDefaults()`, shared by the three), new descriptions, and the same add-ins and toast step. Ids are kept, so saves still find them.
+- `src/domain/schedule.ts`: the add-in and prep steps are made by one helper, `addInsAfter`, used after the first turn by both methods.
+- `src/state/load.ts`: `otherDough` loads a recipe fresh, settings and checklist, when its version 6 settings name a flour it doesn't use, so the old Tartine-dough saves don't mix 75% hydration and a Tartine build into the new dough.
+- docs/BEHAVIOUR.md records decision 16, the Olive and Sesame schedule, the add-in scaling and the loading rule.
+
+Record changes, checked by decoding both records against `main`: the 18 Olive and Sesame plans and 8 calculations changed, and in each saved-data case only the Olive and Sesame entries; every other plan, calculation and helper is identical. Two case inputs moved with the new timing (Sesame's toast up next at 1:50 PM, Olive's add-ins at 2:50 PM).
+
+Not verified: a real phone, and a real bake of either.
