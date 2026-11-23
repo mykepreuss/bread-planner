@@ -641,23 +641,33 @@ test.describe('flows', () => {
     );
   });
 
-  test('The quiet-hours warning suggests the quietest start and, for Tartine, a warm proof; each button moves the plan', async ({
+  test('The quiet-hours warning suggests the quietest start and, for Tartine, the other proof when it has less; each button moves the plan', async ({
     page,
   }) => {
-    // Original Tartine as it comes: a cold proof from a 9:00 AM leaven on November 22 (decision 15).
+    // Tartine Country Bread as it comes: a cold proof from a 9:00 AM leaven on November 22. With its 18-hour fridge
+    // (decision 21), a leaven at 10:30 PM tonight keeps every step out of quiet hours.
     await open(page, 'recipe-tartine');
     const warning = page.getByRole('region', { name: 'Quiet hours warning' });
     expect(await warning.ariaSnapshot()).toMatchSnapshot('flow-quiet-fix.aria.yml');
-    await warning.getByRole('button', { name: 'Start at 6:15 AM' }).click();
-    await expect(page.locator('#plan-time')).toHaveValue('06:15');
-    await expect(page.locator('#plan-date')).toHaveValue('2026-11-22');
-    await expect(warning.getByRole('heading', { level: 2 })).toHaveText('1 action needs you during quiet hours');
-    await expect(warning.getByRole('button', { name: 'Start at 6:15 AM' })).toHaveCount(0);
-    await warning.getByRole('button', { name: 'Use a warm proof at 10:30 PM' }).click();
+    await warning.getByRole('button', { name: 'Start at 10:30 PM' }).click();
     await expect(warning).toHaveCount(0);
     await expect(page.locator('#plan-date')).toHaveValue('2026-11-21');
     await expect(page.locator('#plan-time')).toHaveValue('22:30');
-    await expect(page.getByRole('combobox', { name: 'Final proof' })).toContainText('Warm');
+    // Eight loaves baked one at a time with a warm proof: the quietest warm start leaves two actions, and a cold proof
+    // none, so both are offered.
+    await page.getByLabel('Number of loaves').fill('8');
+    await choose(page, 'Loaves baked at once', '1 loaf');
+    await choose(page, 'Final proof', 'Warm, 3 to 4 hours');
+    await warning.getByRole('button', { name: 'Start at 6:00 PM' }).click();
+    await expect(page.locator('#plan-date')).toHaveValue('2026-11-21');
+    await expect(page.locator('#plan-time')).toHaveValue('18:00');
+    await expect(warning.getByRole('heading', { level: 2 })).toHaveText('2 actions need you during quiet hours');
+    await expect(warning.getByRole('button', { name: 'Start at 6:00 PM' })).toHaveCount(0);
+    await warning.getByRole('button', { name: 'Use a cold proof at 9:00 PM' }).click();
+    await expect(warning).toHaveCount(0);
+    await expect(page.locator('#plan-date')).toHaveValue('2026-11-21');
+    await expect(page.locator('#plan-time')).toHaveValue('21:00');
+    await expect(page.getByRole('combobox', { name: 'Final proof' })).toContainText('Refrigerated');
     await expectSameAfterReload(page);
   });
 

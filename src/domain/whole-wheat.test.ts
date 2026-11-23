@@ -8,10 +8,11 @@ import { dateString } from './text.ts';
 /**
  * Tartine Whole Wheat, from Tartine Bread, page 114: the Basic Country Bread made with 700 g whole wheat and 300 g
  * all-purpose flour and 800 g water at about 75°F. The book rests it 40 to 60 minutes with the leaven in; since
- * decision 16 the flour and water autolyse for 2 hours on their own as the leaven finishes, the leaven goes in with the
+ * decision 19 the flour and water autolyse for 2 hours on their own as the leaven finishes, the leaven goes in with the
  * salt, and the loaves proof 18½ hours in the fridge. Plans start the leaven at 9:00 AM on October 21, 2026; every time
- * is built and read in the local zone, so these tests hold in any time zone. Original Tartine is checked against its
- * plan as it was before this recipe was added.
+ * is built and read in the local zone, so these tests hold in any time zone. Tartine Country Bread (Original Tartine)
+ * is checked against its plan as it was before this recipe was added, on the book's times, which Whole Wheat's plan
+ * is measured from; since decision 21 its own fridge is 18 hours.
  */
 
 const NOTE =
@@ -79,7 +80,7 @@ const TO_SHAPE: Row[] = [
   ['bench1', '2026-10-22 00:35', 30, 'Bench rest and prepare baskets'],
   ['fold', '2026-10-22 01:05', 5, 'Final shape'],
 ];
-/** Original Tartine's plan as it was before Tartine Whole Wheat, for each proof and oven capacity. */
+/** Original Tartine's plan as it was before Tartine Whole Wheat, on the book's times, for each proof and oven capacity. */
 const TARTINE_PLANS: { name: string; change: Partial<PlanInput>; rows: Row[] }[] = [
   {
     name: 'cold proof, both loaves together',
@@ -242,8 +243,8 @@ test('Tartine Whole Wheat is on the menu after Olive and Sesame, made the Tartin
   const tartine = recipe('tartine');
   assert.deepEqual(
     [tartine.autolyse, tartine.coldProof, tartine.initialMix],
-    [undefined, undefined, undefined],
-    'Original Tartine keeps the book’s initial mix and fridge',
+    [undefined, 1080, undefined],
+    'Tartine Country Bread keeps the book’s initial mix, with an 18-hour fridge since decision 21',
   );
   assert.match(r.description, /whole-wheat/);
   assert.match(r.description, /15%/);
@@ -272,7 +273,7 @@ test('the formula is the book’s table: 700 g whole wheat, 300 g all-purpose, 8
   approx(r.water, 800);
   approx(r.used, 200);
   approx(r.salt, 20);
-  // The leaven goes in with the salt, after the autolyse (decision 16).
+  // The leaven goes in with the salt, after the autolyse (decision 19).
   stage(r.initial, [
     ['Whole-wheat flour', 700],
     ['All-purpose flour', 300],
@@ -296,12 +297,30 @@ test('the formula is the book’s table: 700 g whole wheat, 300 g all-purpose, 8
   approx(r.totalWater, 900);
 });
 
-test('Original Tartine keeps exactly the schedule, notes and cues it had, for either proof and oven capacity', () => {
-  for (const { name, change, rows: expected } of TARTINE_PLANS) {
+/**
+ * Tartine Country Bread's plan from the book's: since decision 21 the loaves proof 18 hours in the fridge rather than
+ * 12, so with a cold proof every later step is 6 hours later. Nothing else moves.
+ */
+function countryRows(book: Row[]): Row[] {
+  const f = book.findIndex(([id]) => id === 'fridge');
+  return book.map(([id, at, minutes, title], n): Row =>
+    f < 0 || n < f ? [id, at, minutes, title] : n === f ? [id, at, 1080, title] : [id, later(at, 360), minutes, title],
+  );
+}
+
+test('Tartine Country Bread keeps exactly the schedule, notes and cues it had, but for its 18-hour fridge, for either proof and oven capacity', () => {
+  for (const { name, change, rows: book } of TARTINE_PLANS) {
     const steps = schedule(plan('tartine', change));
-    assert.deepEqual(rows(steps), expected, name);
+    assert.deepEqual(rows(steps), countryRows(book), name);
     if (change.ovenCapacity === 2) {
-      assert.deepEqual(notes(steps), pick(steps, TARTINE_NOTES), name);
+      assert.deepEqual(
+        notes(steps),
+        {
+          ...pick(steps, TARTINE_NOTES),
+          ...(change.proof === 'cold' && { fridge: 'Cover the baskets and refrigerate for about 18 hours.' }),
+        },
+        name,
+      );
       assert.deepEqual(readiness(steps), pick(steps, TARTINE_READINESS), name);
     }
   }
@@ -347,7 +366,9 @@ test('Tartine Whole Wheat follows Original Tartine, with a 2-hour autolyse befor
   );
 });
 
-test('every Whole Wheat step is Original Tartine’s, moved as decision 16 says, whatever the count, oven or proof', () => {
+test('every Whole Wheat step is the book’s Tartine plan’s, moved as decision 19 says, whatever the count, oven or proof', () => {
+  // The book's times: Tartine Country Bread as it was before decision 21 gave it an 18-hour fridge.
+  const book: Recipe = { ...recipe('tartine'), coldProof: undefined };
   for (const proof of ['cold', 'warm'] as const)
     for (const ovenCapacity of [1, 2, 3])
       for (const count of [1, 2, 3, 5])
@@ -358,7 +379,7 @@ test('every Whole Wheat step is Original Tartine’s, moved as decision 16 says,
         ]) {
           const change = { proof, ovenCapacity, date, time },
             name = `${proof} ${ovenCapacity} at once, ${count} loaves, ${date}`;
-          const tartine = plan('tartine', change),
+          const tartine = { ...plan('tartine', change), recipe: book },
             wheat = plan('whole-wheat', change);
           tartine.settings.count = count;
           wheat.settings.count = count;
@@ -424,7 +445,8 @@ test('every Whole Wheat step is Original Tartine’s, moved as decision 16 says,
 });
 
 test('planning back from the last loaf out reproduces the forward Whole Wheat schedule', () => {
-  // The plan ends 6 hours later than Original Tartine's, so planning back from 8:50 PM starts the leaven at 9:00 AM.
+  // The plan ends 6 hours later than the book's Tartine plan, as Tartine Country Bread's now does, so planning back
+  // from 8:50 PM starts the leaven at 9:00 AM.
   assert.deepEqual(
     schedule(plan('whole-wheat', { anchor: 'done', date: '2026-10-22', time: '20:50' })),
     schedule(plan('whole-wheat')),

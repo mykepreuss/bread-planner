@@ -6,7 +6,7 @@
     - tab "Ingredients"
   - text: Recipe
   - combobox "Recipe": Tartine Country Bread
-  - paragraph: The book’s 90/10 white and whole-wheat loaf, with leaven in the initial mix. Its 12-hour leaven suits an evening start.
+  - paragraph: The book’s 90/10 white and whole-wheat loaf, with leaven in the initial mix. Its 12-hour leaven suits an evening start, and 18 hours in the fridge bakes it two mornings later.
   - tabpanel "Schedule":
     - region "Up next":
       - text: Up next in 17h 40m
@@ -23,11 +23,8 @@
       - heading "7 actions need you during quiet hours" [level=2]
       - paragraph: Hands-on work is scheduled after 10:30 PM or before 7:00 AM. Overnight rests are fine.
       - paragraph:
-        - text: Start the leaven at 6:15 AM on Sunday, Nov 22 and 1 action falls in quiet hours.
-        - button "Start at 6:15 AM"
-      - paragraph:
-        - text: With a warm proof, start the leaven at 7:00 PM on Sunday, Nov 22 and nothing falls in quiet hours.
-        - button "Use a warm proof at 7:00 PM"
+        - text: Start the leaven at 10:30 PM on Saturday, Nov 21 and nothing falls in quiet hours.
+        - button "Start at 10:30 PM"
       - heading "View affected steps" [level=3]:
         - button "View affected steps"
     - text: When are we baking? Plan around
@@ -37,7 +34,7 @@
     - text: Time
     - textbox "Time": 09:00
     - text: Baking complete
-    - strong: 2:50 PM
+    - strong: 8:50 PM
     - text: Monday, Nov 23 Your batch Number of loaves
     - spinbutton "Number of loaves": "2"
     - text: loaves Loaves per mix
@@ -58,12 +55,12 @@
       - strong: 1 batch
       - text: for 2 loaves.
     - text: Final proof
-    - combobox "Final proof": Refrigerated, 10 to 12 hours
+    - combobox "Final proof": Refrigerated, about 18 hours
     - paragraph: Allows 60 minutes to warm each batch.
     - paragraph: Readiness comes before the clock. Wait until the dough is ready, then check the step. Later steps move to match.
     - region "Bake schedule":
       - heading "Bake schedule" [level=2]
-      - text: 29h 50m total 0 of 18 steps checked
+      - text: 35h 50m total 0 of 18 steps checked
       - button "Clear checklist" [disabled]
       - text: Day 1
       - heading "Sunday, Nov 22" [level=3]
@@ -147,10 +144,10 @@
       - checkbox "Complete Refrigerated final proof"
       - time: 1:10 AM
       - text: Refrigerated final proof Quiet hours
-      - paragraph: Cover the baskets and refrigerate for 10 to 12 hours.
-      - text: Next step in 12h
+      - paragraph: Cover the baskets and refrigerate for about 18 hours.
+      - text: Next step in 18h
       - checkbox "Complete Warm both loaves to room temperature"
-      - time: 1:10 PM
+      - time: 7:10 PM
       - text: Warm both loaves to room temperature
       - paragraph: Remove the loaves from the refrigerator.
       - paragraph:
@@ -158,17 +155,17 @@
         - text: Bring the dough back to room temperature before baking; use its condition, rather than the clock alone.
       - text: Next step in 30 min
       - checkbox "Complete Preheat oven and Dutch oven"
-      - time: 1:40 PM
+      - time: 7:40 PM
       - text: Preheat oven and Dutch oven
       - paragraph: Place the lidded Dutch oven or pots in the oven and heat to 500°F / 260°C. Use one suitable pot per loaf baked at once.
       - text: Next step in 30 min
       - checkbox "Complete Bake covered (both loaves)"
-      - time: 2:10 PM
+      - time: 8:10 PM
       - text: Bake covered (both loaves)
       - paragraph: Dust the loaf tops. Carefully turn seam-side down into the hot pot, score with a lame or razor, and cover. Reduce oven to 450°F / 232°C.
       - text: Next step in 20 min
       - checkbox "Complete Remove lid"
-      - time: 2:30 PM
+      - time: 8:30 PM
       - text: Remove lid
       - paragraph: "Remove lid carefully: hot steam can escape. Continue at 450°F / 232°C."
       - paragraph:
@@ -176,7 +173,7 @@
         - text: Bake until the crust is a rich golden brown; extend the uncovered bake if needed.
       - text: Next step in 20 min
       - checkbox "Complete All loaves out of the oven"
-      - time: 2:50 PM
+      - time: 8:50 PM
       - text: All loaves out of the oven
       - paragraph: Transfer to a wire rack. The base should sound hollow when tapped. Cool each loaf at least 15 minutes before slicing.
   - heading "Mature starter and readiness guide" [level=3]:

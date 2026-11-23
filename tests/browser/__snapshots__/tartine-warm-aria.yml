@@ -6,7 +6,7 @@
     - tab "Ingredients"
   - text: Recipe
   - combobox "Recipe": Tartine Country Bread
-  - paragraph: The book’s 90/10 white and whole-wheat loaf, with leaven in the initial mix. Its 12-hour leaven suits an evening start.
+  - paragraph: The book’s 90/10 white and whole-wheat loaf, with leaven in the initial mix. Its 12-hour leaven suits an evening start, and 18 hours in the fridge bakes it two mornings later.
   - tabpanel "Schedule":
     - region "Up next":
       - text: Up next in 17h 40m
