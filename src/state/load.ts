@@ -174,6 +174,8 @@ function assemble(
     date: isDate(p.date) ? p.date : tomorrow(now),
     time: isTime(p.time) ? p.time : '09:00',
     anchor: p.anchor === 'done' ? 'done' : 'leaven',
+    // Saves from before November 23, 2026 have none: their date and time were chosen.
+    timeChosen: p.timeChosen !== false,
     proof: p.proof === 'warm' ? 'warm' : 'cold',
     ovenCapacity:
       typeof capacity === 'number' && Number.isInteger(capacity) && capacity > 0 ? Math.min(2, capacity) : 2,

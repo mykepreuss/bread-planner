@@ -7,10 +7,12 @@ import { scheduleView, skipsOnCheck } from './schedule.ts';
 import { clockText, dateString } from '../domain/text.ts';
 
 const NOW = new Date(2026, 10, 21, 15, 20).getTime();
+/** A new planner with its leaven at 9:00 AM tomorrow chosen, so checks keep it there rather than the suggested start. */
+const chosenPlan = () => ({ ...freshState(NOW), timeChosen: true });
 
 test('the checked count leaves out checks for steps no longer on the schedule, but the bake still counts as underway', () => {
   // Three loaves one at a time, with a later batch's steps checked; then one loaf, so those steps are gone.
-  let s = act.setOvenCapacity(act.setSetting(freshState(NOW), 'count', 3), 1);
+  let s = act.setOvenCapacity(act.setSetting(chosenPlan(), 'count', 3), 1);
   const three = schedule(planOf(s)).map((step) => step.id);
   s = act.setSetting(s, 'count', 1);
   const one = new Set(schedule(planOf(s)).map((step) => step.id)),
@@ -28,7 +30,7 @@ test('the checked count leaves out checks for steps no longer on the schedule, b
 });
 
 test('Up next passes over an unchecked starter feed once the bake is through turn 3, and the feed can still be checked', () => {
-  let s = freshState(NOW);
+  let s = chosenPlan();
   for (const id of ['leaven', 'autolyse', 'mix', 'rest', 'turn1', 'turn2', 'turn3'])
     s = act.setChecked(s, id, true, NOW);
   const v = scheduleView(s, NOW, String);
@@ -41,7 +43,7 @@ test('Up next passes over an unchecked starter feed once the bake is through tur
 });
 
 test('with the feed and the autolyse both forgotten, checking the feed late leaves the autolyse skipped and Up next on turn 4', () => {
-  let s = freshState(NOW);
+  let s = chosenPlan();
   for (const id of ['leaven', 'mix', 'rest', 'turn1', 'turn2', 'turn3']) s = act.setChecked(s, id, true, NOW);
   assert.deepEqual(scheduleView(s, NOW, String).skipped, ['feed', 'autolyse']);
   s = act.setChecked(s, 'feed', true, NOW);
@@ -50,7 +52,7 @@ test('with the feed and the autolyse both forgotten, checking the feed late leav
 });
 
 test('Preheat checked before the fridge step it starts with leaves Up next on the fridge step', () => {
-  let s = freshState(NOW);
+  let s = chosenPlan();
   const ids = schedule(planOf(s)).map((step) => step.id);
   for (const id of ids.slice(0, ids.indexOf('warmup'))) s = act.setChecked(s, id, true, NOW);
   s = act.setChecked(s, 'preheat', true, NOW);
@@ -61,7 +63,7 @@ test('Preheat checked before the fridge step it starts with leaves Up next on th
 });
 
 test('Basket rest checked late, after Preheat, still leaves Up next on the fridge step', () => {
-  let s = freshState(NOW);
+  let s = chosenPlan();
   const ids = schedule(planOf(s)).map((step) => step.id);
   for (const id of ids.slice(0, ids.indexOf('warmup')).filter((id) => id !== 'basket'))
     s = act.setChecked(s, id, true, NOW);
@@ -71,14 +73,14 @@ test('Basket rest checked late, after Preheat, still leaves Up next on the fridg
 });
 
 test('in Tartine, warm bulk checked before the salt step it starts with leaves Up next on the salt step', () => {
-  let s = act.selectRecipe(freshState(NOW), 'tartine');
+  let s = act.selectRecipe(chosenPlan(), 'tartine');
   for (const id of ['leaven', 'autolyse', 'rest']) s = act.setChecked(s, id, true, NOW);
   const v = scheduleView(s, NOW, String);
   assert.deepEqual([v.skipped, v.next?.id], [[], 'mix']);
 });
 
 test('an extra turn for cool dough, due at the planned preshape time, is skipped once preshape is done', () => {
-  let s = act.setDoughTemp(freshState(NOW), 65);
+  let s = act.setDoughTemp(chosenPlan(), 65);
   for (const id of ['feed', 'leaven', 'autolyse', 'mix', 'rest']) s = act.setChecked(s, id, true, NOW);
   s = act.setChecked(s, 'shape', true, NOW + 270 * 60000);
   const v = scheduleView(s, NOW + 270 * 60000, String),
@@ -91,7 +93,7 @@ test('an extra turn for cool dough, due at the planned preshape time, is skipped
 });
 
 test('a plan whose last loaf is out has ended once every step but a forgotten starter feed is checked', () => {
-  let s = freshState(NOW);
+  let s = chosenPlan();
   const ids = schedule(planOf(s)).map((step) => step.id);
   for (const id of ids.slice(1)) s = act.setChecked(s, id, true, NOW);
   const later = NOW + 3 * 24 * 60 * 60000,
@@ -101,7 +103,7 @@ test('a plan whose last loaf is out has ended once every step but a forgotten st
 });
 
 test('checking a step that would skip more than three earlier steps, besides bulk and its turns, asks first', () => {
-  const fresh = freshState(NOW),
+  const fresh = chosenPlan(),
     ids = (r: { skips: { id: string }[] }) => r.skips.map((s) => s.id);
   // The mis-tap: the last step on a fresh plan would pass over the whole bake.
   const last = skipsOnCheck(fresh, 'done', NOW);
@@ -143,7 +145,7 @@ test('checking a step that would skip more than three earlier steps, besides bul
 });
 
 test('before the start of bulk is due, the start of bulk and the turns count towards asking', () => {
-  const fresh = freshState(NOW),
+  const fresh = chosenPlan(),
     ids = (r: { skips: { id: string }[] }) => r.skips.map((s) => s.id);
   // The evening before: a tap on preshape would skip twelve steps, seven of them turns, and asks.
   const shape = skipsOnCheck(fresh, 'shape', NOW);
@@ -165,7 +167,7 @@ test('before the start of bulk is due, the start of bulk and the turns count tow
 });
 
 test("the live schedule keeps the final mix's tick-offs through checks, a late start and a dough temperature, and ticks move nothing", () => {
-  let s = freshState(NOW);
+  let s = chosenPlan();
   const before = scheduleView(s, NOW, String);
   for (const id of ['leaven', 'autolyse', 'mix', 'rest', 'turn1']) s = act.setChecked(s, id, true, NOW + 3600000);
   s = act.setAdded(act.setDoughTemp(s, 72), 'mix:salt', true);
@@ -177,7 +179,7 @@ test("the live schedule keeps the final mix's tick-offs through checks, a late s
   );
   assert.deepEqual(v.bake.added, ['mix:salt']);
   // A tick alone changes no step's time, state or the count of steps checked.
-  const ticked = scheduleView(act.setAdded(freshState(NOW), 'mix:salt', true), NOW, String);
+  const ticked = scheduleView(act.setAdded(chosenPlan(), 'mix:salt', true), NOW, String);
   assert.deepEqual(
     ticked.steps.map((step) => [step.id, +step.at]),
     before.steps.map((step) => [step.id, +step.at]),
@@ -194,7 +196,7 @@ const fixes = (v: ReturnType<typeof scheduleView>) => v.quietFixes.map((f) => [f
 test('a cold-proofed Tartine plan is offered its night-free start; a warm one with none is offered a cold proof, and each button moves the plan there', () => {
   // The leaven tomorrow, November 22, at 9:00 AM. With Tartine Country Bread's 18-hour fridge (decision 21), 10:30 PM
   // tonight is the nearest night-free start, and a warm proof can't have fewer actions than none.
-  const s = act.selectRecipe(freshState(NOW), 'tartine'),
+  const s = act.selectRecipe(chosenPlan(), 'tartine'),
     v = scheduleView(s, NOW, String);
   assert.ok(v.night.length > 1);
   assert.deepEqual(fixes(v), [['cold', '2026-11-21 22:30', 0]]);
@@ -227,17 +229,17 @@ test('a cold-proofed Tartine plan is offered its night-free start; a warm one wi
 });
 
 test('a suggestion keeps a plan made from the finish, clears the new bake, and none is offered once a step is checked or for a quiet plan', () => {
-  assert.deepEqual(scheduleView(freshState(NOW), NOW, String).quietFixes, []);
+  assert.deepEqual(scheduleView(chosenPlan(), NOW, String).quietFixes, []);
   // A cold dough temperature left after unchecking every step lengthens bulk into the night, but the plan's own start
   // is never suggested: it is already the quietest.
-  let cold = freshState(NOW);
+  let cold = chosenPlan();
   for (const id of ['feed', 'leaven', 'autolyse', 'mix']) cold = act.setChecked(cold, id, true, NOW);
   cold = act.setDoughTemp(cold, 60);
   for (const id of ['feed', 'leaven', 'autolyse', 'mix']) cold = act.setChecked(cold, id, false, NOW);
   const stale = scheduleView(cold, NOW, String);
   assert.ok(stale.night.length > 0, 'the leftover temperature puts work in quiet hours');
   assert.deepEqual(stale.quietFixes, []);
-  let s = act.setDoughTemp(act.setAnchor(act.selectRecipe(freshState(NOW), 'tartine'), 'done'), 78);
+  let s = act.setDoughTemp(act.setAnchor(act.selectRecipe(chosenPlan(), 'tartine'), 'done'), 78);
   const fix = scheduleView(s, NOW, String).quietFixes[0];
   assert.equal(fix.proof, 'cold');
   const moved = act.startLeavenAt(s, fix.at, 'cold'),
@@ -252,11 +254,7 @@ test('a suggestion keeps a plan made from the finish, clears the new bake, and n
   // Switching the proof keeps a plan made from the finish too: eight warm-proofed loaves baked one at a time are
   // offered a cold proof, and the leaven lands on its suggested start.
   const eight = act.setOvenCapacity(
-    act.setSetting(
-      act.setProof(act.setAnchor(act.selectRecipe(freshState(NOW), 'tartine'), 'done'), 'warm'),
-      'count',
-      8,
-    ),
+    act.setSetting(act.setProof(act.setAnchor(act.selectRecipe(chosenPlan(), 'tartine'), 'done'), 'warm'), 'count', 8),
     1,
   );
   const coldFix = scheduleView(eight, NOW, String).quietFixes.find((f) => f.proof === 'cold')!;

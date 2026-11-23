@@ -30,6 +30,12 @@ export type PlannerState = {
   date: string;
   time: string;
   anchor: 'leaven' | 'done';
+  /**
+   * Whether Michael chose the date and time. Until he does, and while nothing is checked, the planner shows its own
+   * suggested start instead (decision 24; see `shownState`). A new planner and "Plan the next bake" leave it to the
+   * planner; setting a date, a time or a suggested quiet start, or checking a step, chooses it.
+   */
+  timeChosen: boolean;
   proof: 'cold' | 'warm';
   ovenCapacity: number;
   /** The most loaves mixed in one bowl; a bigger batch is mixed in several bowls. */
@@ -48,7 +54,10 @@ export function tomorrow(now: number) {
   return dateString(d);
 }
 
-/** A new planner: Preuss House, every recipe at its defaults, the leaven at 9:00 AM tomorrow. */
+/**
+ * A new planner: Preuss House, every recipe at its defaults, and no start chosen, so the planner suggests one. The
+ * saved date and time, the leaven at 9:00 AM tomorrow, are kept for when it can't.
+ */
 export function freshState(now: number): PlannerState {
   return {
     recipe: 'house',
@@ -56,6 +65,7 @@ export function freshState(now: number): PlannerState {
     date: tomorrow(now),
     time: '09:00',
     anchor: 'leaven',
+    timeChosen: false,
     proof: 'cold',
     ovenCapacity: 2,
     mixCapacity: 2,

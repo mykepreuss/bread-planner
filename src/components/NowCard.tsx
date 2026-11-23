@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Clock3, Check } from 'lucide-react';
+import { Clock3, Check, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { LiveStep } from '@/domain/bakeday';
 import { untilText, shiftText } from '@/domain/text';
@@ -9,7 +9,7 @@ import { Additions } from './Additions';
 /**
  * The Up next card: the next step, its countdown, its note and cue, and a Done button. A mixing step lists what goes
  * in, each with its own tick-off. From 30 minutes before bulk should end, a turn's card leads with the dough: check
- * it, and preshape now if it is ready.
+ * it, and preshape now if it is ready. Before a start is chosen, it says the start is the planner's suggestion.
  */
 export function NowCard({
   next,
@@ -21,6 +21,7 @@ export function NowCard({
   doughCheck,
   added,
   onAdded,
+  suggested,
 }: {
   next: LiveStep;
   then?: LiveStep;
@@ -31,6 +32,8 @@ export function NowCard({
   added: string[];
   onAdded: (id: string, added: boolean) => void;
   doughCheck?: { readiness?: string; onReady: () => void };
+  /** The plan is the planner's suggested start, not one Michael chose. */
+  suggested?: boolean;
 }) {
   const due = +next.at <= now;
   return (
@@ -59,6 +62,12 @@ export function NowCard({
       {next.readiness && (
         <p className="readiness-cue">
           <strong>Ready when:</strong> {next.readiness}
+        </p>
+      )}
+      {suggested && (
+        <p className="now-suggested">
+          <Sparkles size={16} />
+          Suggested start: the soonest with the least night work.
         </p>
       )}
       {shift !== 0 && (

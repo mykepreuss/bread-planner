@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { defaultSettings, recipeById, type Settings } from './recipes.ts';
 import { schedule, type PlanInput, type Step } from './schedule.ts';
-import { quietHourActions, quietestStart } from './quiet.ts';
+import { quietHourActions, quietestStart, suggestedStart } from './quiet.ts';
 import { clockText, dateString } from './text.ts';
 
 // Ported from src/lib/recipes.test.ts. Quiet hours are local wall-clock rules, so every time here is built and read
@@ -243,6 +243,49 @@ test('a House plan with night work finds the nearest start without any, by the l
         q.flours = {};
       }),
       EARLY,
+    ),
+    null,
+  );
+});
+
+test('the suggested start is the soonest with the fewest quiet-hour actions, its first step from the current quarter hour (decision 24)', () => {
+  const now = new Date(2026, 9, 21, 15, 20).getTime();
+  // House: the starter feed at 9:15 PM and the leaven at 8:15 AM leave nothing in quiet hours; a feed at 9:00 PM does not.
+  const house = suggestedStart(plan('house'), now)!;
+  assert.deepEqual([local(house.at), house.actions], ['2026-10-22 08:15', 0]);
+  assert.ok(quietHourActions(schedule(plan('house', undefined, { date: '2026-10-22', time: '08:00' }))).length > 0);
+  // The planned date and time don't matter.
+  assert.deepEqual(
+    suggestedStart(plan('house', undefined, { date: '2027-03-01', time: '17:45', anchor: 'done' }), now),
+    house,
+  );
+  // Tartine Country Bread: the leaven at 9:00 PM; 8:45 PM leaves work in quiet hours.
+  const book = suggestedStart(plan('tartine'), now)!;
+  assert.deepEqual([local(book.at), book.actions], ['2026-10-21 21:00', 0]);
+  assert.ok(quietHourActions(schedule(plan('tartine', undefined, { time: '20:45' }))).length > 0);
+  // A start that has just come stays until the next quarter hour: at 9:14 PM the 9:00 PM leaven is still shown, at
+  // 9:15 PM the 9:15 one.
+  assert.equal(local(suggestedStart(plan('tartine'), new Date(2026, 9, 21, 21, 14).getTime())!.at), '2026-10-21 21:00');
+  assert.equal(local(suggestedStart(plan('tartine'), new Date(2026, 9, 21, 21, 15).getTime())!.at), '2026-10-21 21:15');
+  // With night work no start avoids, fewer actions win however far ahead within 24 hours, then the least far into
+  // quiet hours. Eight warm-proofed Tartine loaves, one at a time, at 8:00 PM: the 6:00 PM leaven 22 hours ahead.
+  const eight = (input: Partial<PlanInput>) =>
+    plan('tartine', (s) => (s.count = 8), { proof: 'warm', ovenCapacity: 1, ...input });
+  const far = suggestedStart(eight({}), new Date(2026, 9, 21, 20, 0).getTime())!;
+  assert.deepEqual([local(far.at), far.actions], ['2026-10-22 18:00', 2]);
+  // Twelve warm-proofed Whole Wheat loaves, two at a time, at midnight: a 7:00 PM leaven and a 9:00 PM one each leave
+  // one action, and the 9:00 PM one falls less far into quiet hours.
+  const wheat = plan('whole-wheat', (s) => (s.count = 12), { proof: 'warm' });
+  const deep = suggestedStart(wheat, new Date(2026, 9, 21, 0, 0).getTime())!;
+  assert.deepEqual([local(deep.at), deep.actions], ['2026-10-21 21:00', 1]);
+  assert.equal(quietHourActions(schedule({ ...wheat, time: '19:00' })).length, 1);
+  // A blend with no flour has no plan to suggest a start for.
+  assert.equal(
+    suggestedStart(
+      plan('house', (s) => {
+        for (const k of Object.keys(s.flours)) s.flours[k as keyof typeof s.flours] = 0;
+      }),
+      now,
     ),
     null,
   );

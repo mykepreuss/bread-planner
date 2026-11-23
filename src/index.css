@@ -1095,6 +1095,26 @@ h2 {
 .now-shift svg {
   margin-top: 3px;
 }
+/* Before a start is chosen: the Up next card and the plan card say the start is the planner's suggestion (decision 24). The plan card is dark, so its line uses the espresso muted colour. */
+.now-suggested {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 14px 0 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+}
+.now-suggested svg {
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+.plan-suggested {
+  margin: 10px 0 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--espresso-muted);
+}
 .now-actions {
   display: flex;
   align-items: center;

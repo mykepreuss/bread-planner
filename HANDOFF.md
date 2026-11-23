@@ -1360,3 +1360,24 @@ Independent check (the verifier, on `ca3a516`): PASS on all seven criteria, with
 Brought up to date with `main` at `ada1f88` (pull request 47, which labels the field "Autolyse" for every recipe): the browser flow uses that label, and the docs keep both changes. The checks below were rerun after it.
 
 Not verified: a real phone.
+
+
+## A suggested start, November 23, 2026: committed, pull request open
+
+Why: Michael asked that when no bake has started and he hasn't chosen a future time, Up next show the best time to start the next step, so he can see when to start and how the schedule would run. Branch `suggested-start`, from `main` at `912e951` (after pull requests 47 and 48). The open Emmer/Einkorn pull request 49 also claims decision 24; whichever merges second renumbers.
+
+Change (decision 24 in docs/BEHAVIOUR.md): a saved `timeChosen` flag. A new planner and "Plan the next bake" leave it false; setting a date or time, using a start the quiet-hours warning offers, or checking a step sets it. While it is false and nothing is checked, the Schedule tab shows the suggested start: of the plans whose first step starts on a quarter hour from the current one through 24 hours, the fewest quiet-hour actions, then the least far into quiet hours, then the soonest (`suggestedStart` in src/domain/quiet.ts, `shownState` in src/state/actions.ts). Up next and the plan card each say it is a suggestion. A tap keeps the plan as the screen last showed it. A save from before counts as chosen, so a plan already set keeps its time. A plan that ended with nothing checked still says so; "Plan the next bake" brings up the suggestion.
+
+Record changes: `tests/baseline/baseline.json` is unchanged, because every recorded plan has a chosen start. In the browser record, the fresh screen, both "Plan the next bake" flows and the Plan-around-finish flow now show the suggestion: every time is 45 minutes earlier (a 9:15 PM feed and an 8:15 AM leaven at 3:20 PM), plus the two "Suggested" lines. Three flows that only needed a 9:00 AM plan now open the `recipe-house` save, with records unchanged. Two flows were added, so the record has 37 actions.
+
+Evidence (this session): `npm test` passed 193 of 193, also with `BASELINE_ZONE=rule`. `npm run build` passed with 0 errors, 0 warnings and 0 hints. `npm run test:browser` passed 59 of 59. In the dev server, a fresh planner showed "Feed starter · 9:15 PM", then Start leaven at 8:15 AM tomorrow, with no console errors. A new time kept the suggested date and saved it as chosen, and Done kept the 8:15 AM leaven.
+
+Independent check (the verifier): pass on all criteria. Its own search over 115,048 moments on four 3-day windows (both daylight-saving weekends among them), all six recipes and 146 setups matched the suggestion every time. Of 12 deliberate breaks, 9 were caught. Fixed afterwards without a re-check, under relaxed verification:
+- a tap just after a quarter hour could keep a plan 15 minutes off what the screen showed;
+- the docs said 14 minutes, but the grace is anything under 15;
+- the README left out the depth rule;
+- tests added for the three breaks it missed: a new time keeping the suggested date, the 24-hour window, and the depth rule. I confirmed the last two now fail when broken.
+
+Known and left: over the end of daylight saving, with eight warm-proofed Tartine loaves baked one at a time, the quiet-hours warning can offer a start with one fewer night action than the suggestion, because it looks further ahead. While starting now is still best, the start moves forward 15 minutes each quarter hour until it is no longer best.
+
+Not verified: a real phone, and a real bake.

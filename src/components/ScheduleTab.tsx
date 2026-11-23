@@ -30,13 +30,19 @@ import { Timeline } from './Timeline';
  * temperature readings, and starting the next bake. A check that would skip many earlier steps asks first (see `skipsOnCheck`).
  */
 export function ScheduleTab({ onViewIngredients }: { onViewIngredients: () => void }) {
-  const { state, update } = usePlanner(),
+  const { state: saved, update } = usePlanner(),
     now = useNow();
+  // Until a start is chosen, the tab shows the planner's suggested one (decision 24).
+  const state = useMemo(() => act.shownState(saved, now), [saved, now]),
+    suggested = state !== saved;
   const v = useMemo(() => scheduleView(state, now, (at) => whenText(at, now)), [state, now]);
   const book = v.recipe.method === 'tartine',
     checks = v.bake.done;
   // A check that asks first is recorded at the tap, so what it skips is what the question counted.
-  const [asking, setAsking] = useState<{ id: string; title: string; skips: number; at: number } | null>(null);
+  // `shown` is the screen's moment, so a suggested start is kept as it was shown (decision 24).
+  const [asking, setAsking] = useState<{ id: string; title: string; skips: number; at: number; shown: number } | null>(
+    null,
+  );
   const asked = useRef<string | null>(null);
   const check = (id: string, checked: boolean) => {
     const at = Date.now();
@@ -45,10 +51,10 @@ export function ScheduleTab({ onViewIngredients }: { onViewIngredients: () => vo
       const title = v.steps.find((s) => s.id === id)?.title ?? '';
       if (ask) {
         asked.current = id;
-        return setAsking({ id, title, skips: skips.length, at });
+        return setAsking({ id, title, skips: skips.length, at, shown: now });
       }
     }
-    update((s) => act.setChecked(s, id, checked, at));
+    update((s) => act.setChecked(s, id, checked, at, now));
   };
   const onUnit = (u: TempUnit) => update((s) => act.setTempUnit(s, u));
   const onAdded = (id: string, added: boolean) => update((s) => act.setAdded(s, id, added));
@@ -86,6 +92,7 @@ export function ScheduleTab({ onViewIngredients }: { onViewIngredients: () => vo
           shift={v.shift}
           now={now}
           onDone={() => check(v.next!.id, true)}
+          suggested={suggested}
           bulk={nowBulk}
           doughCheck={doughCheck}
           added={v.bake.added}
@@ -108,8 +115,9 @@ export function ScheduleTab({ onViewIngredients }: { onViewIngredients: () => vo
             date={state.date}
             time={state.time}
             onAnchor={(anchor) => update((s) => act.setAnchor(s, anchor))}
-            onDate={(date) => update((s) => act.setDate(s, date))}
-            onTime={(time) => update((s) => act.setTime(s, time))}
+            onDate={(date) => update((s) => act.setDate(s, date, now))}
+            onTime={(time) => update((s) => act.setTime(s, time, now))}
+            suggested={suggested}
             doneStep={v.doneStep}
           />
           <BatchCard
@@ -190,7 +198,9 @@ export function ScheduleTab({ onViewIngredients }: { onViewIngredients: () => vo
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Don't check it</AlertDialogCancel>
-            <AlertDialogAction onClick={() => asking && update((s) => act.setChecked(s, asking.id, true, asking.at))}>
+            <AlertDialogAction
+              onClick={() => asking && update((s) => act.setChecked(s, asking.id, true, asking.at, asking.shown))}
+            >
               Check and skip
             </AlertDialogAction>
           </AlertDialogFooter>
