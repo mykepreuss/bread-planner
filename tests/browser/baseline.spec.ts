@@ -591,10 +591,12 @@ test.describe('flows', () => {
     await field('Autolyse').fill('270');
     // Tartine mixes the leaven in first, so its rest moves the salt and everything after it.
     await choose(page, 'Recipe', 'Tartine Country Bread');
-    await expect(field('Rest after mixing')).toHaveValue('30');
-    await expect(page.getByText('The leaven is in this mix, so the steps after it move with the rest.')).toBeVisible();
+    await expect(field('Autolyse')).toHaveValue('30');
+    await expect(
+      page.getByText('The leaven is already in, so every later step moves with the autolyse.'),
+    ).toBeVisible();
     await expect(at('mix')).toHaveText('9:30 PM');
-    await field('Rest after mixing').fill('60');
+    await field('Autolyse').fill('60');
     await expect(at('mix')).toHaveText('10:00 PM');
     await expect(at('turn1')).toHaveText('10:30 PM');
     expect(await aria(page)).toMatchSnapshot('flow-autolyse-length.aria.yml');

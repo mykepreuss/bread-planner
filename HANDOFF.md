@@ -1280,7 +1280,7 @@ Evidence after the fixes (this session, on `country-bread-proof`):
 
 Not verified: a real phone, and a real bake with the 18-hour fridge.
 
-## Autolyse length as a setting, November 23, 2026: committed, pull request open
+## Autolyse length as a setting, November 23, 2026: merged and verified live
 
 Why: Michael wants to try a shorter autolyse on his next Preuss bake, and asked for the autolyse length to be a setting with each recipe's own default. Branch `autolyse-length`, from `main` at `985e10f`.
 
@@ -1309,4 +1309,20 @@ Independent check (the verifier, on `5abbd3f`): every behaviour criterion met; i
 Brought up to date with `main` at `de1a050` (pull request 45, Tartine Country Bread's 18-hour fridge, which took decision 21): this change is now decision 22. Against that `main`, the decoded record again differs only by the same 56 initial-mix notes and the three new plans. `npm test` passed 188 of 188 with the host zone and with `BASELINE_ZONE=rule`, the build passed with 0 errors, and `npm run test:browser` passed 57 of 57 (35 flows).
 
 Not verified: a real phone, and a real bake.
+
+Release: pull request 46 merged as `5c6a522` on Michael's "Yes, merge it", after both Vercel checks passed on `058f032`. `node scripts/verify-deployment.mjs https://bread.assemblydigital.com` passed. On the live site at 375 px, with Tartine Country Bread selected in the in-app browser, the batch card showed "Rest after mixing" at 30 min with its note, the page was 375 wide, and there were no console errors. No value was changed there.
+
+## The autolyse field is "Autolyse" for every recipe, November 23, 2026: committed, pull request open
+
+Why: Michael asked for the field to be called Autolyse instead of "Rest after mixing" on Tartine Country Bread and Tartine Country Rye. Branch `autolyse-label`, from `main` at `5c6a522`.
+
+Change: the batch card's field is labelled "Autolyse" for every recipe. For the two recipes with the leaven in the initial mix, its note reads "The leaven is already in, so every later step moves with the autolyse." Nothing else changes: what the length does for those recipes, the step titles and notes, and the saved data are as before. docs/BEHAVIOUR.md updates the Autolyse length bullet and decision 22.
+
+Record changes: the behaviour record is unchanged. The browser record's four Tartine and Country Rye screens and flows changed only the label and the note; no screenshot changed.
+
+Evidence (this session, on `autolyse-label`): `npm test` passed 188 of 188, `npm run test:browser` 57 of 57, and the build passed.
+
+Verification: my own checks, not the verifier: the change is one label and one note.
+
+Not verified: a real phone.
 
