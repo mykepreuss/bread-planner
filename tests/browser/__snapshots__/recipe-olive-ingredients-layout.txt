@@ -78,7 +78,7 @@ main
                           td[data-slot=table-cell].p-2.align-middle.whitespace-nowrap.[&:has([role=checkbox])]:pr-0
                             div.cell-control
                               div.amount-wrap
-                                input[data-slot=input].h-8.w-full.min-w-0.rounded-lg.border.border-input.bg-transparent.px-2.5.py-1.text-base.transition-colors.outline-none.file:inline-flex.file:h-6.file:border-0.file:bg-transparent.file:text-sm.file:font-medium.file:text-foreground.placeholder:text-muted-foreground.focus-visible:border-ring.focus-visible:ring-3.focus-visible:ring-ring/50.disabled:pointer-events-none.disabled:cursor-not-allowed.disabled:bg-input/50.disabled:opacity-50.aria-invalid:border-destructive.aria-invalid:ring-3.aria-invalid:ring-destructive/20.md:text-sm.dark:bg-input/30.dark:disabled:bg-input/80.dark:aria-invalid:border-destructive/50.dark:aria-invalid:ring-destructive/40[id=field-flour_white][type=number]
+                                input[data-slot=input].h-8.w-full.min-w-0.rounded-lg.border.border-input.bg-transparent.px-2.5.py-1.text-base.transition-colors.outline-none.file:inline-flex.file:h-6.file:border-0.file:bg-transparent.file:text-sm.file:font-medium.file:text-foreground.placeholder:text-muted-foreground.focus-visible:border-ring.focus-visible:ring-3.focus-visible:ring-ring/50.disabled:pointer-events-none.disabled:cursor-not-allowed.disabled:bg-input/50.disabled:opacity-50.aria-invalid:border-destructive.aria-invalid:ring-3.aria-invalid:ring-destructive/20.md:text-sm.dark:bg-input/30.dark:disabled:bg-input/80.dark:aria-invalid:border-destructive/50.dark:aria-invalid:ring-destructive/40[id=field-flour_anita][type=number]
                                 span.unit
                         tr[data-slot=table-row].border-b.transition-colors.hover:bg-muted/50.has-aria-expanded:bg-muted/50.data-[state=selected]:bg-muted
                           td[data-slot=table-cell].p-2.align-middle.whitespace-nowrap.[&:has([role=checkbox])]:pr-0
@@ -88,6 +88,15 @@ main
                             div.cell-control
                               div.amount-wrap
                                 input[data-slot=input].h-8.w-full.min-w-0.rounded-lg.border.border-input.bg-transparent.px-2.5.py-1.text-base.transition-colors.outline-none.file:inline-flex.file:h-6.file:border-0.file:bg-transparent.file:text-sm.file:font-medium.file:text-foreground.placeholder:text-muted-foreground.focus-visible:border-ring.focus-visible:ring-3.focus-visible:ring-ring/50.disabled:pointer-events-none.disabled:cursor-not-allowed.disabled:bg-input/50.disabled:opacity-50.aria-invalid:border-destructive.aria-invalid:ring-3.aria-invalid:ring-destructive/20.md:text-sm.dark:bg-input/30.dark:disabled:bg-input/80.dark:aria-invalid:border-destructive/50.dark:aria-invalid:ring-destructive/40[id=field-flour_wheat][type=number]
+                                span.unit
+                        tr[data-slot=table-row].border-b.transition-colors.hover:bg-muted/50.has-aria-expanded:bg-muted/50.data-[state=selected]:bg-muted
+                          td[data-slot=table-cell].p-2.align-middle.whitespace-nowrap.[&:has([role=checkbox])]:pr-0
+                            span.flour-name
+                              small
+                          td[data-slot=table-cell].p-2.align-middle.whitespace-nowrap.[&:has([role=checkbox])]:pr-0
+                            div.cell-control
+                              div.amount-wrap
+                                input[data-slot=input].h-8.w-full.min-w-0.rounded-lg.border.border-input.bg-transparent.px-2.5.py-1.text-base.transition-colors.outline-none.file:inline-flex.file:h-6.file:border-0.file:bg-transparent.file:text-sm.file:font-medium.file:text-foreground.placeholder:text-muted-foreground.focus-visible:border-ring.focus-visible:ring-3.focus-visible:ring-ring/50.disabled:pointer-events-none.disabled:cursor-not-allowed.disabled:bg-input/50.disabled:opacity-50.aria-invalid:border-destructive.aria-invalid:ring-3.aria-invalid:ring-destructive/20.md:text-sm.dark:bg-input/30.dark:disabled:bg-input/80.dark:aria-invalid:border-destructive/50.dark:aria-invalid:ring-destructive/40[id=field-flour_rye][type=number]
                                 span.unit
               div[data-slot=accordion].flex.w-full.flex-col.recipe-settings[data-orientation=vertical]
                 div[data-state=open][data-orientation=vertical][data-slot=accordion-item].not-last:border-b
@@ -239,10 +248,6 @@ main
                       dt
                       dd
                         span
-                    div
-                      dt
-                      dd
-                        span
               div[data-slot=card][data-size=default].group/card.flex.flex-col.gap-(--card-spacing).overflow-hidden.rounded-xl.bg-card.py-(--card-spacing).text-sm.text-card-foreground.ring-1.ring-foreground/10.[--card-spacing:--spacing(4)].has-data-[slot=card-footer]:pb-0.has-[>img:first-child]:pt-0.data-[size=sm]:[--card-spacing:--spacing(3)].data-[size=sm]:has-data-[slot=card-footer]:pb-0.*:[img:first-child]:rounded-t-xl.*:[img:last-child]:rounded-b-xl.work-card
                 div[data-slot=card-header].group/card-header.@container/card-header.grid.auto-rows-min.items-start.gap-1.rounded-t-xl.px-(--card-spacing).has-data-[slot=card-action]:grid-cols-[1fr_auto].has-data-[slot=card-description]:grid-rows-[auto_auto].[.border-b]:pb-(--card-spacing)
                   div.card-title-row
@@ -250,6 +255,14 @@ main
                   div[data-slot=card-description].text-sm.text-muted-foreground
                 div[data-slot=card-content].px-(--card-spacing)
                   dl.weights
+                    div
+                      dt
+                      dd
+                        span
+                    div
+                      dt
+                      dd
+                        span
                     div
                       dt
                       dd

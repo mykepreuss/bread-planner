@@ -1,6 +1,7 @@
 /**
- * Add-ins: things worked into a Tartine dough after the first turn, such as olives or toasted seeds, for the book's
- * variations on its Basic Country Bread. Added at Michael's request on November 22, 2026. Amounts are kept in the
+ * Add-ins: things worked into a dough after the first turn, such as olives or toasted seeds, from the book's variations
+ * on its Basic Country Bread. Added at Michael's request on November 22, 2026; since decision 16 they go into Preuss
+ * House's dough. Amounts are kept in the
  * book's own measures (cups, teaspoons, lemons): weighing olives or seeds by the cup would be a guess.
  */
 
@@ -19,7 +20,7 @@ export type AddIn = {
 /**
  * Oven work the add-ins need before they go in, such as toasting seeds: a step with id `toast` and kind `prep` that
  * starts `minutesBefore` minutes (more than 0) ahead of the add-in step, so they are ready and cool by then. Added for
- * Tartine Sesame on November 22, 2026.
+ * Sesame on November 22, 2026.
  */
 export type Prep = { title: string; note: string; minutesBefore: number };
 

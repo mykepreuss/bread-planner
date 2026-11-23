@@ -367,7 +367,7 @@ test.describe('flows', () => {
     await expect(page.getByText('Skipped', { exact: true })).toHaveCount(12);
   });
 
-  test('Tartine Olive lists its add-ins scaled to the loaves, and the list fits a phone', async ({ page }) => {
+  test('Olive lists its add-ins scaled to the loaves, and the list fits a phone', async ({ page }) => {
     await page.setViewportSize(widths.phone);
     await open(page, 'recipe-olive');
     await page.getByRole('tab', { name: 'Ingredients' }).click();
@@ -581,14 +581,16 @@ test.describe('flows', () => {
     await expectSameAfterReload(page);
   });
 
-  test('The recipe menu offers Preuss House and the five Tartine recipes', async ({ page }) => {
+  test('The recipe menu offers Preuss House, Original Tartine, Olive, Sesame and two more Tartine recipes', async ({
+    page,
+  }) => {
     await open(page, 'fresh');
     await page.getByRole('combobox', { name: 'Recipe' }).click();
     await expect(page.getByRole('option')).toHaveText([
       'Preuss House',
       'Original Tartine',
-      'Tartine Olive',
-      'Tartine Sesame',
+      'Olive',
+      'Sesame',
       'Tartine Whole Wheat',
       'Tartine Country Rye',
     ]);

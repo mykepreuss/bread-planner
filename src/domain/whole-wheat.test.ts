@@ -189,14 +189,14 @@ function wholeWheatRows(tartine: Row[]): Row[] {
   );
 }
 
-test('Tartine Whole Wheat is on the menu after the two Tartine variations, made the Tartine way', () => {
+test('Tartine Whole Wheat is on the menu after Olive and Sesame, made the Tartine way', () => {
   assert.deepEqual(
     RECIPES.map((r) => [r.id, r.name, r.method]),
     [
       ['house', 'Preuss House', 'house'],
       ['tartine', 'Original Tartine', 'tartine'],
-      ['olive', 'Tartine Olive', 'tartine'],
-      ['sesame', 'Tartine Sesame', 'tartine'],
+      ['olive', 'Olive', 'house'],
+      ['sesame', 'Sesame', 'house'],
       ['whole-wheat', 'Tartine Whole Wheat', 'tartine'],
       ['country-rye', 'Tartine Country Rye', 'tartine'],
     ],

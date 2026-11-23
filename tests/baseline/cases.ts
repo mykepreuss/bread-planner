@@ -370,11 +370,11 @@ function bakeDays(): [string, PlanInput][] {
     ],
     [
       'olive with its add-in step up next, after Turn 1',
-      { ...upTo(tartine({ recipe: 'olive' }), 'turn1'), now: '2026-11-22 22:05' },
+      { ...upTo(tartine({ recipe: 'olive' }), 'turn1'), now: '2026-11-22 14:50' },
     ],
     [
-      'sesame with its toast step up next, beside the initial mix',
-      { ...upTo(tartine({ recipe: 'sesame' }), 'autolyse'), now: '2026-11-22 21:05' },
+      'sesame with its toast step up next, as the autolyse finishes',
+      { ...upTo(tartine({ recipe: 'sesame' }), 'autolyse'), now: '2026-11-22 13:50' },
     ],
     // The final mix's tick-offs, added November 22, 2026.
     [
