@@ -202,7 +202,7 @@ export const RECIPES: Recipe[] = [
     id: 'country-rye',
     name: 'Tartine Country Rye',
     description:
-      'The book’s country rye: just enough medium-fine whole rye with white bread flour for a sweet rye flavour without much sourness. Cooler water and a longer rest after mixing than Tartine Country Bread.',
+      'The book’s country rye: just enough medium-fine whole rye with white bread flour for a sweet rye flavour without much sourness. Cooler water and a longer rest after mixing than Tartine Country Bread, and 17½ hours in the fridge, so a leaven started in the evening bakes two mornings later.',
     method: 'tartine',
     flours: ['rye', 'white'],
     late: [],
@@ -211,6 +211,11 @@ export const RECIPES: Recipe[] = [
       rest: 50,
       note: 'Stir the leaven used into the initial water, about 75°F / 24°C, until it disperses. Add the rye and white-bread flour and mix by hand until no dry flour is left. Cover and rest for 40 to 60 minutes.',
     },
+    // Michael's choice on November 22, 2026 (decision 17), so a cold-proofed bake keeps out of quiet hours: the loaves
+    // proof 17½ hours in the fridge, not 12, so a leaven from 9:00 to 10:30 PM keeps every step out of them. The book's
+    // rest with the leaven in stays: both autolyse guides he reviewed warn that rye is high in enzymes, and
+    // SourdoughGuru gives a blend with under 30% rye only a 20- to 30-minute autolyse.
+    coldProof: 1050,
     // Tartine Bread, page 118: 170 g medium-fine whole rye, 830 g white bread flour; 800 g water; 200 g leaven, built
     // as for Original Tartine; 20 g salt, added after the rest. As for Tartine Whole Wheat, 50 g of the water is
     // assumed to wait for the salt, as in the Basic Country Bread. Added at Michael's request on November 22, 2026.

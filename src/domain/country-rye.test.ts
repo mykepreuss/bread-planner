@@ -53,6 +53,12 @@ test('Tartine Country Rye is last on the menu, made the Tartine way with rye and
     ['Tartine Country Rye', 'tartine', ['rye', 'white'], [], 'white', undefined],
   );
   assert.deepEqual(r.initialMix, { rest: 50, note: NOTE });
+  assert.deepEqual(
+    [r.coldProof, r.autolyse],
+    [1050, undefined],
+    'a 17½-hour fridge, and the book’s rest, not an autolyse',
+  );
+  assert.match(r.description, /17½ hours in the fridge/);
   assert.deepEqual(defaultSettings(r), {
     count: 2,
     weight: 1010,
@@ -90,12 +96,13 @@ test('its weights are the book’s table: 170 g rye, 830 g bread flour, 800 g wa
   near(f.reserve, 215, 'leaven kept');
 });
 
-test('its schedule is Original Tartine’s with a 50-minute rest, so every step after the initial mix is 20 minutes later', () => {
-  // Tartine Whole Wheat had this schedule too until decision 16 gave it an autolyse and a longer fridge.
+test('its schedule is Original Tartine’s with a 50-minute rest and a 17½-hour fridge: steps after the mix 20 minutes later, and after the fridge 5 hours 50 minutes later', () => {
+  // Tartine Whole Wheat had the 50-minute rest too until decision 16 gave it an autolyse; decision 17 gave Country Rye
+  // its 17½-hour fridge.
   for (const proof of ['cold', 'warm'] as const)
     for (const anchor of ['leaven', 'done'] as const) {
       const change =
-        anchor === 'done' ? { anchor, date: '2026-10-22', time: proof === 'cold' ? '15:10' : '05:40' } : { anchor };
+        anchor === 'done' ? { anchor, date: '2026-10-22', time: proof === 'cold' ? '20:40' : '05:40' } : { anchor };
       const rye = schedule(plan('country-rye', { proof, ...change }));
       const tartine = schedule(
         plan('tartine', {
@@ -105,12 +112,24 @@ test('its schedule is Original Tartine’s with a 50-minute rest, so every step 
             : { anchor }),
         }),
       );
-      const mixed = tartine.findIndex((s) => s.id === 'autolyse');
+      const mixed = tartine.findIndex((s) => s.id === 'autolyse'),
+        fridge = tartine.findIndex((s) => s.id === 'fridge');
+      const later = (n: number) => (n <= mixed ? 0 : fridge >= 0 && n > fridge ? 20 + 330 : 20);
       assert.deepEqual(
         rye.map((s) => [s.id, s.title, +s.at, s.minutes]),
-        tartine.map((s, n) => [s.id, s.title, n <= mixed ? +s.at : +s.at + 20 * 60000, n === mixed ? 50 : s.minutes]),
+        tartine.map((s, n) => [
+          s.id,
+          s.title,
+          +s.at + later(n) * 60000,
+          n === mixed ? 50 : s.id === 'fridge' ? 1050 : s.minutes,
+        ]),
         `${proof} ${anchor}`,
       );
+      if (proof === 'cold')
+        assert.equal(
+          rye.find((s) => s.id === 'fridge')!.note,
+          'Cover the baskets and refrigerate for about 17½ hours.',
+        );
       const mix = rye.find((s) => s.id === 'autolyse')!;
       assert.equal(mix.note, NOTE);
       assert.equal(+rye.find((s) => s.id === 'mix')!.at - +mix.at, 50 * 60000, 'a 50-minute rest');
