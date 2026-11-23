@@ -1109,6 +1109,19 @@ h2 {
   margin-top: 3px;
   flex-shrink: 0;
 }
+.plan-suggestion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 14px;
+}
+.plan-suggestion p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--espresso-muted);
+}
 .plan-suggested {
   margin: 10px 0 0;
   font-size: 14px;

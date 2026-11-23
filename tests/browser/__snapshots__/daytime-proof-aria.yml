@@ -30,6 +30,8 @@
     - textbox "Leaven date": 2026-11-22
     - text: Time
     - textbox "Time": 21:00
+    - button "Use suggested start"
+    - paragraph: Feed starter · 9:15 PM
     - text: Baking complete
     - strong: 9:33 PM
     - text: Monday, Nov 23 Your batch Number of loaves
