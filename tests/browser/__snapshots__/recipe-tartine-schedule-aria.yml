@@ -39,7 +39,10 @@
     - spinbutton "Number of loaves": "2"
     - text: loaves Loaves per mix
     - spinbutton "Loaves per mix": "2"
-    - text: loaves
+    - text: loaves Rest after mixing
+    - spinbutton "Rest after mixing": "30"
+    - text: min
+    - paragraph: The leaven is in this mix, so the steps after it move with the rest.
     - strong: 985 g
     - text: per loaf
     - strong: 1,970 g
@@ -75,7 +78,7 @@
       - checkbox "Complete Mix dough and rest"
       - time: 9:00 PM
       - text: Mix dough and rest
-      - paragraph: Disperse the leaven used in the initial water, about 80°F / 27°C. Add white and whole-wheat flour; mix until no dry flour remains. Cover for 25 to 40 minutes.
+      - paragraph: Disperse the leaven used in the initial water, about 80°F / 27°C. Add white and whole-wheat flour; mix until no dry flour remains. Cover and rest; the book gives 25 to 40 minutes.
       - text: Next step in 30 min
       - checkbox "Complete Add salt and final water"
       - time: 9:30 PM

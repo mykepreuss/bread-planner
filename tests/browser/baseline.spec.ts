@@ -571,6 +571,39 @@ test.describe('flows', () => {
     expect(await aria(page)).toMatchSnapshot('flow-restore-defaults.aria.yml');
   });
 
+  test('Each recipe keeps its own autolyse length: an autolyse moves only its start, a Tartine rest moves what follows', async ({
+    page,
+  }) => {
+    await open(page, 'fresh');
+    const at = (id: string) => page.locator('.timeline-step', { has: page.locator(`#step-${id}`) }).locator('time');
+    const field = (name: string) => page.getByLabel(name, { exact: true });
+    await expect(field('Autolyse')).toHaveValue('90');
+    await expect(page.getByText('It ends as the leaven is ready, so only its start moves.')).toBeVisible();
+    await expect(at('autolyse')).toHaveText('12:30 PM');
+    await field('Autolyse').fill('270');
+    await expect(at('autolyse')).toHaveText('9:30 AM');
+    await expect(at('mix')).toHaveText('2:00 PM');
+    await expect(at('done')).toHaveText('9:33 AM');
+    // More than 12 hours is refused, and the plan keeps the last valid length.
+    await field('Autolyse').fill('721');
+    await expect(page.getByText('Use a whole number from 0 to 720')).toBeVisible();
+    await expect(at('autolyse')).toHaveText('9:30 AM');
+    await field('Autolyse').fill('270');
+    // Tartine mixes the leaven in first, so its rest moves the salt and everything after it.
+    await choose(page, 'Recipe', 'Tartine Country Bread');
+    await expect(field('Rest after mixing')).toHaveValue('30');
+    await expect(page.getByText('The leaven is in this mix, so the steps after it move with the rest.')).toBeVisible();
+    await expect(at('mix')).toHaveText('9:30 PM');
+    await field('Rest after mixing').fill('60');
+    await expect(at('mix')).toHaveText('10:00 PM');
+    await expect(at('turn1')).toHaveText('10:30 PM');
+    expect(await aria(page)).toMatchSnapshot('flow-autolyse-length.aria.yml');
+    await expectSameAfterReload(page);
+    // Preuss Country Bread kept its own length.
+    await choose(page, 'Recipe', 'Preuss Country Bread');
+    await expect(field('Autolyse')).toHaveValue('270');
+  });
+
   test('Loaf count and oven capacity on the Schedule tab set the batches', async ({ page }) => {
     await open(page, 'fresh');
     await page.getByLabel('Number of loaves').fill('3');

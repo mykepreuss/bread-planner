@@ -40,7 +40,14 @@ export const selectRecipe = (state: PlannerState, id: string): PlannerState =>
 
 /** A number setting of the selected recipe. The field accepts only valid values; see Amount. */
 export type SettingKey =
-  'count' | 'weight' | 'leaven' | 'salt' | 'reserve' | `flour:${FlourKey}` | `build:${keyof Settings['build']}`;
+  | 'count'
+  | 'weight'
+  | 'leaven'
+  | 'salt'
+  | 'reserve'
+  | 'autolyse'
+  | `flour:${FlourKey}`
+  | `build:${keyof Settings['build']}`;
 export function setSetting(state: PlannerState, key: SettingKey, value: number): PlannerState {
   const s = settingsOf(state);
   if (key.startsWith('flour:'))

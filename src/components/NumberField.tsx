@@ -9,7 +9,7 @@ import { usePlanner } from './calculator';
 import { g } from './text';
 
 /** A field's id (`field-<cell>`), label, unit and limits. */
-export type FieldSpec = { cell: string; label: string; unit: string; min?: number; step?: number };
+export type FieldSpec = { cell: string; label: string; unit: string; min?: number; max?: number; step?: number };
 
 const sliderRanges: Record<string, { min: number; max: number; step: number }> = {
   hydration: { min: 50, max: 100, step: 1 },
@@ -118,7 +118,7 @@ export function NumberField({
           label={context ? `${spec.label} (${context})` : spec.label}
           value={value}
           min={min}
-          max={spec.cell === 'reserve' ? 100 : undefined}
+          max={spec.cell === 'reserve' ? 100 : spec.max}
           step={spec.step ?? 0.001}
           onChange={onChange}
         />
@@ -160,7 +160,7 @@ function useSetting(cell: string) {
     ? settings.build[key.slice(6) as keyof typeof settings.build]
     : key.startsWith('flour:')
       ? (settings.flours[key.slice(6) as FlourKey] ?? 0)
-      : settings[key as 'count' | 'weight' | 'leaven' | 'salt' | 'reserve'];
+      : settings[key as 'count' | 'weight' | 'leaven' | 'salt' | 'reserve' | 'autolyse'];
   return { value, onChange: (n: number) => update((s) => setSetting(s, key, n)) };
 }
 /** A number field for one of the selected recipe's settings. */

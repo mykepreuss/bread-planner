@@ -1,6 +1,7 @@
 /**
  * How long each stage takes, in minutes. These were cells of the source spreadsheet (House) and the book's times
- * (Tartine); there is no editor, so they are constants. Bulk runs from its start to preshape, with a turn every 30
+ * (Tartine); there is no editor, so they are constants, except the autolyse and Tartine's rest, which are only each
+ * recipe's default for its `autolyse` setting (decision 22). Bulk runs from its start to preshape, with a turn every 30
  * minutes in between.
  */
 export const HOUSE = {
@@ -30,7 +31,7 @@ export const HOUSE = {
 
 export const TARTINE = {
   leaven: 720,
-  /** The rest after the initial mix. A recipe's `initialMix` can set its own (see recipes.ts). */
+  /** The rest after the initial mix: Tartine Country Bread's default for its `autolyse` setting. */
   rest: 30,
   turnEvery: 30,
   bulk: 180,

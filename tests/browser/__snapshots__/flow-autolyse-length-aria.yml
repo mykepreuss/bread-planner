@@ -1,0 +1,187 @@
+- banner:
+  - heading "Bread Planner" [level=1]
+- main:
+  - tablist:
+    - tab "Schedule" [selected]
+    - tab "Ingredients"
+  - text: Recipe
+  - combobox "Recipe": Tartine Country Bread
+  - paragraph: The book’s 90/10 white and whole-wheat loaf, with leaven in the initial mix. Its 12-hour leaven suits an evening start, and 18 hours in the fridge bakes it two mornings later.
+  - tabpanel "Schedule":
+    - region "Up next":
+      - text: Up next in 17h 40m
+      - heading "Make leaven" [level=2]
+      - paragraph:
+        - time: Sunday, Nov 22 at 9:00 AM
+      - paragraph: Mix 15 g (about 1 tbsp) of mature starter with 200 g water, then add 100 g white-bread flour and 100 g whole-wheat flour. Cover at room temperature. You use 200 g in the dough and keep 215 g.
+      - paragraph:
+        - strong: "Ready when:"
+        - text: Use when aerated and puffy, and a spoonful floats in room-temperature water. If it sinks, allow more fermentation before mixing.
+      - button "Done"
+      - paragraph: "Then: Mix dough and rest · Sunday, Nov 22 at 9:00 PM"
+    - region "Quiet hours warning":
+      - heading "8 actions need you during quiet hours" [level=2]
+      - paragraph: Hands-on work is scheduled after 10:30 PM or before 7:00 AM. Overnight rests are fine.
+      - paragraph:
+        - text: Start the leaven at 10:30 PM on Saturday, Nov 21 and nothing falls in quiet hours.
+        - button "Start at 10:30 PM"
+      - heading "View affected steps" [level=3]:
+        - button "View affected steps"
+    - text: When are we baking? Plan around
+    - combobox "Plan around": Starting the leaven
+    - text: Leaven date
+    - textbox "Leaven date": 2026-11-22
+    - text: Time
+    - textbox "Time": 09:00
+    - text: Baking complete
+    - strong: 9:20 PM
+    - text: Monday, Nov 23 Your batch Number of loaves
+    - spinbutton "Number of loaves": "2"
+    - text: loaves Loaves per mix
+    - spinbutton "Loaves per mix": "2"
+    - text: loaves Rest after mixing
+    - spinbutton "Rest after mixing": "60"
+    - text: min
+    - paragraph: The leaven is in this mix, so the steps after it move with the rest.
+    - strong: 985 g
+    - text: per loaf
+    - strong: 1,970 g
+    - text: total dough
+    - strong: 77%
+    - text: total hydration
+    - strong: 1 bowl
+    - text: to mix in
+    - button "View ingredients"
+    - text: Oven and proof Loaves baked at once
+    - combobox "Loaves baked at once": 2 loaves
+    - paragraph:
+      - strong: 1 batch
+      - text: for 2 loaves.
+    - text: Final proof
+    - combobox "Final proof": Refrigerated, about 18 hours
+    - paragraph: Allows 60 minutes to warm each batch.
+    - paragraph: Readiness comes before the clock. Wait until the dough is ready, then check the step. Later steps move to match.
+    - region "Bake schedule":
+      - heading "Bake schedule" [level=2]
+      - text: 36h 20m total 0 of 18 steps checked
+      - button "Clear checklist" [disabled]
+      - text: Day 1
+      - heading "Sunday, Nov 22" [level=3]
+      - checkbox "Complete Make leaven"
+      - time: 9:00 AM
+      - text: Make leaven Up next
+      - paragraph: Mix 15 g (about 1 tbsp) of mature starter with 200 g water, then add 100 g white-bread flour and 100 g whole-wheat flour. Cover at room temperature. You use 200 g in the dough and keep 215 g.
+      - paragraph:
+        - strong: "Ready when:"
+        - text: Use when aerated and puffy, and a spoonful floats in room-temperature water. If it sinks, allow more fermentation before mixing.
+      - text: Next step in 12h
+      - checkbox "Complete Mix dough and rest"
+      - time: 9:00 PM
+      - text: Mix dough and rest
+      - paragraph: Disperse the leaven used in the initial water, about 80°F / 27°C. Add white and whole-wheat flour; mix until no dry flour remains. Cover and rest; the book gives 25 to 40 minutes.
+      - text: Next step in 1h
+      - checkbox "Complete Add salt and final water"
+      - time: 10:00 PM
+      - text: Add salt and final water
+      - paragraph: Work in the salt and reserved water. Keep mixing if the dough separates; it should come together again.
+      - list "Add to the dough":
+        - listitem:
+          - checkbox "Salt 20 g"
+          - text: Salt 20 g
+        - listitem:
+          - checkbox "Water 50 g"
+          - text: Water 50 g
+      - checkbox "Complete Begin warm bulk fermentation"
+      - time: 10:00 PM
+      - text: Begin warm bulk fermentation
+      - paragraph: Cover and keep at 75°F to 80°F / 24°C to 27°C.
+      - text: Dough temperature after mixing
+      - spinbutton "Dough temperature after mixing"
+      - combobox "Temperature unit": °F
+      - paragraph: Measure the dough after mixing to estimate how long bulk will take. The plan counts 78°F / 26°C as normal.
+      - text: Next step in 30 min
+      - checkbox "Complete Turn 1"
+      - time: 10:30 PM
+      - text: Turn 1
+      - paragraph: Wet your hand. Stretch one quadrant over the dough; rotate and repeat to fold all four sides.
+      - text: Next step in 30 min
+      - checkbox "Complete Turn 2"
+      - time: 11:00 PM
+      - text: Turn 2 Quiet hours
+      - paragraph: Repeat the four-sided stretch and fold, with wet hands.
+      - text: Next step in 30 min
+      - checkbox "Complete Turn 3"
+      - time: 11:30 PM
+      - text: Turn 3 Quiet hours
+      - paragraph: Repeat the four-sided stretch and fold, with wet hands.
+      - text: Next step in 30 min Day 2
+      - heading "Monday, Nov 23" [level=3]
+      - checkbox "Complete Turn 4"
+      - time: 12:00 AM
+      - text: Turn 4 Quiet hours
+      - paragraph: Repeat the four-sided stretch and fold, with wet hands.
+      - text: Next step in 30 min
+      - checkbox "Complete Turn 5"
+      - time: 12:30 AM
+      - text: Turn 5 Quiet hours
+      - paragraph: Repeat the four-sided stretch and fold, with wet hands.
+      - text: Next step in 30 min
+      - checkbox "Complete Divide and preshape"
+      - time: 1:00 AM
+      - text: Divide and preshape Quiet hours
+      - paragraph: Dust the top, divide equally and turn flour-side down. Shape taut rounds with the dusting flour on the outside.
+      - paragraph:
+        - strong: "Ready when:"
+        - text: Look for a billowy dough and 20% to 30% volume increase. The book allows up to one more hour with folds if needed; wait until the dough is ready before moving on.
+      - text: Next step in 5 min
+      - checkbox "Complete Bench rest and prepare baskets"
+      - time: 1:05 AM
+      - text: Bench rest and prepare baskets Quiet hours
+      - paragraph: Cover the rounds for 30 minutes. Line proofing baskets or bowls with towels and generously dust with rice flour.
+      - text: Next step in 30 min
+      - checkbox "Complete Final shape"
+      - time: 1:35 AM
+      - text: Final shape Quiet hours
+      - paragraph: Turn flour-side down. Stretch and fold the bottom, sides and top over the center; roll seam-side down into a taut round. Place seam-side up in a prepared basket.
+      - text: Next step in 5 min
+      - checkbox "Complete Refrigerated final proof"
+      - time: 1:40 AM
+      - text: Refrigerated final proof Quiet hours
+      - paragraph: Cover the baskets and refrigerate for about 18 hours.
+      - text: Next step in 18h
+      - checkbox "Complete Warm both loaves to room temperature"
+      - time: 7:40 PM
+      - text: Warm both loaves to room temperature
+      - paragraph: Remove the loaves from the refrigerator.
+      - paragraph:
+        - strong: "Ready when:"
+        - text: Bring the dough back to room temperature before baking; use its condition, rather than the clock alone.
+      - text: Next step in 30 min
+      - checkbox "Complete Preheat oven and Dutch oven"
+      - time: 8:10 PM
+      - text: Preheat oven and Dutch oven
+      - paragraph: Place the lidded Dutch oven or pots in the oven and heat to 500°F / 260°C. Use one suitable pot per loaf baked at once.
+      - text: Next step in 30 min
+      - checkbox "Complete Bake covered (both loaves)"
+      - time: 8:40 PM
+      - text: Bake covered (both loaves)
+      - paragraph: Dust the loaf tops. Carefully turn seam-side down into the hot pot, score with a lame or razor, and cover. Reduce oven to 450°F / 232°C.
+      - text: Next step in 20 min
+      - checkbox "Complete Remove lid"
+      - time: 9:00 PM
+      - text: Remove lid
+      - paragraph: "Remove lid carefully: hot steam can escape. Continue at 450°F / 232°C."
+      - paragraph:
+        - strong: "Ready when:"
+        - text: Bake until the crust is a rich golden brown; extend the uncovered bake if needed.
+      - text: Next step in 20 min
+      - checkbox "Complete All loaves out of the oven"
+      - time: 9:20 PM
+      - text: All loaves out of the oven
+      - paragraph: Transfer to a wire rack. The base should sound hollow when tapped. Cool each loaf at least 15 minutes before slicing.
+  - heading "Mature starter and readiness guide" [level=3]:
+    - button "Mature starter and readiness guide"
+  - heading "Establishing a starter from scratch" [level=3]:
+    - button "Establishing a starter from scratch"
+  - heading "Shaping, basket preparation and baking" [level=3]:
+    - button "Shaping, basket preparation and baking"

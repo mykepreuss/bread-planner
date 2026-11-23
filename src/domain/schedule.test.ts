@@ -237,6 +237,57 @@ test('House autolyse is the leaven’s last 90 minutes, and the cold proof runs 
   );
 });
 
+test('each recipe sets its own autolyse length, by default as before (decision 22)', () => {
+  const lengths = Object.fromEntries(
+    ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye'].map((id) => [
+      id,
+      [defaultSettings(recipeById(id)!).autolyse, find(schedule(plan(id)), 'autolyse').minutes],
+    ]),
+  );
+  assert.deepEqual(lengths, {
+    house: [90, 90],
+    tartine: [30, 30],
+    olive: [90, 90],
+    sesame: [90, 90],
+    'whole-wheat': [120, 120],
+    'country-rye': [50, 50],
+  });
+});
+
+test('an autolyse ends as the leaven is ready, so a longer or shorter one moves only its own start (decision 22)', () => {
+  for (const [id, minutes, start] of [
+    ['house', 270, '2026-10-21 09:30'],
+    ['house', 0, '2026-10-21 14:00'],
+    ['olive', 60, '2026-10-21 13:00'],
+    ['whole-wheat', 60, '2026-10-21 20:00'],
+    ['whole-wheat', 720, '2026-10-21 09:00'],
+  ] as const) {
+    const before = schedule(plan(id)),
+      after = schedule(plan(id, {}, { autolyse: minutes }));
+    assert.equal(local(find(after, 'autolyse').at), start, `${id} at ${minutes} minutes starts then`);
+    assert.equal(find(after, 'autolyse').minutes, minutes);
+    const others = (s: Step[]) => s.filter((x) => x.id !== 'autolyse' && x.id !== 'toast').map((x) => [x.id, +x.at]);
+    assert.deepEqual(others(after), others(before), `${id} at ${minutes} minutes moves nothing else`);
+  }
+});
+
+test('with the leaven in the initial mix, a longer rest moves every step after it (decision 22)', () => {
+  for (const id of ['tartine', 'country-rye']) {
+    const before = schedule(plan(id)),
+      d = defaultSettings(recipeById(id)!).autolyse,
+      after = schedule(plan(id, {}, { autolyse: d + 40 }));
+    assert.deepEqual(
+      after.map((x) => x.id),
+      before.map((x) => x.id),
+    );
+    after.forEach((x, i) => {
+      const moved = (+x.at - +before[i].at) / 60000;
+      assert.equal(moved, x.id === 'leaven' || x.id === 'autolyse' ? 0 : 40, `${id}: ${x.id}`);
+    });
+    assert.equal(find(after, 'autolyse').minutes, d + 40);
+  }
+});
+
 test('House proof counts elapsed minutes across midnight, and a daytime proof is named for it', () => {
   const s = schedule(plan('house', { time: '21:00' })),
     w = coldProofWindow(s)!;

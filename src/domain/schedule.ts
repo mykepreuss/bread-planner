@@ -166,10 +166,9 @@ export type PlanInput = {
 
 const LEAVEN_CUE =
   'Use when aerated and puffy, and a spoonful floats in room-temperature water. If it sinks, allow more fermentation before mixing.';
-/** The Basic Country Bread's initial mix and rest, for a Tartine recipe without its own `initialMix`. */
+/** The Basic Country Bread's initial mix, for a Tartine recipe without its own `initialMix`. */
 const TARTINE_MIX = {
-  rest: TARTINE.rest,
-  note: 'Disperse the leaven used in the initial water, about 80°F / 27°C. Add white and whole-wheat flour; mix until no dry flour remains. Cover for 25 to 40 minutes.',
+  note: 'Disperse the leaven used in the initial water, about 80°F / 27°C. Add white and whole-wheat flour; mix until no dry flour remains. Cover and rest; the book gives 25 to 40 minutes.',
 };
 const gram = (n: number) => `${Math.round(n * 10) / 10} g`;
 
@@ -260,16 +259,17 @@ export function schedule(input: PlanInput): Step[] {
     const t = TARTINE,
       initial = recipe.initialMix ?? TARTINE_MIX,
       own = recipe.autolyse,
+      rest = settings.autolyse,
       split = (note: string) =>
         bowls > 1 ? `Split this mix between ${bowls} bowls, with an equal share of everything in each. ${note}` : note;
     push('leaven', 'leaven', 'Make leaven', 0, t.leaven, leavenNote(recipe, r, bowls), LEAVEN_CUE);
     let at = t.leaven;
     // A recipe with its own autolyse rests the flour and water until the leaven is ready, then adds the leaven with the
     // salt (decision 16). The book's method mixes the leaven in first and rests before the salt.
-    if (own) push('autolyse', 'autolyse', 'Start autolyse', at - own.minutes, own.minutes, split(own.note));
+    if (own) push('autolyse', 'autolyse', 'Start autolyse', at - rest, rest, split(own.note));
     else {
-      push('autolyse', 'autolyse', 'Mix dough and rest', at, initial.rest, split(initial.note));
-      at += initial.rest;
+      push('autolyse', 'autolyse', 'Mix dough and rest', at, rest, split(initial.note));
+      at += rest;
     }
     const added = own ? 'leaven, salt and reserved water' : 'salt and reserved water';
     push(
@@ -389,8 +389,8 @@ export function schedule(input: PlanInput): Step[] {
       'autolyse',
       'autolyse',
       'Start autolyse',
-      h.leaven - h.autolyse,
-      h.autolyse,
+      h.leaven - settings.autolyse,
+      settings.autolyse,
       bowls > 1
         ? `In each of ${bowls} bowls, mix ${listed(perBowl(r.initial, bowls))}. Cover. Keep the remaining ingredients for the final mix.`
         : `Mix ${listed(r.initial)}. Cover. Keep the remaining ingredients for the final mix.`,

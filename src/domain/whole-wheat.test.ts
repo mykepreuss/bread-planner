@@ -148,7 +148,7 @@ const TARTINE_NOTES: Record<string, string> = {
   leaven:
     'Mix 15 g (about 1 tbsp) of mature starter with 200 g water, then add 100 g white-bread flour and 100 g whole-wheat flour. Cover at room temperature. You use 200 g in the dough and keep 215 g.',
   autolyse:
-    'Disperse the leaven used in the initial water, about 80°F / 27°C. Add white and whole-wheat flour; mix until no dry flour remains. Cover for 25 to 40 minutes.',
+    'Disperse the leaven used in the initial water, about 80°F / 27°C. Add white and whole-wheat flour; mix until no dry flour remains. Cover and rest; the book gives 25 to 40 minutes.',
   mix: 'Work in the salt and reserved water. Keep mixing if the dough separates; it should come together again.',
   rest: 'Cover and keep at 75°F to 80°F / 24°C to 27°C.',
   turn1: 'Wet your hand. Stretch one quadrant over the dough; rotate and repeat to fold all four sides.',
@@ -237,9 +237,10 @@ test('Tartine Whole Wheat is on the menu after Olive and Sesame, made the Tartin
     reserve: 6.25,
     flours: { wheat: 70, ap: 30 },
     build: { starter: 15, flour: 100, wheat: 100, water: 200 },
+    autolyse: 120,
   });
   assert.deepEqual(r.defaults.build, recipe('tartine').defaults.build, 'the leaven is built as for Original Tartine');
-  assert.deepEqual([r.autolyse, r.coldProof, r.initialMix], [{ minutes: 120, note: NOTE }, 1110, undefined]);
+  assert.deepEqual([r.autolyse, r.coldProof, r.initialMix], [{ note: NOTE }, 1110, undefined]);
   const tartine = recipe('tartine');
   assert.deepEqual(
     [tartine.autolyse, tartine.coldProof, tartine.initialMix],
