@@ -107,7 +107,7 @@ async function openIngredients(page: Page) {
   }
 }
 
-const RECIPES = ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye'];
+const RECIPES = ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye', 'emmer'];
 /** Screens recorded as a whole page too, at these widths. Kept to a few: whole pages are large. */
 const wholePage: Record<string, string[]> = {
   'mid-bulk': ['phone', 'desktop'],
@@ -622,7 +622,7 @@ test.describe('flows', () => {
     await expectSameAfterReload(page);
   });
 
-  test('The recipe menu offers Preuss Country Bread, Tartine Country Bread, Olive Bread, Sesame Bread and two more Tartine recipes', async ({
+  test('The recipe menu offers Preuss Country Bread, Tartine Country Bread, Olive Bread, Sesame Bread and three more Tartine recipes', async ({
     page,
   }) => {
     await open(page, 'fresh');
@@ -634,6 +634,7 @@ test.describe('flows', () => {
       'Sesame Bread',
       'Tartine Whole Wheat',
       'Tartine Country Rye',
+      'Tartine Emmer/Einkorn',
     ]);
   });
 

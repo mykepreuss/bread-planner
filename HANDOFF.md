@@ -1328,7 +1328,7 @@ Verification: my own checks, not the verifier: the change is one label and one n
 
 Not verified: a real phone.
 
-## The autolyse's range, November 23, 2026: committed, pull request open
+## The autolyse's range, November 23, 2026: merged and verified live
 
 Why: Michael asked to review Tartine Whole Wheat's autolyse setting. The review, on `main` at `5c6a522` and the live site, found the field took 0 to 720 minutes for every recipe, against his 4-hour maximum of November 22. A 0-minute autolyse left a "Start autolyse" step that contradicted itself, and Whole Wheat's description always said 2 hours. He chose to cap each recipe at what its guides and book recommend and to fix the other two. Branch `autolyse-range`, from `main` at `5c6a522`.
 
@@ -1360,3 +1360,30 @@ Independent check (the verifier, on `ca3a516`): PASS on all seven criteria, with
 Brought up to date with `main` at `ada1f88` (pull request 47, which labels the field "Autolyse" for every recipe): the browser flow uses that label, and the docs keep both changes. The checks below were rerun after it.
 
 Not verified: a real phone.
+
+Release, recorded with decision 24: pull request 48 merged as `912e951` on Michael's "Merge", after both Vercel checks passed on `b4c6aaa`. Production deployment `dpl_Eh8H2xsKqrZaYhULijPo3nrNhiA1` is READY with the `bread.assemblydigital.com` alias. On the live site at phone width (390 px), with the clock at 3:20 PM on November 21 and a fresh save, each recipe's Autolyse field showed its default and limits: 90 and 15 to 120 for Preuss Country Bread, Olive Bread and Sesame Bread, 120 and 15 to 120 for Tartine Whole Wheat, 30 and 15 to 40 for Tartine Country Bread, and 50 and 15 to 60 for Country Rye. For each, one over the longest and 14 showed "Use a whole number from 15 to …" and left the plan's times as they were. Whole Wheat's description read "soaks in cool water, for 2 hours by default". No console errors.
+
+## Tartine Emmer/Einkorn, November 23, 2026: committed, pull request open
+
+Why: Michael asked to add Emmer/Einkorn from Tartine Book No. 3, page 72, and confirmed that the book's master method is Tartine Bread's Basic Country Bread. Branch `emmer-einkorn`, from `main` at `912e951`.
+
+Done means:
+- "Tartine Emmer/Einkorn" is last on the menu.
+- Its Ingredients tab gives the book's table for two loaves: 400 g white-bread flour (for medium-strong), 300 g emmer or einkorn flour, 300 g high-extraction wheat flour, 70 g wheat germ, 850 g water, 150 g leaven and 25 g salt, 2,095 g in all.
+- Its schedule is Tartine Country Bread's, step for step, with its own initial-mix note, the bran line at the final shape, 25 g salt, and "about 18 hours" in the fridge.
+- A 9:00 to 10:30 PM leaven is night-free with a cold proof.
+- Nothing else changes, and `npm test`, the UTC run, the build and `npm run test:browser` pass.
+
+Change:
+- `src/domain/recipes.ts` adds two flours (`emmer`, "Emmer or einkorn flour"; `highext`, "High-extraction wheat flour") and two recipe fields: `extras` (dry ingredients that are not flour, as a percentage of the flour) and `finalShape` (added to Tartine's final shape note). It also adds the recipe itself.
+- `src/domain/formula.ts` counts `extras` in the dough's weight and puts them in the first mix after the flours.
+- `src/domain/schedule.ts` adds `finalShape` to the final shape note.
+- `src/domain/emmer.test.ts` checks the recipe, the book's weights (including the wheat germ scaling with the flour), its plan against Tartine Country Bread's in every proof, oven size and anchor, and its night-free starts.
+- The tests that list the menu, the autolyse lengths and ranges, the Tartine rest and the bowls include it; the total-hydration test now counts `extras` in the dough's weight.
+- `tests/browser/saved-plans.json` gains its saved plan (so the load test counts 26), and the record and browser lists include it.
+- docs/BEHAVIOUR.md records decision 24, and README's counts are updated.
+- This entry also records pull request 48's release in its own section.
+
+Record changes, checked by decoding both records: 8 plans and 4 calculations were added for the recipe, and each of the 24 saved-data cases gained it at the end of the menu and in its recipes. No plan, calculation or helper that was there changed. The browser record gained the recipe's two screens, and the recipe menu flow lists it; no other screen changed.
+
+Not verified: a real phone, or a real bake. Emmer and einkorn have weaker gluten than wheat, so the 18-hour fridge is worth watching on the first bake.
