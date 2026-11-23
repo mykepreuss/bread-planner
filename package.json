@@ -8,7 +8,7 @@
     "check": "astro check",
     "build": "prettier --check . '!vercel.json' && astro check && astro build",
     "preview": "astro preview --host 127.0.0.1",
-    "test": "TZ=America/Vancouver node --experimental-strip-types --test src/domain/formula.test.ts src/domain/schedule.test.ts src/domain/recipes.test.ts src/domain/quiet.test.ts src/domain/bakeday.test.ts src/domain/addins.test.ts src/domain/olive.test.ts src/domain/sesame.test.ts src/domain/whole-wheat.test.ts src/domain/country-rye.test.ts src/state/state.test.ts src/view/schedule.test.ts src/components/text.test.ts tests/baseline/vancouver.test.ts tests/baseline/baseline.test.ts tests/baseline/load.test.ts tests/baseline/app.test.ts",
+    "test": "TZ=America/Vancouver node --experimental-strip-types --test src/domain/formula.test.ts src/domain/schedule.test.ts src/domain/recipes.test.ts src/domain/quiet.test.ts src/domain/bakeday.test.ts src/domain/addins.test.ts src/domain/olive.test.ts src/domain/sesame.test.ts src/domain/whole-wheat.test.ts src/domain/country-rye.test.ts src/domain/emmer.test.ts src/state/state.test.ts src/view/schedule.test.ts src/components/text.test.ts tests/baseline/vancouver.test.ts tests/baseline/baseline.test.ts tests/baseline/load.test.ts tests/baseline/app.test.ts",
     "baseline:update": "TZ=America/Vancouver node --experimental-strip-types tests/baseline/update.ts",
     "test:browser": "playwright test",
     "format": "prettier --write .",

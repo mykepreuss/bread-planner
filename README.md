@@ -15,7 +15,7 @@ npm run test:browser
 npm run format
 ```
 
-`docs/BEHAVIOUR.md` describes what the app does. `npm test` runs the rules' own tests, next to the code in `src/domain/`, `src/state/`, `src/view/` and `src/components/`, and two records hold the app to that description. `npm test` also includes `tests/baseline`, which compares the code's output for 164 plans, 42 recipe calculations and 24 kinds of saved data with `tests/baseline/baseline.json`. It also renders `App.tsx` itself for every plan and checks the Schedule tab shows the same, so it runs in every Vercel build. `npm run test:browser` builds the site and compares 22 screens, each at phone and desktop width, and 35 actions, with the records in `tests/browser`, using Playwright's Chromium. It runs on this Mac only, not in the Vercel build. After a deliberate change, rewrite the records with `npm run baseline:update` or `npm run test:browser -- --update-snapshots`, and review the diff.
+`docs/BEHAVIOUR.md` describes what the app does. `npm test` runs the rules' own tests, next to the code in `src/domain/`, `src/state/`, `src/view/` and `src/components/`, and two records hold the app to that description. `npm test` also includes `tests/baseline`, which compares the code's output for 173 plans, 46 recipe calculations and 24 kinds of saved data with `tests/baseline/baseline.json`. It also renders `App.tsx` itself for every plan and checks the Schedule tab shows the same, so it runs in every Vercel build. `npm run test:browser` builds the site and compares 24 screens, each at phone and desktop width, and 35 actions, with the records in `tests/browser`, using Playwright's Chromium. It runs on this Mac only, not in the Vercel build. After a deliberate change, rewrite the records with `npm run baseline:update` or `npm run test:browser -- --update-snapshots`, and review the diff.
 
 Astro statically builds the page shell, metadata and 404 page. The calculator is one React island because its recipe inputs, ingredient weights, schedule and checklists share live state. There is no server or database. `src/App.tsx` holds the page: loading and saving, the tabs, the recipe menu and the method guide. The rules are plain, tested TypeScript:
 - `src/domain/`: the recipes as data, the formula, the House and Tartine timings, the schedule with each step's facts, the bake-day rules and quiet hours.
@@ -28,7 +28,7 @@ The code is formatted with Prettier (`npm run format`; `npm run format:check` re
 
 ## Recipes and persistence
 
-Preuss Country Bread is the default. Six distinct editable recipes retain independent settings and checklists. The calculation engine includes separate leaven made/used/reserved, staged ingredients, all-loaf forward/backward scheduling, overnight proof, readiness cues and quiet-hours checks. Percentages support both sliders and exact number entry.
+Preuss Country Bread is the default. Seven distinct editable recipes retain independent settings and checklists. The calculation engine includes separate leaven made/used/reserved, staged ingredients, all-loaf forward/backward scheduling, overnight proof, readiness cues and quiet-hours checks. Percentages support both sliders and exact number entry.
 
 On bake day, an "Up next" card shows the next step with a countdown. Checking a step records when it was done, and later steps move to keep their planned spacing from it. Turns are the exception: they are recorded but move nothing, so bulk always runs its planned length from when it started.
 

@@ -239,7 +239,7 @@ test('House autolyse is the leaven’s last 90 minutes, and the cold proof runs 
 
 test('each recipe sets its own autolyse length, by default as before (decision 22)', () => {
   const lengths = Object.fromEntries(
-    ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye'].map((id) => [
+    ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye', 'emmer'].map((id) => [
       id,
       [defaultSettings(recipeById(id)!).autolyse, find(schedule(plan(id)), 'autolyse').minutes],
     ]),
@@ -251,6 +251,7 @@ test('each recipe sets its own autolyse length, by default as before (decision 2
     sesame: [90, 90],
     'whole-wheat': [120, 120],
     'country-rye': [50, 50],
+    emmer: [30, 30],
   });
 });
 
@@ -272,7 +273,7 @@ test('an autolyse ends as the leaven is ready, so a longer or shorter one moves 
 });
 
 test('with the leaven in the initial mix, a longer rest moves every step after it (decision 22)', () => {
-  for (const id of ['tartine', 'country-rye']) {
+  for (const id of ['tartine', 'country-rye', 'emmer']) {
     const before = schedule(plan(id)),
       d = defaultSettings(recipeById(id)!).autolyse,
       after = schedule(plan(id, {}, { autolyse: d + 40 }));
@@ -388,6 +389,7 @@ test('an ingredient the recipe has none of gets no tick-off, and a final mix wit
 });
 
 test("Tartine's second addition lists its salt and water as tick-offs, and the leaven first after Whole Wheat's autolyse", () => {
+  // Emmer/Einkorn's 25 g of salt is checked in emmer.test.ts.
   for (const id of ['tartine', 'whole-wheat', 'country-rye']) {
     const steps = schedule(plan(id)),
       mix = find(steps, 'mix'),
@@ -481,7 +483,7 @@ test('the loaves split equally between bowls, and a bowl that holds them all is 
 });
 
 test('Tartine recipes split the initial mix and the salt step between bowls, and combine them for bulk', () => {
-  for (const id of ['tartine', 'whole-wheat', 'country-rye']) {
+  for (const id of ['tartine', 'whole-wheat', 'country-rye', 'emmer']) {
     const steps = schedule(plan(id, {}, { count: 4 }));
     assert.match(
       find(steps, 'autolyse').note,

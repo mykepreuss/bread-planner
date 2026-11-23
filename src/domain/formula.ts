@@ -30,14 +30,16 @@ export function addedHydration(total: number, s: Settings) {
 export type Weighed = [name: string, grams: number];
 
 /**
- * The weights for a recipe's settings: the dough's flour, water, leaven and salt, each flour's share, the two mixing
- * stages, and the leaven build made, used, kept or still needed. Null when there is no flour to scale from.
+ * The weights for a recipe's settings: the dough's flour, water, leaven and salt, each flour's share, any dry
+ * ingredients that are not flour (`extras`), the two mixing stages, and the leaven build made, used, kept or still
+ * needed. Null when there is no flour to scale from.
  */
 export function formula(recipe: Recipe, s: Settings) {
   const total = s.count * s.weight,
     part = (key: FlourKey) => s.flours[key] || 0,
     parts = recipe.flours.reduce((a, k) => a + part(k), 0),
-    denominator = 1 + (s.hydration + s.leaven + s.salt) / 100;
+    extraPercent = (recipe.extras ?? []).reduce((a, x) => a + x.percent, 0),
+    denominator = 1 + (s.hydration + s.leaven + s.salt + extraPercent) / 100;
   if (parts <= 0 || !Number.isFinite(total) || denominator <= 0) return null;
   const flour = total / denominator,
     water = (flour * s.hydration) / 100,
@@ -52,8 +54,11 @@ export function formula(recipe: Recipe, s: Settings) {
   }));
   // The book's Tartine method puts the leaven in the initial mix; a Tartine recipe with its own autolyse adds it later.
   const tartine = recipe.method === 'tartine' && !recipe.autolyse;
+  // Dry ingredients that are not flour, such as wheat germ, go in with the first flours.
+  const extras: Weighed[] = (recipe.extras ?? []).map((x) => [x.name, (flour * x.percent) / 100]);
   const initial: Weighed[] = [
     ...flours.filter((f) => f.grams > 0 && !recipe.late.includes(f.key)).map((f): Weighed => [f.name, f.grams]),
+    ...extras,
     ['Water', water - finalWater],
   ];
   if (tartine) initial.unshift(['Leaven used', used]);
@@ -79,6 +84,7 @@ export function formula(recipe: Recipe, s: Settings) {
     totalFlour,
     totalWater,
     flours,
+    extras,
     initial,
     final,
     madeParts,

@@ -11,13 +11,15 @@ import { HOUSE, TARTINE } from './methods.ts';
  * (decision 17). Ids are unchanged, and code comments still use the shorter names.
  */
 
-export type FlourKey = 'anita' | 'white' | 'wheat' | 'rye' | 'ap';
+export type FlourKey = 'anita' | 'white' | 'wheat' | 'rye' | 'ap' | 'emmer' | 'highext';
 export const FLOUR_NAMES: Record<FlourKey, string> = {
   anita: "Anita's all-purpose flour",
   white: 'White-bread flour',
   wheat: 'Whole-wheat flour',
   rye: 'Rye flour',
   ap: 'All-purpose flour',
+  emmer: 'Emmer or einkorn flour',
+  highext: 'High-extraction wheat flour',
 };
 
 /** A flour name as it reads mid-sentence: lowercase, except a name that starts with a proper noun. */
@@ -62,7 +64,10 @@ const PREUSS_MAX_AUTOLYSE = 120;
  * the flour and first water rest on their own, ending as the leaven is ready, and the leaven then goes in with the salt
  * and reserved water. How long either rests is the setting `autolyse`. `coldProof`, for Tartine recipes only, is the
  * refrigerated final proof in minutes, in place of the book's 12 hours. `maxAutolyse` is the longest `autolyse` the
- * baker can set, in minutes: what the recipe's book pages or the autolyse guides give (decision 23).
+ * baker can set, in minutes: what the recipe's book pages or the autolyse guides give (decision 23). `extras` are dry
+ * ingredients that are not flour, such as wheat germ, as a percentage of the flour: they go into the first mix with
+ * the flour and count in the dough's weight, but not in its hydration. `finalShape`, for Tartine recipes only, is
+ * added to the final shape step's note.
  */
 export type Recipe = {
   id: string;
@@ -77,6 +82,8 @@ export type Recipe = {
   autolyse?: { note: string };
   coldProof?: number;
   maxAutolyse: number;
+  extras?: { name: string; percent: number }[];
+  finalShape?: string;
   defaults: Settings;
 };
 
@@ -261,6 +268,43 @@ export const RECIPES: Recipe[] = [
       build: { starter: 15, flour: 100, wheat: 100, water: 200 },
       // The book's 50-minute rest with the leaven in, the middle of its 40 to 60.
       autolyse: 50,
+    },
+  },
+  {
+    // Tartine Book No. 3, page 72, "Emmer/Einkorn", added at Michael's request on November 23, 2026 (decision 24). The
+    // book makes it by its master method, which Michael confirmed is Tartine Bread's Basic Country Bread, so it is
+    // mixed and timed as Tartine Country Bread is, with its 18-hour fridge (decision 21).
+    id: 'emmer',
+    name: 'Tartine Emmer/Einkorn',
+    description:
+      'From Tartine Book No. 3: whole-grain emmer or einkorn with medium-strong and high-extraction wheat flour and a little wheat germ, for a nutty, grassy loaf. Made the Basic Country Bread way, with 18 hours in the fridge, so a leaven started in the evening bakes two mornings later. Roll the shaped loaves in coarse bran if you like.',
+    method: 'tartine',
+    // Medium-strong wheat flour is the white-bread flour here, a choice made for Michael (decision 24).
+    flours: ['white', 'emmer', 'highext'],
+    late: [],
+    buildFlour: 'white',
+    initialMix: {
+      note: 'Disperse the leaven used in the initial water, about 80°F / 27°C. Add the flours and the wheat germ; mix until no dry flour remains. Cover and rest; the book gives 25 to 40 minutes.',
+    },
+    extras: [{ name: 'Wheat germ', percent: 7 }],
+    finalShape: 'For a bran crust, roll the round in coarse bran before it goes into the basket, bran side down.',
+    coldProof: 1080,
+    // The Basic Country Bread's 25 to 40 minutes for the rest with the leaven in (decision 23).
+    maxAutolyse: 40,
+    // Page 72: 400 g medium-strong wheat flour, 300 g whole-grain emmer or einkorn flour, 300 g high-extraction wheat
+    // flour; 70 g wheat germ (7%); 850 g water (85%); 150 g leaven (15%), built as for Tartine Country Bread; 25 g fine
+    // sea salt (2.5%). Two loaves of 2,095 g / 2. As for Whole Wheat and Country Rye, 50 g of the water is assumed to
+    // wait for the salt, as in the Basic Country Bread.
+    defaults: {
+      count: 2,
+      weight: 1047.5,
+      hydration: 85,
+      leaven: 15,
+      salt: 2.5,
+      reserve: share(50, 850),
+      flours: { white: 40, emmer: 30, highext: 30 },
+      build: { starter: 15, flour: 100, wheat: 100, water: 200 },
+      autolyse: TARTINE.rest,
     },
   },
 ];
