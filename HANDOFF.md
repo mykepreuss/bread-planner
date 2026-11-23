@@ -1154,3 +1154,13 @@ Independent check (the verifier, on `1cbed1b`): PASS on all six criteria.
 - Noted, not changed: from a 9:00 AM leaven the seeds go into the oven around 2:00 PM, as the final mix starts, as the Tartine version also overlapped its initial mix. A rollback to an earlier release would show Olive as a mix of the two doughs. Any Tartine Olive or Sesame bake in progress loses its checks on the first load after release, by design.
 
 Not verified: a real phone, and a real bake of either.
+
+## Recipe names, November 22, 2026: committed, pull request open
+
+Why: Michael asked for Preuss House to be Preuss Country Bread, Original Tartine to be Tartine Country Bread, Olive to be Olive Bread and Sesame to be Sesame Bread. Branch `recipe-names`, from `preuss-olive-sesame` (pull request 42), so this pull request is based on it.
+
+Change: the four names in `src/domain/recipes.ts`, and "Preuss Country Bread dough" in Olive Bread's and Sesame Bread's descriptions. Ids, saves, settings and schedules are unchanged. docs/BEHAVIOUR.md uses the new names in its description of the app and records decision 17; earlier decisions keep the names of their time, and code comments still use the short ones. README says Preuss Country Bread is the default.
+
+Tests: the name checks in the recipe, Olive, Sesame and Whole Wheat tests and the browser record's recipe menu and recipe choices use the new names. The record (`baseline.json`) has no recipe names and didn't change.
+
+Not verified: a real phone.

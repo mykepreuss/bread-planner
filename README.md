@@ -28,7 +28,7 @@ The code is formatted with Prettier (`npm run format`; `npm run format:check` re
 
 ## Recipes and persistence
 
-Preuss House is the default. Six distinct editable recipes retain independent settings and checklists. The calculation engine includes separate leaven made/used/reserved, staged ingredients, all-loaf forward/backward scheduling, overnight proof, readiness cues and quiet-hours checks. Percentages support both sliders and exact number entry.
+Preuss Country Bread is the default. Six distinct editable recipes retain independent settings and checklists. The calculation engine includes separate leaven made/used/reserved, staged ingredients, all-loaf forward/backward scheduling, overnight proof, readiness cues and quiet-hours checks. Percentages support both sliders and exact number entry.
 
 On bake day, an "Up next" card shows the next step with a countdown. Checking a step records when it was done, and later steps move to keep their planned spacing from it. Turns are the exception: they are recorded but move nothing, so bulk always runs its planned length from when it started.
 

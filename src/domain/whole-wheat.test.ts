@@ -193,10 +193,10 @@ test('Tartine Whole Wheat is on the menu after Olive and Sesame, made the Tartin
   assert.deepEqual(
     RECIPES.map((r) => [r.id, r.name, r.method]),
     [
-      ['house', 'Preuss House', 'house'],
-      ['tartine', 'Original Tartine', 'tartine'],
-      ['olive', 'Olive', 'house'],
-      ['sesame', 'Sesame', 'house'],
+      ['house', 'Preuss Country Bread', 'house'],
+      ['tartine', 'Tartine Country Bread', 'tartine'],
+      ['olive', 'Olive Bread', 'house'],
+      ['sesame', 'Sesame Bread', 'house'],
       ['whole-wheat', 'Tartine Whole Wheat', 'tartine'],
       ['country-rye', 'Tartine Country Rye', 'tartine'],
     ],

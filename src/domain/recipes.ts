@@ -5,7 +5,9 @@ import type { AddIns } from './addins.ts';
  * equals the value the app has always started with. White & Whole Wheat, Red Spring & Rye, Five-Flour and Four-Flour
  * Sourdough were removed at Michael's request on November 22, 2026, with the flours only they used; they are in git
  * history. The same day he asked for four more from Tartine Bread: Tartine Olive, Tartine Sesame, Tartine Whole Wheat
- * and Tartine Country Rye. Then he asked for Olive and Sesame, so named, to follow Preuss House where logical.
+ * and Tartine Country Rye. Then he asked for Olive and Sesame to follow Preuss House where logical, and renamed the
+ * recipes: Preuss Country Bread (Preuss House), Tartine Country Bread (Original Tartine), Olive Bread and Sesame Bread
+ * (decision 17). Ids are unchanged, and code comments still use the shorter names.
  */
 
 export type FlourKey = 'anita' | 'white' | 'wheat' | 'rye' | 'ap';
@@ -79,7 +81,7 @@ const preussDefaults = (): Settings => ({
 export const RECIPES: Recipe[] = [
   {
     id: 'house',
-    name: 'Preuss House',
+    name: 'Preuss Country Bread',
     description: "Anita's all-purpose flour with whole wheat and rye. Autolyse, then an overnight cold proof.",
     method: 'house',
     flours: ['anita', 'wheat', 'rye'],
@@ -89,7 +91,7 @@ export const RECIPES: Recipe[] = [
   },
   {
     id: 'tartine',
-    name: 'Original Tartine',
+    name: 'Tartine Country Bread',
     description:
       'The book’s 90/10 white and whole-wheat loaf, with leaven in the initial mix. Its 12-hour leaven suits an evening start.',
     method: 'tartine',
@@ -113,9 +115,9 @@ export const RECIPES: Recipe[] = [
     // asked for it to follow Preuss House where that is logical (decision 16): its dough, leaven, 1½-hour autolyse,
     // turns, overnight cold proof and oven, with the olive mixture worked in after the first turn, as the book does.
     id: 'olive',
-    name: 'Olive',
+    name: 'Olive Bread',
     description:
-      'Preuss House dough with olives, herbes de Provence, lemon zest and, if you like, toasted nuts, worked in after the first turn. A mix of green and oil-cured black olives works well.',
+      'Preuss Country Bread dough with olives, herbes de Provence, lemon zest and, if you like, toasted nuts, worked in after the first turn. A mix of green and oil-cured black olives works well.',
     method: 'house',
     flours: ['anita', 'wheat', 'rye'],
     late: ['rye'],
@@ -137,9 +139,9 @@ export const RECIPES: Recipe[] = [
     // Tartine Bread page 90, "Sesame": 1 cup of seeds for the book's two loaves. Like Olive, it follows Preuss House
     // where that is logical (decision 16): the seeds go into Preuss House's dough after the first turn.
     id: 'sesame',
-    name: 'Sesame',
+    name: 'Sesame Bread',
     description:
-      'Preuss House dough and timing, with toasted sesame seeds worked in after the first turn. The seeds toast as the autolyse finishes.',
+      'Preuss Country Bread dough and timing, with toasted sesame seeds worked in after the first turn. The seeds toast as the autolyse finishes.',
     method: 'house',
     flours: ['anita', 'wheat', 'rye'],
     late: ['rye'],

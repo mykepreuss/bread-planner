@@ -58,7 +58,7 @@ test('Sesame is on the menu right after Olive, with Preuss House’s method, flo
     house = recipe('house');
   assert.equal(ids.indexOf('sesame'), ids.indexOf('olive') + 1);
   assert.equal(ids.indexOf('olive'), ids.indexOf('tartine') + 1);
-  assert.equal(sesame.name, 'Sesame');
+  assert.equal(sesame.name, 'Sesame Bread');
   assert.deepEqual(
     [sesame.method, sesame.flours, sesame.late, sesame.buildFlour],
     [house.method, house.flours, house.late, house.buildFlour],
@@ -72,7 +72,7 @@ test('Sesame is on the menu right after Olive, with Preuss House’s method, flo
     [sesame.flours, house.flours],
   ] as const)
     assert.notEqual(a, b);
-  assert.match(sesame.description, /^Preuss House dough and timing, with toasted sesame seeds/);
+  assert.match(sesame.description, /^Preuss Country Bread dough and timing, with toasted sesame seeds/);
   assert.ok(
     Object.isFrozen(sesame.addIns) && Object.isFrozen(sesame.addIns!.prep) && Object.isFrozen(sesame.addIns!.items[0]),
   );
