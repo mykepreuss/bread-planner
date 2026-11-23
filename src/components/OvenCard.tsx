@@ -16,6 +16,7 @@ export function OvenCard({
   onReheat,
   onProof,
   book,
+  coldText,
   batches,
   count,
   proofWindow,
@@ -27,6 +28,8 @@ export function OvenCard({
   onReheat: (minutes: number) => void;
   onProof: (proof: 'cold' | 'warm') => void;
   book: boolean;
+  /** The recipe's refrigerated final proof, such as "10 to 12 hours"; see `coldProofText`. */
+  coldText: string;
   batches: number;
   count: number;
   proofWindow: ReturnType<typeof coldProofWindow>;
@@ -87,7 +90,7 @@ export function OvenCard({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="cold">Refrigerated, 10 to 12 hours</SelectItem>
+              <SelectItem value="cold">{`Refrigerated, ${coldText}`}</SelectItem>
               <SelectItem value="warm">Warm, 3 to 4 hours</SelectItem>
             </SelectContent>
           </Select>

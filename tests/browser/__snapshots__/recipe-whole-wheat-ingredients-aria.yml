@@ -6,7 +6,7 @@
     - tab "Ingredients" [selected]
   - text: Recipe
   - combobox "Recipe": Tartine Whole Wheat
-  - paragraph: The book’s 70/30 whole-wheat and all-purpose loaf, mixed with cooler water and rested longer before the salt. If the dough runs lively, lower the leaven toward 15%.
+  - paragraph: The book’s 70/30 whole-wheat and all-purpose loaf. The flour soaks in cool water for 2 hours before the leaven goes in, and the loaves proof 18½ hours in the fridge, so a leaven started in the evening bakes two mornings later. If the dough runs lively, lower the leaven toward 15%.
   - tabpanel "Ingredients":
     - text: Your batch Each recipe remembers its own settings. Number of loaves
     - spinbutton "Number of loaves": "2"
@@ -85,16 +85,16 @@
       - button "Restore recipe defaults"
     - text: 2,020g
     - paragraph: Total dough for 2 loaves
-    - text: 82% total hydration 1,010 g per loaf 01 / Initial mix and rest Leaven goes into this mix before the initial rest.
-    - term: Leaven used
-    - definition: 200 g
+    - text: 82% total hydration 1,010 g per loaf 01 / Autolyse Mix the flour and first water addition. Keep the final-mix ingredients separate.
     - term: Whole-wheat flour
     - definition: 700 g
     - term: All-purpose flour
     - definition: 300 g
     - term: Water
     - definition: 750 g
-    - text: 02 / Salt and remaining water Add after the initial rest, then begin bulk fermentation.
+    - text: 02 / Final mix Add after the autolyse, once the leaven is ready.
+    - term: Leaven used
+    - definition: 200 g
     - term: Salt
     - definition: 20 g
     - term: Water

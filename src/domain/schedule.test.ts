@@ -333,18 +333,21 @@ test('an ingredient the recipe has none of gets no tick-off, and a final mix wit
   assert.equal(nothing.note, 'Mix until incorporated.');
 });
 
-test("Tartine's second addition lists its salt and water as tick-offs, for every Tartine recipe, and keeps the book's note", () => {
+test("Tartine's second addition lists its salt and water as tick-offs, and the leaven first after Whole Wheat's autolyse", () => {
   for (const id of ['tartine', 'whole-wheat', 'country-rye']) {
     const steps = schedule(plan(id)),
-      mix = find(steps, 'mix');
+      mix = find(steps, 'mix'),
+      leaven = id === 'whole-wheat';
     assert.deepEqual(mix.additions, [
+      ...(leaven ? [{ id: 'mix:leaven', name: 'Leaven', grams: 200 }] : []),
       { id: 'mix:salt', name: 'Salt', grams: 20 },
       { id: 'mix:water', name: 'Water', grams: 50 },
     ]);
     assert.equal(
       mix.note,
-      'Work in the salt and reserved water. Keep mixing if the dough separates; it should come together again.',
+      `Work in the ${leaven ? 'leaven, ' : ''}salt and reserved water. Keep mixing if the dough separates; it should come together again.`,
     );
+    assert.equal(mix.title, leaven ? 'Add leaven, salt and final water' : 'Add salt and final water');
     assert.deepEqual(
       steps.filter((s) => s.additions).map((s) => s.id),
       ['mix'],
@@ -431,13 +434,16 @@ test('Tartine recipes split the initial mix and the salt step between bowls, and
       /^Split this mix between 2 bowls, with an equal share of everything in each\. /,
       id,
     );
+    const leaven = id === 'whole-wheat';
     assert.equal(
       find(steps, 'mix').note,
-      'Work the salt and reserved water into each bowl. Keep mixing if the dough separates; it should come together again.',
+      `Work the ${leaven ? 'leaven, ' : ''}salt and reserved water into each bowl. Keep mixing if the dough separates; it should come together again.`,
     );
     assert.deepEqual(
       find(steps, 'mix').additions!.map((a) => a.id),
-      ['mix:1:salt', 'mix:1:water', 'mix:2:salt', 'mix:2:water'],
+      leaven
+        ? ['mix:1:leaven', 'mix:1:salt', 'mix:1:water', 'mix:2:leaven', 'mix:2:salt', 'mix:2:water']
+        : ['mix:1:salt', 'mix:1:water', 'mix:2:salt', 'mix:2:water'],
     );
     assert.match(find(steps, 'rest').note, /^Combine both bowls in one container\. Cover and keep/);
   }

@@ -172,6 +172,17 @@ const TARTINE_MIX = {
   note: 'Disperse the leaven used in the initial water, about 80°F / 27°C. Add white and whole-wheat flour; mix until no dry flour remains. Cover for 25 to 40 minutes.',
 };
 const gram = (n: number) => `${Math.round(n * 10) / 10} g`;
+
+/**
+ * How long a Tartine recipe's loaves stay in the fridge, as its step and the oven card say: the book's "10 to 12 hours",
+ * or the recipe's own, such as "about 18½ hours".
+ */
+export function coldProofText(recipe: Recipe) {
+  if (recipe.coldProof === undefined) return '10 to 12 hours';
+  const hours = recipe.coldProof / 60,
+    whole = Math.floor(hours);
+  return `about ${hours - whole === 0.5 ? `${whole}½` : Math.round(hours * 10) / 10} hours`;
+}
 const listed = (rows: [string, number][]) =>
   rows.map(([name, n]) => `${inSentence(name)} (${Math.round(n * 10) / 10} g)`).join(', ');
 
@@ -247,29 +258,29 @@ export function schedule(input: PlanInput): Step[] {
   let firstBake: number, preheat: number, covered: number, uncovered: number, warmup: number;
   if (tartine) {
     const t = TARTINE,
-      initial = recipe.initialMix ?? TARTINE_MIX;
+      initial = recipe.initialMix ?? TARTINE_MIX,
+      own = recipe.autolyse,
+      split = (note: string) =>
+        bowls > 1 ? `Split this mix between ${bowls} bowls, with an equal share of everything in each. ${note}` : note;
     push('leaven', 'leaven', 'Make leaven', 0, t.leaven, leavenNote(recipe, r, bowls), LEAVEN_CUE);
     let at = t.leaven;
-    push(
-      'autolyse',
-      'autolyse',
-      'Mix dough and rest',
-      at,
-      initial.rest,
-      bowls > 1
-        ? `Split this mix between ${bowls} bowls, with an equal share of everything in each. ${initial.note}`
-        : initial.note,
-    );
-    at += initial.rest;
+    // A recipe with its own autolyse rests the flour and water until the leaven is ready, then adds the leaven with the
+    // salt (decision 16). The book's method mixes the leaven in first and rests before the salt.
+    if (own) push('autolyse', 'autolyse', 'Start autolyse', at - own.minutes, own.minutes, split(own.note));
+    else {
+      push('autolyse', 'autolyse', 'Mix dough and rest', at, initial.rest, split(initial.note));
+      at += initial.rest;
+    }
+    const added = own ? 'leaven, salt and reserved water' : 'salt and reserved water';
     push(
       'mix',
       'mix',
-      'Add salt and final water',
+      own ? 'Add leaven, salt and final water' : 'Add salt and final water',
       at,
       0,
       bowls > 1
-        ? 'Work the salt and reserved water into each bowl. Keep mixing if the dough separates; it should come together again.'
-        : 'Work in the salt and reserved water. Keep mixing if the dough separates; it should come together again.',
+        ? `Work the ${added} into each bowl. Keep mixing if the dough separates; it should come together again.`
+        : `Work in the ${added}. Keep mixing if the dough separates; it should come together again.`,
       undefined,
       additionsFor('mix', r.final, bowls),
     );
@@ -324,15 +335,16 @@ export function schedule(input: PlanInput): Step[] {
     );
     at += t.shape;
     if (input.proof === 'cold') {
+      const cold = recipe.coldProof ?? t.cold;
       push(
         'fridge',
         'fridge',
         'Refrigerated final proof',
         at,
-        t.cold,
-        `Cover the baskets and refrigerate for 10 to 12 hours.${later}`,
+        cold,
+        `Cover the baskets and refrigerate for ${coldProofText(recipe)}.${later}`,
       );
-      at += t.cold;
+      at += cold;
       warmup = t.warmup;
       push(
         'warmup',

@@ -1195,3 +1195,27 @@ Independent check (the verifier, on `c0bf36e`): PASS on all five criteria.
 Not verified: a real phone.
 
 Rebased onto `main` at `5b500e1` (after pull requests 41, 42 and 43): the recorded records and browser snapshots were regenerated, the Tartine-only quiet-hours test no longer includes Olive and Sesame (now Preuss House variations with night-free starts), and 57 of the record's 161 plans now carry suggestions. The rest of the change is as verified.
+
+## Tartine Whole Wheat: a 2-hour autolyse and an 18½-hour cold final proof, November 22, 2026: committed, pull request open
+
+Why: after the start suggestion (pull request 39), Michael asked to take the Tartine recipes one at a time, starting with Whole Wheat, and to make its cold final proof fit a normal day. He chose a longer fridge ("which is fine"), and after reviewing The Perfect Loaf's and SourdoughGuru's autolyse guides, a true autolyse in place of the book's 50-minute rest with the leaven in ("option 2"). Branch `whole-wheat-autolyse`, from `quiet-start` at `f9f8f38`, so this pull request is based on pull request 39.
+
+Done means: Whole Wheat from a 9:30 PM leaven shows "Start autolyse" at 7:30 AM for 2 hours, "Add leaven, salt and final water" at 9:30 AM with Leaven 200 g, Salt 20 g and Water 50 g to tick, the fridge at 1:10 PM for "about 18½ hours", and the loaves out at 9:20 AM two mornings later, with no quiet-hours warning; the other recipes don't change; and `npm test`, the build and `npm run test:browser` pass.
+
+Change:
+- `src/domain/recipes.ts`: a Tartine recipe can have its own `autolyse` (minutes and note) in place of the book's initial mix and rest, and its own `coldProof` in minutes. Whole Wheat has a 120-minute autolyse and a 1,110-minute cold proof; its `initialMix` is gone, and its description says so. Country Rye keeps its 50-minute rest.
+- `formula.ts`: a Tartine recipe with its own autolyse has the leaven in the final mix. `schedule.ts`: its autolyse is the leaven's last `minutes`, titled "Start autolyse"; the mix at the leaven's end is "Add leaven, salt and final water"; the fridge lasts `coldProof`, and `coldProofText` writes "about 18½ hours" for the step and the oven card's Final proof menu ("10 to 12 hours" otherwise). The Ingredients tab shows "01 / Autolyse" and "02 / Final mix" for it.
+- docs/BEHAVIOUR.md records decision 19 (16 before rebasing) and Whole Wheat's schedule.
+
+Record changes, checked by decoding both records with the repo's decoder: only the 8 Whole Wheat plans and its 4 calculations changed; every other plan, calculation, saved-data case and helper is identical (the raw file also renumbers its shared texts).
+
+Independent check (the verifier, on `bed5c10`): PASS on all six criteria.
+- Its own check of 5,580 plans (both proofs, 1 to 3 per oven, 1 to 5 loaves, 1 to 3 per mix, around both clock changes) matched the rule for every step. The only mismatches were 18 plans finishing in the repeated 1:00 AM hour on November 1, where planning back from the finish differs; Tartine Country Bread already does this.
+- Trying every minute, the night-free leaven starts are exactly 9:00 to 10:30 PM with either proof. On the clock-change weekends, timing in elapsed hours narrows it (October 30 and 31: 10:00 to 10:30 PM) or widens it (March 7: from 8:00 PM).
+- Decoding both records confirmed that only the 8 Whole Wheat plans and 4 calculations changed. All five breaks were caught: the autolyse ending at the leaven's start, the leaven left in the first stage, the fridge back to 12 hours, the 18½ hours leaking to Country Rye, and "18.5" written for "18½".
+- Fixed from its findings: Country Rye's description said its longer rest was "as for whole wheat"; it now says "than Tartine Country Bread", which changes that description on its two screens. Decision 10 in BEHAVIOUR.md now notes that Whole Wheat's rest was replaced.
+- Noted for deploying: a Whole Wheat bake started before this change and still under way would show "Add leaven, salt and final water" with the leaven to tick although it is already in, and move its later steps (its bake 6½ hours later once in the fridge). Finish any such bake first; Michael added the recipe today.
+
+Not verified: a real phone, and a real bake with the 18½-hour fridge.
+
+Rebased onto `main` at `3599cf0` (after pull requests 41, 42, 43 and 39): the records and browser snapshots were regenerated, the Tartine-method tests no longer list Olive and Sesame, Country Rye's description compares its rest with Tartine Country Bread's, and the decision is renumbered 19. The rest of the change is as verified.

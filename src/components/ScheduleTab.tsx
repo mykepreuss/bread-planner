@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import * as act from '@/state/actions';
 import { scheduleView, skipsOnCheck } from '@/view/schedule';
+import { coldProofText } from '@/domain/schedule';
 import { usePlanner } from './calculator';
 import { useNow } from './useNow';
 import { whenText } from './text';
@@ -128,6 +129,7 @@ export function ScheduleTab({ onViewIngredients }: { onViewIngredients: () => vo
             onReheat={(minutes) => update((s) => act.setReheat(s, minutes))}
             onProof={(proof) => update((s) => act.setProof(s, proof))}
             book={book}
+            coldText={coldProofText(v.recipe)}
             batches={v.batches}
             count={v.count}
             proofWindow={v.proofWindow}

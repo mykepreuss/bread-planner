@@ -83,7 +83,8 @@ export function IngredientsTab() {
   const { state, update } = usePlanner(),
     { recipe: d, settings: p } = selected(state),
     r = formula(d, p),
-    book = d.method === 'tartine';
+    // The book's Tartine method has the leaven in the initial mix; a Tartine recipe with its own autolyse doesn't.
+    book = d.method === 'tartine' && !d.autolyse;
   const buildFlour = FLOUR_NAMES[d.buildFlour];
   // Mixed in several bowls, each stage lists one bowl's weights; see `mixingBowls`.
   const bowls = mixingBowls(p.count, state.mixCapacity),
