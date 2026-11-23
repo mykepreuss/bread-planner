@@ -5,8 +5,8 @@
     - tab "Schedule"
     - tab "Ingredients" [selected]
   - text: Recipe
-  - combobox "Recipe": Olive
-  - paragraph: Preuss House dough with olives, herbes de Provence, lemon zest and, if you like, toasted nuts, worked in after the first turn. A mix of green and oil-cured black olives works well.
+  - combobox "Recipe": Olive Bread
+  - paragraph: Preuss Country Bread dough with olives, herbes de Provence, lemon zest and, if you like, toasted nuts, worked in after the first turn. A mix of green and oil-cured black olives works well.
   - tabpanel "Ingredients":
     - text: Your batch Each recipe remembers its own settings. Number of loaves
     - spinbutton "Number of loaves": "2"

@@ -1161,6 +1161,8 @@ Why: Michael asked for Preuss House to be Preuss Country Bread, Original Tartine
 
 Change: the four names in `src/domain/recipes.ts`, and "Preuss Country Bread dough" in Olive Bread's and Sesame Bread's descriptions. Ids, saves, settings and schedules are unchanged. docs/BEHAVIOUR.md uses the new names in its description of the app and records decision 17; earlier decisions keep the names of their time, and code comments still use the short ones. README says Preuss Country Bread is the default.
 
-Tests: the name checks in the recipe, Olive, Sesame and Whole Wheat tests and the browser record's recipe menu and recipe choices use the new names. The record (`baseline.json`) has no recipe names and didn't change.
+Tests: the name checks in the recipe, Olive, Sesame and Whole Wheat tests and the browser record's recipe menu and recipe choices use the new names. The record (`baseline.json`) has no recipe names and didn't change. The browser record's 33 snapshots that show a recipe name changed only in that name; 55 of 55 browser tests pass, `npm test` passes 176 of 176, and the build has 0 errors.
+
+Verification: my own checks, not the verifier: only names changed.
 
 Not verified: a real phone.

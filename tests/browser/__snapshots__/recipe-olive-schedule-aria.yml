@@ -5,8 +5,8 @@
     - tab "Schedule" [selected]
     - tab "Ingredients"
   - text: Recipe
-  - combobox "Recipe": Olive
-  - paragraph: Preuss House dough with olives, herbes de Provence, lemon zest and, if you like, toasted nuts, worked in after the first turn. A mix of green and oil-cured black olives works well.
+  - combobox "Recipe": Olive Bread
+  - paragraph: Preuss Country Bread dough with olives, herbes de Provence, lemon zest and, if you like, toasted nuts, worked in after the first turn. A mix of green and oil-cured black olives works well.
   - tabpanel "Schedule":
     - region "Up next":
       - text: Up next in 6h 40m
