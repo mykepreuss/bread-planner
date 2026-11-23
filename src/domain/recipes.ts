@@ -30,7 +30,7 @@ export function inSentence(name: string) {
  * back for the final mix. `hydration` is added water; the screen shows total hydration (see `totalHydration`). The
  * leaven build is in grams per 1,000 g of added flour. `autolyse` is in whole minutes from 0 to 720: the autolyse, which
  * ends as the leaven is ready, or for a recipe with the leaven in its initial mix, the rest after that mix, which every
- * later step follows (decision 21).
+ * later step follows (decision 22).
  */
 export type Settings = {
   count: number;
@@ -105,11 +105,16 @@ export const RECIPES: Recipe[] = [
     id: 'tartine',
     name: 'Tartine Country Bread',
     description:
-      'The book’s 90/10 white and whole-wheat loaf, with leaven in the initial mix. Its 12-hour leaven suits an evening start.',
+      'The book’s 90/10 white and whole-wheat loaf, with leaven in the initial mix. Its 12-hour leaven suits an evening start, and 18 hours in the fridge bakes it two mornings later.',
     method: 'tartine',
     flours: ['white', 'wheat'],
     late: [],
     buildFlour: 'white',
+    // Michael's choice on November 23, 2026 (decision 21), so a cold-proofed bake keeps out of quiet hours: the loaves
+    // proof 18 hours in the fridge, not 12, so a leaven from 9:00 to 10:30 PM keeps every step out of them. The book's
+    // 30-minute rest with the leaven in stays, so the fridge is the only change from the book; Preuss Country Bread is
+    // the version of this dough with an autolyse.
+    coldProof: 1080,
     // 900 g white, 100 g whole wheat; 750 g water with 50 g held back; 200 g leaven; 20 g salt; 1 tbsp (15 g) starter.
     defaults: {
       count: 2,

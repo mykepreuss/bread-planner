@@ -409,7 +409,7 @@ function bakeDays(): [string, PlanInput][] {
     ['six loaves in three bowls, planned', house({ params: { count: 6 } })],
     ['four loaves mixed in one bowl of four', house({ params: { count: 4 }, mixCapacity: 4 })],
     ['tartine, four loaves in two bowls, planned', tartine({ params: { count: 4 } })],
-    // The autolyse length as a setting, added November 23, 2026 (decision 21).
+    // The autolyse length as a setting, added November 23, 2026 (decision 22).
     ['a 4½-hour autolyse, planned', house({ params: { autolyse: 270 } })],
     ['tartine, a 60-minute rest after mixing, planned', tartine({ params: { autolyse: 60 } })],
     [

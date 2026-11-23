@@ -1,7 +1,7 @@
 /**
  * How long each stage takes, in minutes. These were cells of the source spreadsheet (House) and the book's times
  * (Tartine); there is no editor, so they are constants, except the autolyse and Tartine's rest, which are only each
- * recipe's default for its `autolyse` setting (decision 21). Bulk runs from its start to preshape, with a turn every 30
+ * recipe's default for its `autolyse` setting (decision 22). Bulk runs from its start to preshape, with a turn every 30
  * minutes in between.
  */
 export const HOUSE = {

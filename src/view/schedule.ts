@@ -117,7 +117,9 @@ export type QuietFix = { at: Date; actions: number; proof: 'cold' | 'warm' };
  * The starts the quiet-hours warning suggests for a plan with `actions` quiet-hour actions: the quietest leaven start
  * with this proof, if it leaves fewer, and for a Tartine recipe the quietest with the other proof, if it leaves fewer
  * still. Added at Michael's request on November 22, 2026: with the book's 12-hour leaven and 12-hour fridge, no start
- * keeps a cold-proofed Tartine bake out of quiet hours, but an evening leaven with a warm proof does.
+ * kept a cold-proofed Tartine bake out of quiet hours, but an evening leaven with a warm proof did. Since decisions 19
+ * to 21 gave each Tartine recipe a longer fridge, a cold proof has a night-free start for up to twelve loaves, so the
+ * other proof is offered when a warm proof has none, as with eight loaves baked one at a time.
  */
 function fixesFor(state: PlannerState, actions: number, now: number): QuietFix[] {
   const input = planOf(state),

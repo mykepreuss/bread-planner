@@ -218,7 +218,7 @@ test('every setting a version 5 or version 6 save holds loads as saved, for ever
   }
 });
 
-test('the autolyse is whole minutes from 0 to 720, and a save without one, or with an invalid one, gets the recipe default (decision 21)', () => {
+test('the autolyse is whole minutes from 0 to 720, and a save without one, or with an invalid one, gets the recipe default (decision 22)', () => {
   const load = (autolyse: unknown, id = 'house') => {
     const settings = { ...defaultSettings(recipeById(id)!), autolyse };
     if (autolyse === undefined) delete (settings as Partial<Settings>).autolyse;
@@ -637,7 +637,7 @@ test('Olive and Sesame saved with Original Tartine’s dough load fresh at Preus
   assert.deepEqual(s.recipes.sesame.settings, edited, 'a save in the new dough keeps its edits');
   assert.deepEqual(s.recipes.sesame.bake.done, ['leaven', 'autolyse']);
   // Original Tartine still uses white and whole-wheat flour, so its save loads as it was, with the default rest
-  // after mixing, which saves from then didn't hold (decision 21).
+  // after mixing, which saves from then didn't hold (decision 22).
   assert.deepEqual(s.recipes.tartine.settings, { ...tartineDough, autolyse: 30 });
   assert.equal(s.recipes.tartine.bake.doughTemp, 78);
   // The rule is for Olive and Sesame only: Preuss House with a flour it doesn't use keeps its settings and checklist.
