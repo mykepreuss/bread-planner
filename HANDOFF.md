@@ -1386,4 +1386,12 @@ Change:
 
 Record changes, checked by decoding both records: 8 plans and 4 calculations were added for the recipe, and each of the 24 saved-data cases gained it at the end of the menu and in its recipes. No plan, calculation or helper that was there changed. The browser record gained the recipe's two screens, and the recipe menu flow lists it; no other screen changed.
 
+Independent check (the verifier, on `60dd8b2`): six of seven criteria passed.
+- It compared the recipe's plan with Tartine Country Bread's in 10,080 setups (dates across both clock changes, both anchors and proofs, 1 to 3 loaves at once, 1 to 5 loaves, several bowl sizes): every step matched, and the notes differed only where intended.
+- 20,000 random inputs for the other six recipes gave the same `formula()` and `schedule()` as `main`, and its decode of both records found only the additions above.
+- A version 6 save from `main` loads with the new recipe last at its defaults.
+- All four of its breaks were caught: wheat germ left out of the weight, the bran line dropped, a wrong longest rest, and the flours reordered.
+- Failed, and fixed: docs/BEHAVIOUR.md's Weights bullet still gave the added-flour formula without the extras, which would give 1,034.6 g of flour instead of 1,000. It now includes them.
+- From its nits: the schedule test now also covers 3 loaves at once and 1, 3 and 5 loaves. Noted, not changed: at phone width the two new flour names wrap to two lines in the Flour blend table, readably.
+
 Not verified: a real phone, or a real bake. Emmer and einkorn have weaker gluten than wheat, so the 18-hour fridge is worth watching on the first bake.

@@ -123,7 +123,7 @@ test('its weights are the book’s table: 400, 300 and 300 g of flour, 70 g whea
 test('its schedule is Tartine Country Bread’s, step for step, with its own initial-mix note, the bran at the final shape and its salt', () => {
   const view = (s: Step[]) => s.map((x) => [x.id, x.title, +x.at, x.minutes, x.kind, x.readiness]);
   for (const proof of ['cold', 'warm'] as const)
-    for (const ovenCapacity of [1, 2])
+    for (const ovenCapacity of [1, 2, 3])
       for (const anchor of ['leaven', 'done'] as const) {
         const change = { proof, ovenCapacity, anchor, ...(anchor === 'done' && { date: '2026-10-23', time: '08:00' }) },
           name = `${proof}, ${ovenCapacity} at once, from the ${anchor}`;
@@ -157,6 +157,15 @@ test('its schedule is Tartine Country Bread’s, step for step, with its own ini
         near(added[0].grams, 25, `${name}: salt`);
         near(added[1].grams, 50, `${name}: water`);
       }
+  // Other loaf counts give the same steps and times; their notes scale with the batch.
+  for (const count of [1, 3, 5])
+    for (const proof of ['cold', 'warm'] as const) {
+      const e = plan('emmer', { proof }),
+        c = plan('tartine', { proof });
+      e.settings = { ...e.settings, count };
+      c.settings = { ...c.settings, count };
+      assert.deepEqual(view(schedule(e)), view(schedule(c)), `${count} loaves, ${proof}`);
+    }
   const cold = schedule(plan('emmer'));
   assert.equal(cold.find((x) => x.id === 'fridge')!.note, 'Cover the baskets and refrigerate for about 18 hours.');
   assert.equal(clockText(cold.find((x) => x.id === 'done')!.at), '20:50');
