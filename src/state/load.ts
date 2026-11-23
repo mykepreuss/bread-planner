@@ -111,13 +111,17 @@ function bakeFrom(source: Raw): Bake {
   };
 }
 
+/** The recipes whose dough changed after saves of them existed: Olive and Sesame were Tartine variations (decision 16). */
+const NEW_DOUGH = new Set(['olive', 'sesame']);
+
 /**
- * Whether a saved recipe was saved for a dough it no longer has: its version 6 settings name a flour the recipe doesn't
- * use. Olive and Sesame changed from Original Tartine's white and whole-wheat dough to Preuss House's (decision 16),
- * so a save from before loads them fresh, settings and checklist, rather than mixing the old dough's values into the
- * new one.
+ * Whether Olive or Sesame was saved for the dough it no longer has: its version 6 settings name a flour it doesn't use,
+ * such as white-bread flour from Original Tartine's dough. Such a save loads it fresh, settings and checklist, rather
+ * than mixing the old dough's values into Preuss House's. Only those two recipes, so a later change to another
+ * recipe's flours doesn't wipe its save.
  */
 function otherDough(recipe: Recipe, source: Raw) {
+  if (!NEW_DOUGH.has(recipe.id)) return false;
   const settings = isObject(source.settings) ? source.settings : {},
     flours = isObject(settings.flours) ? settings.flours : {};
   return Object.keys(flours).some((k) => !(recipe.flours as string[]).includes(k));

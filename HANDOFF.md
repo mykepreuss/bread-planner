@@ -1146,4 +1146,11 @@ Change:
 
 Record changes, checked by decoding both records against `main`: the 18 Olive and Sesame plans and 8 calculations changed, and in each saved-data case only the Olive and Sesame entries; every other plan, calculation and helper is identical. Two case inputs moved with the new timing (Sesame's toast up next at 1:50 PM, Olive's add-ins at 2:50 PM).
 
+Independent check (the verifier, on `1cbed1b`): PASS on all six criteria.
+- Its own grid of 34,560 comparisons (5 dates around both clock changes, 8 start times, either anchor, both proofs, 1 or 2 per oven, 1 to 3 per mix, 6 settings) found Olive and Sesame equal to Preuss House but for their add-in and toast steps, and the four other recipes identical to `main`.
+- It loaded a save written by the released app (Olive at 3 loaves with two steps checked) in the built app: Olive came back at its defaults with nothing checked; Preuss House and Original Tartine kept their saves.
+- All five breaks were caught: the add-ins after Turn 2, the prep's lead time ignored, the old checklist kept, Olive's hydration at 75, and the loading rule removed.
+- Fixed from its findings: the loading rule applied to every recipe, so a later change to any recipe's flours would have wiped that recipe's settings and checklist; it now covers Olive and Sesame only, with a test that Preuss House keeps a save naming another flour. Comments in `addins.ts` and the method guide's line in BEHAVIOUR.md no longer describe Olive and Sesame as Tartine recipes.
+- Noted, not changed: from a 9:00 AM leaven the seeds go into the oven around 2:00 PM, as the final mix starts, as the Tartine version also overlapped its initial mix. A rollback to an earlier release would show Olive as a mix of the two doughs. Any Tartine Olive or Sesame bake in progress loses its checks on the first load after release, by design.
+
 Not verified: a real phone, and a real bake of either.

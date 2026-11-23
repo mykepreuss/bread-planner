@@ -618,4 +618,13 @@ test('Olive and Sesame saved with Original Tartine’s dough load fresh at Preus
   // Original Tartine still uses white and whole-wheat flour, so its save loads as it was.
   assert.deepEqual(s.recipes.tartine.settings, tartineDough);
   assert.equal(s.recipes.tartine.bake.doughTemp, 78);
+  // The rule is for Olive and Sesame only: Preuss House with a flour it doesn't use keeps its settings and checklist.
+  const house = { ...defaultSettings(recipeById('house')!), count: 4 },
+    stray = { ...house, flours: { ...house.flours, red: 0 } };
+  const h = loadState(
+    storage({ [STORAGE_V6]: JSON.stringify({ version: 6, plan: { recipes: { house: { settings: stray, bake } } } }) }),
+    NOW,
+  );
+  assert.deepEqual(h.recipes.house.settings, house);
+  assert.deepEqual(h.recipes.house.bake.done, ['leaven', 'autolyse']);
 });
