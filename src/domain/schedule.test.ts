@@ -239,7 +239,7 @@ test('House autolyse is the leaven’s last 90 minutes, and the cold proof runs 
 
 test('each recipe sets its own autolyse length, by default as before (decision 22)', () => {
   const lengths = Object.fromEntries(
-    ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye', 'emmer'].map((id) => [
+    ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye', 'emmer', 'oat-porridge'].map((id) => [
       id,
       [defaultSettings(recipeById(id)!).autolyse, find(schedule(plan(id)), 'autolyse').minutes],
     ]),
@@ -252,6 +252,7 @@ test('each recipe sets its own autolyse length, by default as before (decision 2
     'whole-wheat': [120, 120],
     'country-rye': [50, 50],
     emmer: [30, 30],
+    'oat-porridge': [30, 30],
   });
 });
 
@@ -273,16 +274,15 @@ test('an autolyse ends as the leaven is ready, so a longer or shorter one moves 
 });
 
 test('with the leaven in the initial mix, a longer rest moves every step after it (decision 22)', () => {
-  for (const id of ['tartine', 'country-rye', 'emmer']) {
+  for (const id of ['tartine', 'country-rye', 'emmer', 'oat-porridge']) {
     const before = schedule(plan(id)),
       d = defaultSettings(recipeById(id)!).autolyse,
       after = schedule(plan(id, {}, { autolyse: d + 40 }));
-    assert.deepEqual(
-      after.map((x) => x.id),
-      before.map((x) => x.id),
-    );
-    after.forEach((x, i) => {
-      const moved = (+x.at - +before[i].at) / 60000;
+    // Oat Porridge's porridge is timed from Turn 2, so it moves too; a rest beyond the 40 minutes allowed, as here, puts
+    // it after the initial mix.
+    assert.deepEqual(after.map((x) => x.id).sort(), before.map((x) => x.id).sort());
+    after.forEach((x) => {
+      const moved = (+x.at - +before.find((y) => y.id === x.id)!.at) / 60000;
       assert.equal(moved, x.id === 'leaven' || x.id === 'autolyse' ? 0 : 40, `${id}: ${x.id}`);
     });
     assert.equal(find(after, 'autolyse').minutes, d + 40);
@@ -483,7 +483,7 @@ test('the loaves split equally between bowls, and a bowl that holds them all is 
 });
 
 test('Tartine recipes split the initial mix and the salt step between bowls, and combine them for bulk', () => {
-  for (const id of ['tartine', 'whole-wheat', 'country-rye', 'emmer']) {
+  for (const id of ['tartine', 'whole-wheat', 'country-rye', 'emmer', 'oat-porridge']) {
     const steps = schedule(plan(id, {}, { count: 4 }));
     assert.match(
       find(steps, 'autolyse').note,

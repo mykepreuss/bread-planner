@@ -7,7 +7,7 @@ import { schedule, type PlanInput } from './schedule.ts';
 // Ported from src/lib/recipes.test.ts. Plans are for 9:00 AM local time on 21 October 2026, as there, and every time
 // is built and read in the local zone, so these tests hold in any time zone.
 const approx = (a: number, b: number, message?: string) => assert.ok(Math.abs(a - b) < 1e-7, message ?? `${a} != ${b}`);
-const IDS = ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye', 'emmer'];
+const IDS = ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye', 'emmer', 'oat-porridge'];
 /**
  * Preuss House set to the numbers of the retired Red Spring & Rye (removed November 22, 2026): the spreadsheet's main
  * calculator, which puts all of a 312 g build into the dough. It keeps the floating-point cases that recipe covered.
@@ -76,6 +76,8 @@ test('total hydration includes only the used leaven while every recipe quantity 
     'country-rye': (900 / 1100) * 100,
     // 850 g water and 75 g in the leaven over 1,000 g flour and 75 g in the leaven; wheat germ is not flour.
     emmer: (925 / 1075) * 100,
+    // 750 g water and 75 g in the leaven over the same; the porridge, almonds and oil go in later and are not counted.
+    'oat-porridge': (825 / 1075) * 100,
   };
   const recipes = JSON.stringify(RECIPES);
   for (const id of IDS) {
@@ -85,8 +87,9 @@ test('total hydration includes only the used leaven while every recipe quantity 
       r = weigh(input);
     approx(r.totalHydration, expected[id]);
     approx(r.totalHydration, (r.totalWater / r.totalFlour) * 100);
-    // Dry ingredients that are not flour, such as Emmer/Einkorn's wheat germ, count in the dough's weight too.
-    approx(r.totalWater + r.totalFlour + r.salt + sum(r.extras), r.total);
+    // Dry ingredients that are not flour, such as Emmer/Einkorn's wheat germ, count in the dough's weight too, and so do
+    // weighed add-ins, such as Oat Porridge's porridge (decision 27).
+    approx(r.totalWater + r.totalFlour + r.salt + sum(r.extras) + sum(r.addIns), r.total);
     approx(addedHydration(totalHydration(s), s), s.hydration);
     assert.equal(JSON.stringify(s), before, id);
   }
@@ -212,7 +215,7 @@ test('every recipe conserves dough mass and scales count, loaf weight and hydrat
     s.weight = 800;
     s.hydration += 5;
     const r = weigh(input);
-    approx(sum([...r.initial, ...r.final]), s.count * 800);
+    approx(sum([...r.initial, ...r.final, ...r.addIns]), s.count * 800);
     approx((100 * r.water) / r.flour, s.hydration);
     if (id !== 'house') assert.deepEqual(house.settings, other);
   }
@@ -389,7 +392,7 @@ test('a recipe is found only by its own id, and its defaults cannot be changed i
   assert.notEqual(defaultSettings(house), defaultSettings(house), 'each copy is new');
 });
 
-test('only Preuss Country Bread, Tartine Country Bread, Olive Bread, Sesame Bread, Tartine Whole Wheat, Tartine Country Rye and Tartine Emmer/Einkorn are on the menu (decisions 17 and 24), and the four removed recipes stay gone (Michael, November 22, 2026)', () => {
+test('only Preuss Country Bread, Tartine Country Bread, Olive Bread, Sesame Bread, Tartine Whole Wheat, Tartine Country Rye, Tartine Emmer/Einkorn and Tartine Oat Porridge are on the menu (decisions 17, 24 and 27), and the four removed recipes stay gone (Michael, November 22, 2026)', () => {
   assert.deepEqual(
     RECIPES.map((r) => [r.id, r.name]),
     [
@@ -400,6 +403,7 @@ test('only Preuss Country Bread, Tartine Country Bread, Olive Bread, Sesame Brea
       ['whole-wheat', 'Tartine Whole Wheat'],
       ['country-rye', 'Tartine Country Rye'],
       ['emmer', 'Tartine Emmer/Einkorn'],
+      ['oat-porridge', 'Tartine Oat Porridge'],
     ],
   );
   for (const gone of ['white-wheat', 'red-rye', 'five-flour', 'four-flour']) assert.equal(recipeById(gone), undefined);

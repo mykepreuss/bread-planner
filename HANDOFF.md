@@ -1420,7 +1420,7 @@ Release: pull request 50 merged as `e3a9a93` on Michael's "Merge when green" and
 
 In the in-app browser at 10:47 AM, the existing test save (Tartine Country Bread, Nov 8 at 9:00 AM, nothing checked) loaded as chosen and said "This plan ended". After "Plan the next bake", Up next showed "Make leaven · 9:00 PM · in 10h 12m", with both Suggested lines, the plan card at 2026-11-23 21:00, no quiet-hours warning and no console errors. The save was then restored byte for byte, and the page again showed Nov 8 at 9:00 AM, ended. GitHub auto-merge is turned off for this repository, so the merge was done by hand.
 
-## Always look forward, November 23, 2026: locally verified, not committed
+## Always look forward, November 23, 2026: released and verified live
 
 Why: at 11:03 AM Michael asked whether a refresh finds the best start from then on. It didn't: his save, from before decision 25, counted as chosen, and so did any start once chosen, however long ago it had passed. He decided the plan should always look forward unless a future date has been chosen. Branch `look-forward`, from `main` at `e3a9a93`.
 
@@ -1442,3 +1442,42 @@ Record changes:
 Evidence (this session): `npm test` passed 200 of 200, also with `BASELINE_ZONE=rule`. `npm run build` passed with 0 errors. `npm run test:browser` passed 63 of 63. In the dev server, with an 11:00 PM leaven chosen and a quiet-hours warning showing, "Use suggested start" showed "Feed starter · 9:15 PM". Tapping it moved the plan to the 8:15 AM suggestion, cleared the warning and hid the button. The dev save was restored.
 
 Known: if a bake starts with nothing ticked, no temperature and no Done, a refresh more than 14 minutes after its start shows the suggestion instead of the bake's times. A date or time left in the past, with nothing checked, gives way to the suggestion once the field loses focus.
+
+Release: pull request 51 merged as `48cb27b` on Michael's "Check and merge", after both Vercel checks passed on `f065fdc`. The production deployment reported success. The live site served the new bundle (`App.D7EDmvhk.js`, with "Use suggested start"), and `node scripts/verify-deployment.mjs https://bread.assemblydigital.com` passed with 7 assets and the negative fixture rejected.
+
+At 11:34 AM, the in-app browser's test save (Tartine Country Bread, chosen for Nov 8 at 9:00 AM, nothing checked) opened on a plain reload as "Make leaven · 9:00 PM · in 9h 25m". It showed the Suggested line, no "This plan ended", no quiet-hours warning or badges, and no console errors. The save itself was unchanged. Merged by hand, since GitHub auto-merge is turned off for this repository.
+
+## Tartine Oat Porridge, November 23, 2026: committed, pull request open
+
+Why: Michael sent photos of Tartine Book No. 3, pages 168 to 171 and 178, and asked to add Oat Porridge "and update all relevant processes". Branch `oat-porridge`, from `main` at `48cb27b`. This entry also records pull request 51's release, in the section above.
+
+Done means:
+- "Tartine Oat Porridge" is last on the menu.
+- Its Ingredients tab gives page 178's table for two loaves: 500 g high-extraction wheat flour, 500 g white-bread flour (for medium-strong), 70 g wheat germ, 750 g water (700 g, then 50 g with the salt), 150 g leaven and 25 g salt, and a "03 / Add-ins" panel with 500 g cooked oat porridge, 200 g almonds (optional) and 50 g almond oil (optional), 2,745 g in all.
+- Its schedule is Tartine Country Bread's, step for step, plus "Cook the oat porridge" (250 g oats in 500 g water, page 168) 2 hours before Turn 2 and "Add the oat porridge" right after Turn 2, with the three add-ins to tick; the oat coat at the final shape; 18 hours in the fridge.
+- Nothing else changes, and `npm test` in both zone modes, the build and `npm run test:browser` pass.
+
+Change (decision 27 in docs/BEHAVIOUR.md):
+- `src/domain/addins.ts`: an add-in can be weighed, as a percentage of the flour, with a name for its tick-off; `afterTurn` puts the add-in step after a later turn; `{g:25}` in a prep note becomes the grams of 25% of the flour (`prepNote`). The prep step keeps the id `toast` for every recipe, so Sesame's saved checks still match.
+- `src/domain/formula.ts`: weighed add-ins count in the dough's weight, not its hydration, and are returned as `addIns`.
+- `src/domain/schedule.ts`: the add-in step follows the recipe's turn, and weighed add-ins are tick-offs on it (`addins:oat-porridge` and so on).
+- `src/domain/recipes.ts`: the recipe, with Emmer/Einkorn's initial-mix note now shared as `BOOK_3_MIX`.
+- `src/components/IngredientsTab.tsx`: the add-ins panel names the turn and says "weights" for weighed add-ins, and passes the flour.
+- `src/domain/oat-porridge.test.ts` (new, in `npm test`): the recipe, the book's weights, the add-in lines, the plan against Tartine Country Bread's in both proofs, three oven sizes and both anchors, the two steps' times, notes and tick-offs, one loaf's scaling, and the night-free starts.
+- Tests that list the menu, the autolyse lengths and ranges, and the bowls include it; the dough-mass tests count weighed add-ins; the longer-rest test compares steps by id, since the porridge step moves with Turn 2 and can pass the initial mix.
+- `tests/baseline/cases.ts` adds two bake-day cases (the porridge step up next, the add-in step up next with the porridge ticked); `tests/browser/saved-plans.json` gains the recipe's saved plan (the load test counts 27); README and BEHAVIOUR counts are updated.
+
+Record changes, checked by decoding both records: 10 plans and 4 calculations were added, all for the recipe; every existing plan, calculation and helper is identical and in the same order; each of the 24 saved-data cases differs only by gaining the recipe. A second `npm run baseline:update` left the record unchanged. The browser record gained the recipe's two screens (8 files), and the recipe menu flow lists it; no other screen changed.
+
+Evidence (this session): `npm test` passed 206 of 206, also with `BASELINE_ZONE=rule`. `npm run build` passed with 0 errors and 0 warnings. `npm run test:browser` passed 66 of 66 on its second run (the first wrote the new screens). In the dev server at 375 px, Oat Porridge showed "Cook the oat porridge" at 8:30 AM with 250 g oats and 500 g water, "Mix dough and rest" at 9:00 AM, "Add the oat porridge" at 10:30 AM after Turn 2 with Oat porridge 500 g, Almonds 200 g and Almond oil 50 g to tick, the oat coat at the final shape and 18 hours in the fridge, nothing wider than the screen and no console errors. The dev save was restored as it was after the new code first loaded it.
+
+Choices made for Michael, each easy to change: loaf weight includes the porridge and optional almonds and oil; the porridge is cooked on the day, not the day before; the almonds toast in the porridge step, with no temperature, since the pages give none; the "double fermented" overnight soak of the oats (page 169) is left out; 50 g of water waits for the salt. Pages 170 and 171 (soaked cracked and flaked grains) belong to other recipes and only inform how to chop oats for the coat.
+
+Independent check (the verifier, on `31d58c2`): PASS on all seven criteria.
+- Against Tartine Country Bread in 4,320 setups (both proofs and anchors, ovens of 1 to 4, 1 to 8 loaves, rests of 15, 30 and 40 minutes, dates across both clock changes), every step matched once the two new steps were set aside; the add-in step always followed Turn 2 and the porridge step was always 120 minutes before it.
+- 2,100 random settings for the other seven recipes gave byte-identical formula, schedule, quiet-hours, add-in and suggested-start output to `main`, apart from the new, empty `addIns` key.
+- A version 6 save written by `main` loaded with Oat Porridge last at its defaults and everything else intact.
+- All six of its breaks were caught: add-ins after Turn 1, add-ins left out of the dough weight, the porridge note unscaled, no tick-offs, the panel's wording (by the browser suite only), and Olive and Sesame moved to Turn 2.
+- Fixed from its nits without a re-check, under relaxed verification: BEHAVIOUR.md said a longer rest could move the porridge step past the initial mix; at the longest allowed rest, 40 minutes, it starts 20 minutes before it. The matching test comment now says so. Left as it is: the record's `recordedFrom` reads "with uncommitted changes", as `main`'s does.
+
+Not verified: a real phone, or a real bake. Porridge doughs are wetter; the 18-hour fridge is worth watching on the first bake.
