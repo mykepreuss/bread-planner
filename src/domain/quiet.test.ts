@@ -167,6 +167,22 @@ test('a House plan with night work finds the nearest start without any, by the l
     quietestStart({ ...early, anchor: 'done', date: dateString(done), time: clockText(done) }, EARLY),
     best,
   );
+  // No start whose first step is already past: at 10:00 PM, 8:15 AM tomorrow would put the starter feed 45 minutes ago,
+  // so it is 9:00 AM, whose feed is now.
+  const tonight = quietestStart(
+    plan('house', undefined, { date: '2026-10-22', time: '05:00' }),
+    new Date(2026, 9, 21, 22, 0).getTime(),
+  )!;
+  assert.deepEqual([local(tonight.at), tonight.actions], ['2026-10-22 09:00', 0]);
+  assert.equal(
+    local(schedule(plan('house', undefined, { date: '2026-10-22', time: '09:00' }))[0].at),
+    '2026-10-21 22:00',
+  );
+  assert.deepEqual(
+    quietestStart(plan('house', undefined, { date: '2026-10-22', time: '05:00' }), EARLY)!.at,
+    new Date(2026, 9, 22, 8, 15),
+    'without the clock, 8:15 AM',
+  );
   // No flour, no plan, no start.
   assert.equal(
     quietestStart(

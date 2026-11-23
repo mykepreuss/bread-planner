@@ -122,8 +122,11 @@ export type QuietFix = { at: Date; actions: number; proof: 'cold' | 'warm' };
 function fixesFor(state: PlannerState, actions: number, now: number): QuietFix[] {
   const input = planOf(state),
     fixes: QuietFix[] = [];
-  const same = quietestStart(input, now);
-  if (same && same.actions < actions) fixes.push({ ...same, proof: state.proof });
+  const same = quietestStart(input, now),
+    planned = schedule(input).find((s) => s.id === 'leaven');
+  // Never the plan's own start: a dough temperature left after unchecking every step can count more night work than
+  // the plan itself has.
+  if (same && same.actions < actions && +same.at !== +planned!.at) fixes.push({ ...same, proof: state.proof });
   if (input.recipe.method === 'tartine') {
     const proof = state.proof === 'cold' ? 'warm' : 'cold',
       other = quietestStart({ ...input, proof }, now);

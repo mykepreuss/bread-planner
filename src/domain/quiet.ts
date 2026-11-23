@@ -35,8 +35,8 @@ function quietDepth(at: Date) {
 /**
  * The leaven start that leaves the fewest hands-on steps in quiet hours, and how many it leaves. Added at Michael's
  * request on November 22, 2026, so a plan with night work can suggest a start with less (decision 15). It tries every
- * quarter hour from 12 hours before the planned leaven start (or from `from`, if later) to 24 hours after that, plans
- * each with the leaven at that time, and keeps the one with the fewest quiet-hour actions; of those, the one whose
+ * quarter hour for 24 hours from 12 hours before the planned leaven start (or from `from`, if later), plans each with
+ * the leaven at that time, skipping a plan whose first step, such as House's starter feed, would already be past, and keeps the one with the fewest quiet-hour actions; of those, the one whose
  * actions fall least far into quiet hours (a leaven at 6:15 AM, not 3:00 AM), then the nearest to the planned start,
  * and the later of two as near. A step that runs past 10:30 PM counts by how far it runs. Null when the plan has no
  * leaven step.
@@ -50,8 +50,8 @@ export function quietestStart(input: PlanInput, from: number): { at: Date; actio
   for (let i = 0; i < 96; i++) {
     const at = new Date(first + i * QUARTER);
     const steps = schedule({ ...input, anchor: 'leaven', date: dateString(at), time: clockText(at) });
-    // A start the clocks skip, such as 2:30 AM as summer time begins, has no plan.
-    if (!steps.length) continue;
+    // A plan must start no earlier than `from`: House's starter feed comes 11 hours before its leaven.
+    if (!steps.length || steps[0].at.getTime() < from) continue;
     const found = quietHourActions(steps),
       actions = found.length,
       depth = found.reduce(

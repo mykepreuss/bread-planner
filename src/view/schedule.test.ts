@@ -218,6 +218,15 @@ test('a fresh cold-proofed Tartine plan suggests its quietest start and a warm p
 
 test('a suggestion keeps a plan made from the finish, clears the new bake, and none is offered once a step is checked or for a quiet plan', () => {
   assert.deepEqual(scheduleView(freshState(NOW), NOW, String).quietFixes, []);
+  // A cold dough temperature left after unchecking every step lengthens bulk into the night, but the plan's own start
+  // is never suggested: it is already the quietest.
+  let cold = freshState(NOW);
+  for (const id of ['feed', 'leaven', 'autolyse', 'mix']) cold = act.setChecked(cold, id, true, NOW);
+  cold = act.setDoughTemp(cold, 60);
+  for (const id of ['feed', 'leaven', 'autolyse', 'mix']) cold = act.setChecked(cold, id, false, NOW);
+  const stale = scheduleView(cold, NOW, String);
+  assert.ok(stale.night.length > 0, 'the leftover temperature puts work in quiet hours');
+  assert.deepEqual(stale.quietFixes, []);
   let s = act.setDoughTemp(act.setAnchor(act.selectRecipe(freshState(NOW), 'tartine'), 'done'), 78);
   const warm = scheduleView(s, NOW, String).quietFixes.find((f) => f.proof === 'warm')!;
   const moved = act.startLeavenAt(s, warm.at, 'warm'),

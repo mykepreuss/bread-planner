@@ -11,7 +11,7 @@ const leaves = (n: number) =>
 
 /**
  * The warning above the schedule when hands-on steps fall after 10:30 PM or before 7:00 AM. Before anything is
- * checked, it suggests the nearest leaven start with less night work, and for a Tartine recipe one with the other
+ * checked, it suggests the quietest leaven start, if it has less night work, and for a Tartine recipe one with the other
  * proof when that has less still (see `fixesFor`).
  */
 export function QuietWarning({
