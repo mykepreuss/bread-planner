@@ -1282,7 +1282,7 @@ Not verified: a real phone, and a real bake with the 18-hour fridge.
 
 Release, recorded with decision 23: pull request 45 merged as `de1a050` on Michael's "Merge", after both Vercel checks passed on `e154948`. Its production deployment `dpl_7pYXyh5sDc8eczdgWXzUym9NzSsn` was READY, and pull request 46 (`5c6a522`), which contains it, was deployed about 2½ minutes later as `dpl_BwwMBKNFT45QqGrTLjuMHrDbfuX4`, the one checked. On the live site at phone width (390 px), with the clock at 3:20 PM on November 21 and a fresh save, Tartine Country Bread showed the new description, "Refrigerated, about 18 hours" and the fridge note, and from a 9:00 AM leaven the fridge at 1:10 AM and all loaves out at 8:50 PM; its warning offered "Start at 10:30 PM", which moved the leaven to 10:30 PM on November 21 and cleared it, with the loaves out at 10:20 AM two mornings later. With eight warm-proofed loaves baked one at a time it offered "Start at 6:00 PM" and "Use a cold proof at 10:30 PM", and the second set the cold proof and cleared the warning. Whole Wheat and Country Rye still said "about 18½ hours" and "about 17½ hours". No console errors.
 
-## Autolyse length as a setting, November 23, 2026: committed, pull request open
+## Autolyse length as a setting, November 23, 2026: merged and verified live
 
 Why: Michael wants to try a shorter autolyse on his next Preuss bake, and asked for the autolyse length to be a setting with each recipe's own default. Branch `autolyse-length`, from `main` at `985e10f`.
 
@@ -1312,9 +1312,25 @@ Brought up to date with `main` at `de1a050` (pull request 45, Tartine Country Br
 
 Not verified: a real phone, and a real bake.
 
+Release: pull request 46 merged as `5c6a522` on Michael's "Yes, merge it", after both Vercel checks passed on `058f032`. `node scripts/verify-deployment.mjs https://bread.assemblydigital.com` passed. On the live site at 375 px, with Tartine Country Bread selected in the in-app browser, the batch card showed "Rest after mixing" at 30 min with its note, the page was 375 wide, and there were no console errors. No value was changed there.
+
+## The autolyse field is "Autolyse" for every recipe, November 23, 2026: committed, pull request open
+
+Why: Michael asked for the field to be called Autolyse instead of "Rest after mixing" on Tartine Country Bread and Tartine Country Rye. Branch `autolyse-label`, from `main` at `5c6a522`.
+
+Change: the batch card's field is labelled "Autolyse" for every recipe. For the two recipes with the leaven in the initial mix, its note reads "The leaven is already in, so every later step moves with the autolyse." Nothing else changes: what the length does for those recipes, the step titles and notes, and the saved data are as before. docs/BEHAVIOUR.md updates the Autolyse length bullet and decision 22.
+
+Record changes: the behaviour record is unchanged. The browser record's four Tartine and Country Rye screens and flows changed only the label and the note; no screenshot changed.
+
+Evidence (this session, on `autolyse-label`): `npm test` passed 188 of 188, `npm run test:browser` 57 of 57, and the build passed.
+
+Verification: my own checks, not the verifier: the change is one label and one note.
+
+Not verified: a real phone.
+
 ## The autolyse's range, November 23, 2026: committed, pull request open
 
-Why: Michael asked to review Tartine Whole Wheat's autolyse setting. The review, on `main` at `5c6a522` and the live site, found the field took 0 to 720 minutes for every recipe, against his 4-hour maximum of November 22. A 0-minute autolyse left a "Start autolyse" step that contradicted itself, and Whole Wheat's description always said 2 hours. He chose to cap each recipe at what its guides and book recommend and to fix the other two. Branch `autolyse-range`, from `main` at `5c6a522`. The `autolyse-label` branch (another session's, not yet in a pull request) edits the same field's label and the same docs, so whichever merges second resolves the overlap.
+Why: Michael asked to review Tartine Whole Wheat's autolyse setting. The review, on `main` at `5c6a522` and the live site, found the field took 0 to 720 minutes for every recipe, against his 4-hour maximum of November 22. A 0-minute autolyse left a "Start autolyse" step that contradicted itself, and Whole Wheat's description always said 2 hours. He chose to cap each recipe at what its guides and book recommend and to fix the other two. Branch `autolyse-range`, from `main` at `5c6a522`.
 
 Done means:
 - The autolyse field refuses anything under 15 minutes or over the recipe's longest: 120 for Preuss Country Bread, Olive Bread, Sesame Bread and Tartine Whole Wheat, 40 for Tartine Country Bread, and 60 for Country Rye.
@@ -1340,5 +1356,7 @@ Independent check (the verifier, on `ca3a516`): PASS on all seven criteria, with
 - It decoded both records (only the three autolyse cases differ) and compared `schedule()` at every recipe's defaults in 2,160 combinations with `main`: none differed.
 - All four of its breaks were caught: a wrong longest for Country Rye, the loader ignoring the longest, a 0-minute shortest, and a fixed field limit (the last by the browser flow only).
 - Fixed from its notes: the loader's general reader no longer lists the autolyse, so it can't be read without the recipe's longest; decision 23 says "just over 3½ hours" (211 minutes) rather than 3¾; it also says to finish a bake under way with an out-of-range length before deploying; and the browser flow checks that Tartine's plan keeps its time after 41 is refused.
+
+Brought up to date with `main` at `ada1f88` (pull request 47, which labels the field "Autolyse" for every recipe): the browser flow uses that label, and the docs keep both changes. The checks below were rerun after it.
 
 Not verified: a real phone.
