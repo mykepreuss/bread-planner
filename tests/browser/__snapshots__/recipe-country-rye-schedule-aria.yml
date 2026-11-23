@@ -6,7 +6,7 @@
     - tab "Ingredients"
   - text: Recipe
   - combobox "Recipe": Tartine Country Rye
-  - paragraph: "The book’s country rye: just enough medium-fine whole rye with white bread flour for a sweet rye flavour without much sourness. Cooler water and a longer rest after mixing than Original Tartine."
+  - paragraph: "The book’s country rye: just enough medium-fine whole rye with white bread flour for a sweet rye flavour without much sourness. Cooler water and a longer rest after mixing than Tartine Country Bread."
   - tabpanel "Schedule":
     - region "Up next":
       - text: Up next in 17h 40m
