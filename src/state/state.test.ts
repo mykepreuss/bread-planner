@@ -26,6 +26,7 @@ function frozen<T>(value: T): T {
 function plan(change: (s: PlannerState) => void = () => {}): PlannerState {
   const s = freshState(NOW);
   s.date = '2026-11-21';
+  s.timeChosen = true;
   change(s);
   return frozen(s);
 }
@@ -333,15 +334,15 @@ test('Done at takes an exact date and time, and ignores an incomplete one', () =
 test('a new date or time clears the dough temperatures only while nothing is checked', () => {
   const temps = plan((s) => Object.assign(s.recipes.house.bake, { doughTemp: 84, bulkTemps: [{ at: NOW, f: 82 }] }));
   for (const change of [
-    (s: PlannerState) => act.setDate(s, '2026-11-23'),
-    (s: PlannerState) => act.setTime(s, '10:00'),
+    (s: PlannerState) => act.setDate(s, '2026-11-23', NOW),
+    (s: PlannerState) => act.setTime(s, '10:00', NOW),
   ]) {
     assert.deepEqual([selected(change(temps)).bake.doughTemp, selected(change(temps)).bake.bulkTemps], [null, []]);
     const underway = act.setChecked(temps, 'feed', true, NOW);
     assert.equal(selected(change(underway)).bake.doughTemp, 84);
   }
-  assert.equal(act.setDate(temps, '2026-11-23').date, '2026-11-23');
-  assert.equal(act.setTime(temps, '10:00').time, '10:00');
+  assert.equal(act.setDate(temps, '2026-11-23', NOW).date, '2026-11-23');
+  assert.equal(act.setTime(temps, '10:00', NOW).time, '10:00');
 });
 
 test('Plan the next bake moves the date to tomorrow and starts afresh: no checks, times, ticks or temperatures (decision 1)', () => {
@@ -399,11 +400,11 @@ test('ticking an addition is kept for the selected recipe, unticking removes it,
 
 test('a new date or time clears the final-mix ticks while nothing is checked, as it does the temperatures', () => {
   const ticked = act.setAdded(plan(), 'mix:salt', true);
-  assert.deepEqual(selected(act.setDate(ticked, '2026-11-23')).bake.added, []);
-  assert.deepEqual(selected(act.setTime(ticked, '10:00')).bake.added, []);
+  assert.deepEqual(selected(act.setDate(ticked, '2026-11-23', NOW)).bake.added, []);
+  assert.deepEqual(selected(act.setTime(ticked, '10:00', NOW)).bake.added, []);
   // Once a step is checked it is the same bake, so the ticks stay.
   const underway = act.setAdded(act.setChecked(plan(), 'leaven', true, NOW), 'mix:salt', true);
-  assert.deepEqual(selected(act.setDate(underway, '2026-11-23')).bake.added, ['mix:salt']);
+  assert.deepEqual(selected(act.setDate(underway, '2026-11-23', NOW)).bake.added, ['mix:salt']);
   // Clear checklist clears ticks even when nothing is checked.
   assert.deepEqual(selected(act.clearChecklist(ticked)).bake.added, []);
 });
@@ -461,7 +462,7 @@ test('a missing or invalid saved date or time falls back to tomorrow at 9:00 AM,
   );
   assert.deepEqual([upgraded.date, upgraded.time], ['2026-11-22', '09:00']);
   // Saved as version 6 with the date field cleared, it reloads on tomorrow's date.
-  const six = JSON.parse(serialize(act.setDate(act.setTime(plan(), '06:45'), '')));
+  const six = JSON.parse(serialize(act.setDate(act.setTime(plan(), '06:45', NOW), '', NOW)));
   const reloaded = fromV6(six, NOW)!;
   assert.deepEqual([reloaded.date, reloaded.time], ['2026-11-22', '06:45']);
   // A creation date and time saved by an earlier release are ignored, and no longer saved.
@@ -686,4 +687,89 @@ test('Olive and Sesame saved with Original Tartine’s dough load fresh at Preus
   );
   assert.deepEqual(h.recipes.house.settings, house);
   assert.deepEqual(h.recipes.house.bake.done, ['leaven', 'autolyse']);
+});
+
+test('until a start is chosen and while nothing is checked, the planner shows the suggested start (decision 25)', () => {
+  const fresh = frozen(freshState(NOW));
+  assert.equal(fresh.timeChosen, false);
+  // At 3:20 PM, the soonest House plan with no quiet-hour work feeds the starter at 9:15 PM and builds the leaven at
+  // 8:15 AM tomorrow.
+  const shown = act.shownState(fresh, NOW);
+  assert.deepEqual([shown.anchor, shown.date, shown.time, shown.timeChosen], ['leaven', '2026-11-22', '08:15', false]);
+  assert.equal(schedule(planOf(shown))[0].at.getTime(), at(2026, 11, 21, 21, 15));
+  // Planned from the last loaf out, it shows the same plan in those terms, and stays a suggestion.
+  const fromFinish = act.setAnchor(fresh, 'done');
+  assert.equal(fromFinish.timeChosen, false);
+  const finish = act.shownState(fromFinish, NOW);
+  assert.equal(finish.anchor, 'done');
+  assert.deepEqual(
+    schedule(planOf(finish)).map((x) => +x.at),
+    schedule(planOf(shown)).map((x) => +x.at),
+  );
+  // Each recipe gets its own: Tartine Country Bread builds its leaven at 9:00 PM.
+  assert.equal(act.shownState(act.selectRecipe(fresh, 'tartine'), NOW).time, '21:00');
+  // A chosen start, or a bake with a step checked, shows as saved.
+  const chosen = { ...fresh, timeChosen: true };
+  assert.equal(act.shownState(chosen, NOW), chosen);
+  const checked = {
+    ...fresh,
+    recipes: {
+      ...fresh.recipes,
+      house: { ...fresh.recipes.house, bake: { ...fresh.recipes.house.bake, done: ['feed'] } },
+    },
+  };
+  assert.equal(act.shownState(checked, NOW), checked);
+});
+
+test('the first check keeps the suggested start, and a new date or time keeps the rest of it', () => {
+  const fresh = frozen(freshState(NOW)),
+    later = at(2026, 11, 21, 21, 40);
+  // Fed at 9:40 PM: the plan stays where it was shown when the check was made, rather than following the clock.
+  const fed = act.setChecked(fresh, 'feed', true, later);
+  assert.deepEqual([fed.date, fed.time, fed.timeChosen], ['2026-11-22', '08:30', true]);
+  assert.equal(act.shownState(fed, at(2026, 11, 23, 9, 0)), fed);
+  // Unchecking leaves it chosen.
+  assert.equal(act.setChecked(fed, 'feed', false, later).timeChosen, true);
+  // A new date keeps the suggested time; a new time keeps the suggested date.
+  const date = act.setDate(fresh, '2026-11-25', NOW),
+    time = act.setTime(fresh, '07:00', NOW);
+  assert.deepEqual([date.date, date.time, date.timeChosen], ['2026-11-25', '08:15', true]);
+  assert.deepEqual([time.date, time.time, time.timeChosen], ['2026-11-22', '07:00', true]);
+  // Planned from the finish, a new time keeps the suggested finish date.
+  const finish = act.setTime(act.setAnchor(fresh, 'done'), '12:00', NOW);
+  assert.deepEqual(
+    [finish.anchor, finish.date, finish.time],
+    ['done', act.shownState(act.setAnchor(fresh, 'done'), NOW).date, '12:00'],
+  );
+  // Tartine Country Bread's suggested leaven is tonight, so a new time keeps tonight's date, not the saved tomorrow.
+  const book = act.selectRecipe(fresh, 'tartine');
+  assert.deepEqual([book.date, act.setTime(book, '20:00', NOW).date], ['2026-11-22', '2026-11-21']);
+  assert.equal(act.setDate(book, '2026-11-28', NOW).time, '21:00');
+  // A tap a few seconds after a quarter hour keeps the plan the screen last showed: drawn at 9:14:45 PM with the
+  // leaven at 9:00 PM, Done at 9:15:05 keeps 9:00, and a new date keeps 21:00.
+  const drawn = at(2026, 11, 21, 21, 14, 45),
+    tapped = at(2026, 11, 21, 21, 15, 5);
+  assert.equal(act.shownState(book, tapped).time, '21:15');
+  assert.equal(act.setChecked(book, 'leaven', true, tapped, drawn).time, '21:00');
+  assert.equal(act.setTime(book, '21:30', drawn).date, '2026-11-21');
+  // A start the quiet-hours warning suggests is chosen too.
+  assert.equal(act.startLeavenAt(fresh, new Date(at(2026, 11, 22, 6, 0)), 'cold').timeChosen, true);
+});
+
+test('Plan the next bake leaves the start to the planner, which then suggests one', () => {
+  const done = act.setChecked(plan(), 'done', true, NOW),
+    next = act.planNextBake(done, at(2026, 11, 24, 10, 0));
+  assert.equal(next.timeChosen, false);
+  const shown = act.shownState(next, at(2026, 11, 24, 10, 0));
+  assert.deepEqual([shown.date, shown.time], ['2026-11-25', '08:15']);
+});
+
+test('a save from before decision 25 keeps its date and time as chosen; a new one saves whether it was chosen', () => {
+  const old = JSON.parse(serialize(plan()));
+  delete old.plan.timeChosen;
+  assert.equal(fromV6(old, NOW)!.timeChosen, true);
+  assert.equal(fromV6({ ...old, plan: { ...old.plan, timeChosen: false } }, NOW)!.timeChosen, false);
+  assert.equal(fromV6(JSON.parse(serialize(freshState(NOW))), NOW)!.timeChosen, false);
+  assert.equal(fromV6({ ...old, plan: { ...old.plan, timeChosen: 'no' } }, NOW)!.timeChosen, true);
+  assert.equal(fromV5({ version: 5, plan: { date: '2026-11-22', time: '09:00' } }, NOW).timeChosen, true);
 });

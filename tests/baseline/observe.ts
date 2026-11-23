@@ -155,6 +155,8 @@ export function plannerState(i: PlanInput | (FormulaInput & { date?: string; tim
     date: full.date ?? '2026-11-22',
     time: full.time ?? '09:00',
     anchor: full.anchor ?? 'leaven',
+    // Every recorded plan has its date and time chosen; the suggested start (decision 25) has tests of its own.
+    timeChosen: true,
     proof: full.proof ?? 'cold',
     ovenCapacity: full.ovenCapacity ?? 2,
     mixCapacity: full.mixCapacity ?? 2,

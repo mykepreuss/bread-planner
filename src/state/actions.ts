@@ -2,6 +2,7 @@ import { defaultSettings, type FlourKey, type Settings } from '../domain/recipes
 import { addedHydration } from '../domain/formula.ts';
 import { schedule } from '../domain/schedule.ts';
 import { retime, stampNow, withReading, type TempUnit } from '../domain/bakeday.ts';
+import { suggestedStart } from '../domain/quiet.ts';
 import { clockText, dateString } from '../domain/text.ts';
 import { emptyBake, planOf, tomorrow, type Bake, type PlannerState } from './schema.ts';
 
@@ -87,42 +88,83 @@ export const setReheat = (state: PlannerState, minutes: number): PlannerState =>
 export const setProof = (state: PlannerState, proof: 'cold' | 'warm'): PlannerState => ({ ...state, proof });
 export const setTempUnit = (state: PlannerState, unit: TempUnit): PlannerState => ({ ...state, tempUnit: unit });
 
-/** A new date or time. Before anything is checked it is a new bake, so the dough temperatures and final-mix ticks clear. */
-export function setDate(state: PlannerState, date: string): PlannerState {
-  const next = { ...state, date };
+/**
+ * What the planner shows at `now`. While no start has been chosen and nothing is checked, that is the suggested start
+ * (decision 25): the soonest whose plan has the fewest quiet-hour actions, from the quarter hour `now` is in (see
+ * `suggestedStart`). A plan made from the last loaf out stays so, with that time moved to match. Otherwise, and when
+ * there is no plan to suggest a start for, it is the saved state.
+ */
+export function shownState(state: PlannerState, now: number): PlannerState {
+  if (state.timeChosen || bakeOf(state).done.length) return state;
+  const start = suggestedStart(planOf(state), now);
+  if (!start) return state;
+  const moved = { ...state, anchor: 'leaven' as const, date: dateString(start.at), time: clockText(start.at) };
+  return state.anchor === 'done' ? setAnchor(moved, 'done') : moved;
+}
+
+/**
+ * A new date or time, from what the planner shows at `now` (the moment the screen last worked out the suggestion), so
+ * a new date keeps the suggested time and the other way round. It is Michael's choice from then on. Before anything is checked it is a new bake, so the dough temperatures
+ * and final-mix ticks clear.
+ */
+export function setDate(state: PlannerState, date: string, now: number): PlannerState {
+  const next = { ...shownState(state, now), date, timeChosen: true };
   return bakeOf(state).done.length ? next : clearTemperatures(next);
 }
-export function setTime(state: PlannerState, time: string): PlannerState {
-  const next = { ...state, time };
+export function setTime(state: PlannerState, time: string, now: number): PlannerState {
+  const next = { ...shownState(state, now), time, timeChosen: true };
   return bakeOf(state).done.length ? next : clearTemperatures(next);
 }
 
-/** Plans around the leaven start or the last loaf out. The date and time change to that step's, so every step stays where it was. */
+/**
+ * Plans around the leaven start or the last loaf out. The date and time change to that step's, so every step stays
+ * where it was. A suggested start stays a suggestion, now shown in the other terms.
+ */
 export function setAnchor(state: PlannerState, anchor: 'leaven' | 'done'): PlannerState {
   const step = schedule(planOf(state)).find((s) => s.id === anchor);
   return step ? { ...state, date: dateString(step.at), time: clockText(step.at), anchor } : { ...state, anchor };
 }
 
 /**
- * Starts the leaven at `at`, with the proof given: a start the quiet-hours warning suggests. A plan made from the last
- * loaf out stays so, with that time moved to match. Before anything is checked it is a new bake, as for `setDate`.
+ * Starts the leaven at `at`, with the proof given: a start the quiet-hours warning suggests, which chooses it. A plan
+ * made from the last loaf out stays so, with that time moved to match. Before anything is checked it is a new bake, as
+ * for `setDate`.
  */
 export function startLeavenAt(state: PlannerState, at: Date, proof: 'cold' | 'warm'): PlannerState {
-  const moved = { ...state, proof, anchor: 'leaven' as const, date: dateString(at), time: clockText(at) },
+  const moved = {
+      ...state,
+      proof,
+      anchor: 'leaven' as const,
+      date: dateString(at),
+      time: clockText(at),
+      timeChosen: true,
+    },
     next = state.anchor === 'done' ? setAnchor(moved, 'done') : moved;
   return bakeOf(state).done.length ? next : clearTemperatures(next);
 }
 
 /**
- * Moves the plan to tomorrow and starts the next bake: the checklist, its times and the dough temperatures clear
- * (decision 1 in docs/BEHAVIOUR.md). It is offered only once a plan has ended, when nothing is checked or every step is checked or skipped.
+ * Starts the next bake: the checklist, its times and the dough temperatures clear (decision 1 in docs/BEHAVIOUR.md),
+ * and the start is left to the planner, which suggests one (decision 25). The saved date moves to tomorrow for when it
+ * can't. It is offered only once a plan has ended, when nothing is checked or every step is checked or skipped.
  */
 export function planNextBake(state: PlannerState, now: number): PlannerState {
-  return clearChecklist({ ...state, date: tomorrow(now) });
+  return clearChecklist({ ...state, date: tomorrow(now), timeChosen: false });
 }
 
-/** Checks a step at `now`, rounded to the minute, or unchecks it and forgets its time. */
-export function setChecked(state: PlannerState, id: string, checked: boolean, now: number): PlannerState {
+/**
+ * Checks a step at `now`, rounded to the minute, or unchecks it and forgets its time. The first check of a suggested
+ * plan keeps it: the bake has started at the start shown, which is the suggestion at `shownAt`, the moment the screen
+ * last worked it out (`now` if not given), so a tap just after a quarter hour keeps the plan on the screen.
+ */
+export function setChecked(
+  state: PlannerState,
+  id: string,
+  checked: boolean,
+  now: number,
+  shownAt: number = now,
+): PlannerState {
+  if (checked && !state.timeChosen) state = { ...shownState(state, shownAt), timeChosen: true };
   const bake = bakeOf(state),
     doneAt = { ...bake.doneAt };
   if (checked) doneAt[id] = stampNow(now);

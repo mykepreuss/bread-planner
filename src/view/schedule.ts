@@ -149,7 +149,8 @@ export const ASK_BEFORE_SKIPPING = 3;
 export function skipsOnCheck(state: PlannerState, id: string, now: number) {
   const current = scheduleView(state, now, String),
     before = new Set(current.skipped);
-  const after = scheduleView(setChecked(state, id, true, now), now, String);
+  // `state` is the plan as shown, so a suggested start is kept as it is (decision 25).
+  const after = scheduleView(setChecked({ ...state, timeChosen: true }, id, true, now), now, String);
   const skips = after.steps.filter((s) => after.skipped.includes(s.id) && !before.has(s.id));
   const start = current.steps.find((s) => s.kind === 'bulk'),
     bulkDue = start !== undefined && start.at.getTime() <= now;

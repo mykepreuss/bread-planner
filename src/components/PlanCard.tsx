@@ -6,7 +6,10 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import type { LiveStep } from '@/domain/bakeday';
 import { calendarText, timeText } from './text';
 
-/** "When are we baking?": plan around the leaven or the finish, the date and time, and when baking is complete. */
+/**
+ * "When are we baking?": plan around the leaven or the finish, the date and time, and when baking is complete. Before
+ * a start is chosen, the date and time are the planner's suggestion, and it says so.
+ */
 export function PlanCard({
   anchor,
   date,
@@ -15,6 +18,7 @@ export function PlanCard({
   onDate,
   onTime,
   doneStep,
+  suggested,
 }: {
   anchor: 'leaven' | 'done';
   date: string;
@@ -23,6 +27,8 @@ export function PlanCard({
   onDate: (date: string) => void;
   onTime: (time: string) => void;
   doneStep?: LiveStep;
+  /** The date and time are the planner's suggested start, not ones Michael chose. */
+  suggested?: boolean;
 }) {
   return (
     <Card className="plan-card">
@@ -50,6 +56,7 @@ export function PlanCard({
             <Input id="plan-time" type="time" value={time} onChange={(e) => onTime(e.target.value)} />
           </div>
         </div>
+        {suggested && <p className="plan-suggested">Suggested. Change the date or time to choose your own.</p>}
         {doneStep && (
           <div className="finish-summary">
             <Flame size={19} />

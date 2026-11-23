@@ -500,15 +500,20 @@ test.describe('flows', () => {
     await expectSameAfterReload(page);
   });
 
-  test('Plan the next bake moves an ended plan to tomorrow', async ({ page }) => {
+  test('Plan the next bake on an ended plan shows the suggested start', async ({ page }) => {
+    // Decision 23: at 3:20 PM, a starter feed at 9:15 PM and the leaven at 8:15 AM tomorrow leave no night work.
     await open(page, 'ended');
     await page.getByRole('button', { name: 'Plan the next bake' }).click();
     await expect(page.locator('#plan-date')).toHaveValue('2026-11-22');
+    await expect(page.locator('#plan-time')).toHaveValue('08:15');
+    await expect(upNext(page).getByText('Suggested start: the soonest with the least night work.')).toBeVisible();
     expect(await aria(page)).toMatchSnapshot('flow-plan-next-bake.aria.yml');
     await expectSameAfterReload(page);
   });
 
-  test('Plan the next bake on a fully checked plan moves the date and starts a fresh checklist', async ({ page }) => {
+  test('Plan the next bake on a fully checked plan starts a fresh checklist at the suggested start', async ({
+    page,
+  }) => {
     // Decision 1: the checklist clears, so a finished bake's next one looks just like an ended plan's next one.
     await open(page, 'complete');
     await page.getByRole('button', { name: 'Plan the next bake' }).click();
@@ -528,15 +533,47 @@ test.describe('flows', () => {
     await expectSameAfterReload(page);
   });
 
-  test('Planning around the finish keeps every step time', async ({ page }) => {
+  test('Planning around the finish keeps every step time, a suggested start included', async ({ page }) => {
+    // A new planner shows the suggested start, the leaven at 8:15 AM tomorrow, so the last loaf is out at 8:48 AM.
     await open(page, 'fresh');
     const timeline = page.getByRole('region', { name: 'Bake schedule' }),
       before = await timeline.ariaSnapshot();
     await choose(page, 'Plan around', 'All loaves out of the oven');
     await expect(page.getByLabel('Last batch date')).toHaveValue('2026-11-23');
-    await expect(page.getByLabel('Time', { exact: true })).toHaveValue('09:33');
+    await expect(page.getByLabel('Time', { exact: true })).toHaveValue('08:48');
+    await expect(page.getByText('Suggested. Change the date or time to choose your own.')).toBeVisible();
     expect(await timeline.ariaSnapshot(), 'the same steps at the same times').toBe(before);
     expect(await aria(page)).toMatchSnapshot('flow-plan-around-finish.aria.yml');
+    await expectSameAfterReload(page);
+  });
+
+  test('A new planner suggests a start until one is chosen, by a new time or by a check (decision 25)', async ({
+    page,
+  }) => {
+    await open(page, 'fresh');
+    const suggestedNow = upNext(page).getByText('Suggested start: the soonest with the least night work.'),
+      suggestedPlan = page.getByText('Suggested. Change the date or time to choose your own.');
+    await expect(upNext(page).getByRole('heading', { level: 2 })).toHaveText('Feed starter');
+    await expect(upNext(page).locator('time')).toHaveText('9:15 PM');
+    await expect(suggestedNow).toBeVisible();
+    await expect(suggestedPlan).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Quiet hours warning' })).toHaveCount(0);
+    // A new time keeps the suggested date, and is kept through a reload.
+    await page.locator('#plan-time').fill('07:00');
+    await expect(page.locator('#plan-date')).toHaveValue('2026-11-22');
+    await expect(suggestedNow).toHaveCount(0);
+    await expect(suggestedPlan).toHaveCount(0);
+    await expectSameAfterReload(page);
+    await expect(page.locator('#plan-time')).toHaveValue('07:00');
+  });
+
+  test('Done on a suggested start keeps that start', async ({ page }) => {
+    await open(page, 'fresh');
+    await upNext(page).getByRole('button', { name: 'Done' }).click();
+    await expect(upNext(page).getByRole('heading', { level: 2 })).toHaveText('Start leaven');
+    await expect(page.locator('#plan-date')).toHaveValue('2026-11-22');
+    await expect(page.locator('#plan-time')).toHaveValue('08:15');
+    await expect(page.getByText('Suggested. Change the date or time to choose your own.')).toHaveCount(0);
     await expectSameAfterReload(page);
   });
 
@@ -574,7 +611,8 @@ test.describe('flows', () => {
   test('Each recipe keeps its own autolyse length: an autolyse moves only its start, a Tartine rest moves what follows', async ({
     page,
   }) => {
-    await open(page, 'fresh');
+    // A start chosen for 9:00 AM tomorrow, so the times are the ones a new planner had before decision 25.
+    await open(page, 'recipe-house');
     const at = (id: string) => page.locator('.timeline-step', { has: page.locator(`#step-${id}`) }).locator('time');
     const field = (name: string) => page.getByLabel(name, { exact: true });
     await expect(field('Autolyse')).toHaveValue('90');
@@ -613,7 +651,8 @@ test.describe('flows', () => {
   });
 
   test('Loaf count and oven capacity on the Schedule tab set the batches', async ({ page }) => {
-    await open(page, 'fresh');
+    // A start chosen for 9:00 AM tomorrow, so the times are the ones a new planner had before decision 25.
+    await open(page, 'recipe-house');
     await page.getByLabel('Number of loaves').fill('3');
     await expect(page.getByText('2 batches')).toBeVisible();
     await choose(page, 'Loaves baked at once', '1 loaf');
@@ -639,7 +678,8 @@ test.describe('flows', () => {
   });
 
   test('Each recipe keeps its own checklist', async ({ page }) => {
-    await open(page, 'fresh');
+    // A start chosen for 9:00 AM tomorrow, so the times are the ones a new planner had before decision 25.
+    await open(page, 'recipe-house');
     await page.getByRole('checkbox', { name: 'Complete Feed starter' }).click();
     await expect(page.getByText('1 of 22 steps checked')).toBeVisible();
     await choose(page, 'Recipe', 'Tartine Country Bread');
