@@ -202,7 +202,7 @@ export const RECIPES: Recipe[] = [
     id: 'country-rye',
     name: 'Tartine Country Rye',
     description:
-      'The book’s country rye: just enough medium-fine whole rye with white bread flour for a sweet rye flavour without much sourness. Cooler water and a longer rest after mixing, as for whole wheat.',
+      'The book’s country rye: just enough medium-fine whole rye with white bread flour for a sweet rye flavour without much sourness. Cooler water and a longer rest after mixing than Original Tartine.',
     method: 'tartine',
     flours: ['rye', 'white'],
     late: [],
