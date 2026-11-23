@@ -111,8 +111,8 @@ test('default House schedule has no quiet-hour work; a late start and book sched
 const EARLY = new Date(2026, 9, 1).getTime();
 const local = (d: Date) => `${dateString(d)} ${clockText(d)}`;
 
-test('no start keeps a cold-proofed Tartine bake out of quiet hours; the quietest leaves only the leaven, as near the plan as it can', () => {
-  for (const id of ['tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye'])
+test('no start keeps a cold-proofed Tartine-method bake out of quiet hours; the quietest leaves only the leaven, as near the plan as it can', () => {
+  for (const id of ['tartine', 'whole-wheat', 'country-rye'])
     for (let m = 0; m < 1440; m += 15) {
       const time = clockText(new Date(2026, 9, 21, 0, m));
       assert.ok(quietHourActions(schedule(plan(id, undefined, { time }))).length >= 1, `${id} ${time}`);

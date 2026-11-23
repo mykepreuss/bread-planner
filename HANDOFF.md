@@ -1166,3 +1166,32 @@ Tests: the name checks in the recipe, Olive, Sesame and Whole Wheat tests and th
 Verification: my own checks, not the verifier: only names changed.
 
 Not verified: a real phone.
+
+## A start with less night work, November 22, 2026: committed, pull request open
+
+Why: Michael asked for Tartine start times that work around late nights, or slightly adjusted times. A first version (pull request 38) also gave every Tartine recipe a 2-hour autolyse alongside the leaven; he asked to keep the autolyse as it is for now, after reviewing The Perfect Loaf's autolyse guide, so that pull request is closed and this one has only the suggestion. He chose the quiet-hours warning over a fixed start in each recipe's description. Branch `quiet-start`, from `main` at `d8974e0`.
+
+Finding behind it, from scanning every quarter-hour leaven start with the book's times: with a cold proof no start keeps a Tartine bake out of quiet hours (12-hour leaven, about 4 hours of dough work, 12-hour fridge: 28 hours). The best leaves one action, the leaven at 6:15 AM (6:00 AM for Whole Wheat and Country Rye, which rest 20 minutes longer). A warm proof is night-free with a leaven from 7:00 to 10:30 PM. Preuss House is night-free from 8:15 to 9:30 AM.
+
+Done means: Original Tartine from a 9:00 AM leaven offers "Start at 6:15 AM" and "Use a warm proof at 7:00 PM", each moves the plan there, the warm one clears the warning; no step time changes anywhere; and `npm test`, the build and `npm run test:browser` pass.
+
+Change:
+- `src/domain/quiet.ts`: `quietestStart(input, from)` tries every quarter hour from 12 hours before the planned leaven start (or `from`) for 24 hours. It keeps the fewest quiet-hour actions; then the least time into quiet hours, so a 6:15 AM leaven beats a nearer 3:00 AM one; then the nearest to the plan, the later of two as near.
+- `src/view/schedule.ts`: before anything is checked, `quietFixes` holds that start when it has fewer actions than the plan, and for a Tartine recipe the other proof's when it has fewer still. `src/state/actions.ts`: `startLeavenAt` moves the leaven there, sets the proof, keeps a plan made from the finish so, and clears a new bake's temperatures as a date change does.
+- `QuietWarning`: one line and button per suggestion; with none, "No other start time has less."; once underway, the old advice.
+- docs/BEHAVIOUR.md records it as decision 18 (it was 15 before rebasing onto the Preuss autolyse, Olive and Sesame, and recipe-names releases) and the Schedule rule.
+
+Record changes, checked against `main`: every plan gained its suggestions (69 of 161 have one or two) and nothing else in any plan, calculation, saved-data case or helper changed. The browser record: 8 screens and 1 flow changed only in the warning, and 1 flow was added.
+
+Evidence (this session, on `quiet-start`): `npm test` passed 180 of 180 in both zones, the build had 0 errors, and `npm run test:browser` passed 56 of 56.
+
+Independent check (the verifier, on `c0bf36e`): PASS on all five criteria.
+- Its own scan of every quarter-hour start matched the recommended starts above. It clicked all 25,472 suggestions in 20,040 plans (House, Tartine and Whole Wheat, both proofs, 2, 3 and 8 loaves, either anchor, around both clock changes), plus 8,520 plans with the clock just before or after the leaven. Every suggestion was in the future and had fewer actions, and every click gave exactly the plan it described.
+- It decoded both records: only `quietFixes` was added.
+- Five of its six breaks were caught. The sixth, a warm-proof suggestion for House, can never show, because House plans are the same for either proof.
+- `quietestStart` takes about 3 ms for 8 Tartine loaves baked one at a time; the view runs it only while nothing is checked.
+- Fixed from its findings: a House suggestion could put the starter feed in the past (at 10:00 PM, "Start at 8:15 AM" made the 9:15 PM feed overdue), so a start whose first step is past is now skipped. A dough temperature left after unchecking every step could make the warning suggest the plan's own start; it no longer does. BEHAVIOUR.md said the search ran to 12 hours after the planned start; it now says 24 hours from 12 hours before, or from now. Each fix has a test, and the record didn't change.
+
+Not verified: a real phone.
+
+Rebased onto `main` at `5b500e1` (after pull requests 41, 42 and 43): the recorded records and browser snapshots were regenerated, the Tartine-only quiet-hours test no longer includes Olive and Sesame (now Preuss House variations with night-free starts), and 57 of the record's 161 plans now carry suggestions. The rest of the change is as verified.
