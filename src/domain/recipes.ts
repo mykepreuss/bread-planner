@@ -211,7 +211,7 @@ export const RECIPES: Recipe[] = [
       rest: 50,
       note: 'Stir the leaven used into the initial water, about 75°F / 24°C, until it disperses. Add the rye and white-bread flour and mix by hand until no dry flour is left. Cover and rest for 40 to 60 minutes.',
     },
-    // Michael's choice on November 22, 2026 (decision 17), so a cold-proofed bake keeps out of quiet hours: the loaves
+    // Michael's choice on November 22, 2026 (decision 20), so a cold-proofed bake keeps out of quiet hours: the loaves
     // proof 17½ hours in the fridge, not 12, so a leaven from 9:00 to 10:30 PM keeps every step out of them. The book's
     // rest with the leaven in stays: both autolyse guides he reviewed warn that rye is high in enzymes, and
     // SourdoughGuru gives a blend with under 30% rye only a 20- to 30-minute autolyse.
