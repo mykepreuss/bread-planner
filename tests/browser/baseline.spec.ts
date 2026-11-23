@@ -659,6 +659,7 @@ test.describe('flows', () => {
     await choose(page, 'Loaves baked at once', '1 loaf');
     await choose(page, 'Final proof', 'Warm, 3 to 4 hours');
     await warning.getByRole('button', { name: 'Start at 6:00 PM' }).click();
+    await expect(page.locator('#plan-date')).toHaveValue('2026-11-21');
     await expect(page.locator('#plan-time')).toHaveValue('18:00');
     await expect(warning.getByRole('heading', { level: 2 })).toHaveText('2 actions need you during quiet hours');
     await expect(warning.getByRole('button', { name: 'Start at 6:00 PM' })).toHaveCount(0);

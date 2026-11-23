@@ -222,7 +222,8 @@ test('a cold-proofed Tartine plan is offered its night-free start; a warm one wi
   assert.deepEqual(fixes(warmView), [['cold', '2026-11-22 21:00', 0]]);
   const switched = act.startLeavenAt(eight, big.quietFixes[1].at, 'cold');
   assert.deepEqual([switched.proof, switched.date, switched.time], ['cold', '2026-11-21', '22:30']);
-  assert.deepEqual(scheduleView(switched, NOW, String).night, []);
+  const after = scheduleView(switched, NOW, String);
+  assert.deepEqual([after.night, after.quietFixes], [[], []]);
 });
 
 test('a suggestion keeps a plan made from the finish, clears the new bake, and none is offered once a step is checked or for a quiet plan', () => {
@@ -248,6 +249,24 @@ test('a suggestion keeps a plan made from the finish, clears the new bake, and n
   assert.deepEqual(scheduleView(moved, NOW, String).night, []);
   assert.equal(`${moved.date} ${moved.time}`, local(steps.find((x) => x.id === 'done')!.at));
   assert.equal(moved.recipes.tartine.bake.doughTemp, null, 'nothing is checked, so it is a new bake');
+  // Switching the proof keeps a plan made from the finish too: eight warm-proofed loaves baked one at a time are
+  // offered a cold proof, and the leaven lands on its suggested start.
+  const eight = act.setOvenCapacity(
+    act.setSetting(
+      act.setProof(act.setAnchor(act.selectRecipe(freshState(NOW), 'tartine'), 'done'), 'warm'),
+      'count',
+      8,
+    ),
+    1,
+  );
+  const coldFix = scheduleView(eight, NOW, String).quietFixes.find((f) => f.proof === 'cold')!;
+  const switched = act.startLeavenAt(eight, coldFix.at, 'cold'),
+    switchedSteps = schedule(planOf(switched));
+  assert.deepEqual([switched.proof, switched.anchor], ['cold', 'done']);
+  assert.equal(local(switchedSteps[0].at), local(coldFix.at));
+  assert.equal(+switchedSteps[0].at, +coldFix.at);
+  assert.deepEqual(scheduleView(switched, NOW, String).night, []);
+  assert.equal(`${switched.date} ${switched.time}`, local(switchedSteps.find((x) => x.id === 'done')!.at));
   // Underway, the warning stays without suggestions: the plan follows what has been checked.
   s = act.setChecked(s, 'leaven', true, NOW);
   const underway = scheduleView(s, NOW, String);

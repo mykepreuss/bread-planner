@@ -1266,4 +1266,16 @@ Change: Tartine Country Bread has `coldProof: 1080`, and its description says 18
 
 Record changes, checked by decoding both records against `main`: the 36 cold-proofed Tartine Country Bread plans changed, and the one saved-data case with its schedule; the 12 warm-proofed ones, all other plans, the calculations and the helpers are identical. Plans with a suggestion: 57 to 56 (an 8:00 PM leaven across the start of daylight saving no longer has quiet-hours steps); other-proof suggestions: 18 to 0.
 
+Independent check (the verifier, on `1dcf026`): five of six criteria passed. Its own random comparison of `schedule()` between `main` and this branch matched on 27,906 inputs for every recipe and proof but Tartine cold. The warm Tartine plan matched on 11,520 more. Its decode of both records confirmed the counts above.
+- Failed, and fixed: the rewrite of "a suggestion keeps a plan made from the finish" had dropped its check of a proof switch on a plan made from the finish, so a break that worked out the new finish with the old proof passed every test. The test now moves eight warm-proofed loaves baked one at a time, planned from the finish, to their cold suggestion, and checks that the leaven lands on it with the plan still made from the finish. The same break now fails that test.
+- Its other three breaks were caught: Country Bread's fridge at 1050 minutes, the other-proof branch removed from `fixesFor`, and a changed fridge note.
+- Fixed from its nits: the `fixesFor` comment and docs/BEHAVIOUR.md said a cold proof always has a night-free start, but that holds only up to twelve loaves; at thirteen baked one at a time the best start leaves one action. The docs now say twelve. The view test also checks that no suggestion remains after the cold switch, and the browser flow checks the date after "Start at 6:00 PM".
+- Noted, not changed: the record no longer holds an other-proof suggestion, so that path rests on the unit test and the browser flow.
+
+Evidence after the fixes (this session, on `country-bread-proof`):
+- `npm test`: 184 of 184
+- the same files in UTC: 180 passed, with the 4 skips main has
+- the build: 0 errors, 0 warnings, 0 hints
+- `npm run test:browser`: 56 of 56, no snapshot changed
+
 Not verified: a real phone, and a real bake with the 18-hour fridge.
