@@ -1219,3 +1219,21 @@ Independent check (the verifier, on `bed5c10`): PASS on all six criteria.
 Not verified: a real phone, and a real bake with the 18½-hour fridge.
 
 Rebased onto `main` at `3599cf0` (after pull requests 41, 42, 43 and 39): the records and browser snapshots were regenerated, the Tartine-method tests no longer list Olive and Sesame, Country Rye's description compares its rest with Tartine Country Bread's, and the decision is renumbered 19. The rest of the change is as verified.
+
+## Tartine Country Rye: a 17½-hour cold final proof, November 22, 2026: committed, pull request open
+
+Why: Michael asked to review Country Rye and decide its cold proof as for Whole Wheat, then chose the recommendation: keep the book's 50-minute rest with the leaven in, and lengthen the fridge. Both autolyse guides warn about rye's enzymes, and SourdoughGuru gives under-30% rye blends only 20 to 30 minutes of autolyse, so Whole Wheat's 2-hour autolyse wasn't proposed. Branch `country-rye-proof`, from `whole-wheat-autolyse` (pull request 40), whose recipe `coldProof` it uses.
+
+Done means: Country Rye from a 9:30 PM leaven shows the initial mix at 9:30 AM, the salt at 10:20 AM, the fridge at 2:00 PM for "about 17½ hours", and the loaves out at 9:10 AM two mornings later, with no quiet-hours warning; a 9:00 to 10:30 PM leaven is night-free with a cold proof; nothing else changes; and `npm test`, the build and `npm run test:browser` pass.
+
+Change: Country Rye has `coldProof: 1050`, and its description says so. Tests: the Country Rye schedule test now expects the 17½-hour fridge (steps after it 5 hours 50 minutes later than Tartine Country Bread's), and a quiet-hours test checks its night-free leaven starts (9:00 to 10:30 PM cold, 7:00 to 10:30 PM warm). docs/BEHAVIOUR.md records decision 20 (17 before rebasing).
+
+Record changes, checked by decoding both records against pull request 40: only the 8 Country Rye plans changed; calculations, saved-data cases and helpers are identical.
+
+Evidence (this session, on `country-rye-proof`): `npm test` passed 182 of 182 in both zones, the build had 0 errors, and `npm run test:browser` passed 56 of 56; only the two Country Rye screens changed.
+
+Verification: my own checks, not the verifier, because the change is one value of a setting the verifier already checked for Whole Wheat.
+
+Not verified: a real phone, and a real bake with the 17½-hour fridge.
+
+Rebased onto `main` at `b31c6d2` (after pull requests 41, 42, 43, 39 and 40): records and browser snapshots regenerated, the Tartine-method quiet-hours test lists Tartine Country Bread only, and the decision is renumbered 20.
