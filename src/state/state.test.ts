@@ -470,11 +470,12 @@ test('settings change only the selected recipe, and Restore defaults puts back i
   let s = act.setSetting(plan(), 'count', 4);
   s = act.setSetting(s, 'flour:rye', 0);
   s = act.setSetting(s, 'build:water', 200);
+  s = act.setSetting(s, 'autolyse', 45);
   s = act.setChecked(s, 'feed', true, NOW);
   s = act.setChecked(act.selectRecipe(s, 'tartine'), 'leaven', true, NOW);
   s = act.selectRecipe(s, 'house');
   const house = selected(s).settings;
-  assert.deepEqual([house.count, house.flours.rye, house.build.water], [4, 0, 200]);
+  assert.deepEqual([house.count, house.flours.rye, house.build.water, house.autolyse], [4, 0, 200, 45]);
   assert.deepEqual(s.recipes.tartine.settings, RECIPES[1].defaults);
   const restored = act.restoreDefaults(act.setOvenCapacity(s, 1));
   assert.deepEqual(selected(restored).settings, RECIPES[0].defaults);

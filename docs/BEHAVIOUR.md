@@ -2,7 +2,7 @@
 
 This is the contract for the rebuild: what the app did at commit `34699a7`, written from the code and checked against the recorded outputs, and kept since except where Michael decided otherwise. His decisions are at the end; sections that changed say so.
 
-Two records back it up. `npm test` checks the code against `tests/baseline/baseline.json` (164 plans, 42 recipe calculations, 24 kinds of saved data), including `App.tsx` rendered for each plan. `npm run test:browser` checks the built site against 22 recorded screens, each at phone and desktop width, and 33 recorded actions.
+Two records back it up. `npm test` checks the code against `tests/baseline/baseline.json` (164 plans, 42 recipe calculations, 24 kinds of saved data), including `App.tsx` rendered for each plan. `npm run test:browser` checks the built site against 22 recorded screens, each at phone and desktop width, and 35 recorded actions.
 
 ## Recipes
 

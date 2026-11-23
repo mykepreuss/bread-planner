@@ -1259,5 +1259,11 @@ Record changes, checked by decoding both records against `main`: 56 plans change
 
 Evidence (this session, on `autolyse-length`): `npm test` passed 187 of 187 with the host zone and with `BASELINE_ZONE=rule`; `npm run build` (Prettier, `astro check` with 0 errors, 0 warnings and 0 hints, and the build) passed; `npm run test:browser` passed 57 of 57. In the dev server the batch card showed the Autolyse field at 90 min at 375 px (page 375 wide) and at desktop width, with no console errors.
 
+Independent check (the verifier, on `5abbd3f`): every behaviour criterion met; it failed on stale action counts only.
+- Its differential ran `schedule()` from `985e10f` and `5abbd3f` on 5,000 random plans (every recipe, counts 1 to 9, oven 1 to 4, bowls, both proofs and anchors, daylight-saving dates): of 132,030 steps, only the 1,689 Tartine and Country Rye initial-mix notes differed, and the quiet-hours suggestion matched. 17 lengths from 0 to 720 on 1,500 plans moved only what they should. The loader refused every bad value it tried, for all six recipes. It decoded both records and confirmed the claim above.
+- Seven of its eight breaks were caught. The eighth, Restore defaults keeping the old length, passed both suites; the settings test now sets the length and expects Restore defaults to reset it, and the same break now fails it.
+- Fixed: README and BEHAVIOUR now count 35 recorded actions (they said 34 and 33).
+- Noted, not changed: a House autolyse longer than 5 hours starts before the leaven, and if the leaven is already checked it shows as Skipped; a 0-minute autolyse still shows its step at the mix's time; three descriptions name default times (Whole Wheat's 2 hours, Country Rye's longer rest, Sesame's toast as the autolyse finishes); the 12-hour cap also allows an unrealistic Tartine rest. From before this change: Tartine's rest counts from the planned leaven, so checking the initial mix late doesn't move the salt.
+
 Not verified: a real phone, and a real bake.
 
