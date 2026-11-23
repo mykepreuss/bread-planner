@@ -163,20 +163,25 @@ test('parallel capacity and a partial final batch cover every loaf once', () => 
   assert.equal(all.filter((x) => x.id.startsWith('covered')).length, 1);
 });
 
-test('Tartine cold: a short rest with the leaven in, five folds before dividing, and the first and last bakes on time', () => {
+test('Tartine cold: a 2-hour autolyse ends as the leaven is ready, five folds before dividing, and the first and last bakes on time', () => {
   const s = schedule(plan('tartine')),
     at = timeOf(s);
-  assert.equal(at('autolyse'), '2026-10-21 21:00');
-  assert.equal(at('mix'), '2026-10-21 21:30');
-  assert.equal(at('shape'), '2026-10-22 00:30');
-  assert.equal(at('fridge'), '2026-10-22 01:10');
+  // Decision 13: the autolyse is the leaven's last 2 hours, and the leaven goes in with the salt.
+  assert.equal(at('autolyse'), '2026-10-21 19:00');
+  assert.equal(find(s, 'autolyse').minutes, 120);
+  assert.equal(at('mix'), '2026-10-21 21:00');
+  assert.equal(+find(s, 'mix').at, +find(s, 'leaven').at + 720 * 60000);
+  assert.equal(at('rest'), '2026-10-21 21:00');
+  assert.equal(at('shape'), '2026-10-22 00:00');
+  assert.equal(at('fridge'), '2026-10-22 00:40');
   assert.equal(s.filter((x) => /^turn\d+$/.test(x.id)).length, 5);
   assert.ok(+find(s, 'turn5').at < +find(s, 'shape').at);
-  assert.equal(at('preheat'), '2026-10-22 13:40');
-  assert.equal(at('covered'), '2026-10-22 14:10');
-  assert.equal(at('out-1'), '2026-10-22 14:50');
-  assert.equal(at('done'), '2026-10-22 16:00');
-  assert.match(find(s, 'autolyse').note, /leaven used/);
+  assert.equal(at('preheat'), '2026-10-22 13:10');
+  assert.equal(at('covered'), '2026-10-22 13:40');
+  assert.equal(at('out-1'), '2026-10-22 14:20');
+  assert.equal(at('done'), '2026-10-22 15:30');
+  assert.doesNotMatch(find(s, 'autolyse').note, /leaven used|disperse/i, 'the leaven stays out of the autolyse');
+  assert.match(find(s, 'mix').note, /^Work in the leaven, salt and reserved water\./);
   assert.match(find(s, 'preheat').note, /500°F/);
   assert.match(find(s, 'covered').note, /450°F/);
 });
@@ -185,9 +190,9 @@ test('Tartine warm proof leaves out the fridge and warm-up, and the preheat over
   const s = schedule(plan('tartine', { proof: 'warm' })),
     at = timeOf(s);
   assert.ok(!s.some((x) => x.id === 'fridge' || x.id.startsWith('warmup')));
-  assert.equal(at('preheat'), '2026-10-22 04:10');
-  assert.equal(at('covered'), '2026-10-22 04:40');
-  assert.equal(at('done'), '2026-10-22 06:30');
+  assert.equal(at('preheat'), '2026-10-22 03:40');
+  assert.equal(at('covered'), '2026-10-22 04:10');
+  assert.equal(at('done'), '2026-10-22 06:00');
 });
 
 test('planning back is from the last batch, for every method, proof and oven capacity', () => {
@@ -331,17 +336,19 @@ test('an ingredient the recipe has none of gets no tick-off, and a final mix wit
   assert.equal(nothing.note, 'Mix until incorporated.');
 });
 
-test("Tartine's second addition lists its salt and water as tick-offs, for every Tartine recipe, and keeps the book's note", () => {
+test("Tartine's second addition lists its leaven, salt and water as tick-offs, for every Tartine recipe, with the book's note", () => {
   for (const id of ['tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye']) {
     const steps = schedule(plan(id)),
       mix = find(steps, 'mix');
+    assert.equal(mix.title, 'Add leaven, salt and final water');
     assert.deepEqual(mix.additions, [
+      { id: 'mix:leaven', name: 'Leaven', grams: 200 },
       { id: 'mix:salt', name: 'Salt', grams: 20 },
       { id: 'mix:water', name: 'Water', grams: 50 },
     ]);
     assert.equal(
       mix.note,
-      'Work in the salt and reserved water. Keep mixing if the dough separates; it should come together again.',
+      'Work in the leaven, salt and reserved water. Keep mixing if the dough separates; it should come together again.',
     );
     assert.deepEqual(
       steps.filter((s) => s.additions).map((s) => s.id),
@@ -421,7 +428,7 @@ test('the loaves split equally between bowls, and a bowl that holds them all is 
   assert.equal(find(schedule(plan('house', {}, { count: 4 })), 'mix').additions!.length, 8);
 });
 
-test('Tartine recipes split the initial mix and the salt step between bowls, and combine them for bulk', () => {
+test('Tartine recipes split the autolyse and the final mix between bowls, and combine them for bulk', () => {
   for (const id of ['tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye']) {
     const steps = schedule(plan(id, {}, { count: 4 }));
     assert.match(
@@ -431,11 +438,11 @@ test('Tartine recipes split the initial mix and the salt step between bowls, and
     );
     assert.equal(
       find(steps, 'mix').note,
-      'Work the salt and reserved water into each bowl. Keep mixing if the dough separates; it should come together again.',
+      'Work the leaven, salt and reserved water into each bowl. Keep mixing if the dough separates; it should come together again.',
     );
     assert.deepEqual(
       find(steps, 'mix').additions!.map((a) => a.id),
-      ['mix:1:salt', 'mix:1:water', 'mix:2:salt', 'mix:2:water'],
+      ['mix:1:leaven', 'mix:1:salt', 'mix:1:water', 'mix:2:leaven', 'mix:2:salt', 'mix:2:water'],
     );
     assert.match(find(steps, 'rest').note, /^Combine both bowls in one container\. Cover and keep/);
   }

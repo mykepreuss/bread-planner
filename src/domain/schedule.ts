@@ -166,11 +166,9 @@ export type PlanInput = {
 
 const LEAVEN_CUE =
   'Use when aerated and puffy, and a spoonful floats in room-temperature water. If it sinks, allow more fermentation before mixing.';
-/** The Basic Country Bread's initial mix and rest, for a Tartine recipe without its own `initialMix`. */
-const TARTINE_MIX = {
-  rest: TARTINE.rest,
-  note: 'Disperse the leaven used in the initial water, about 80°F / 27°C. Add white and whole-wheat flour; mix until no dry flour remains. Cover for 25 to 40 minutes.',
-};
+/** The Basic Country Bread's autolyse note, for a Tartine recipe without its own `autolyse`. */
+const TARTINE_AUTOLYSE =
+  'Mix the white and whole-wheat flour with the initial water, about 80°F / 27°C, until no dry flour remains. Cover and rest until the leaven is ready.';
 const gram = (n: number) => `${Math.round(n * 10) / 10} g`;
 const listed = (rows: [string, number][]) =>
   rows.map(([name, n]) => `${inSentence(name)} (${Math.round(n * 10) / 10} g)`).join(', ');
@@ -227,29 +225,29 @@ export function schedule(input: PlanInput): Step[] {
   let firstBake: number, preheat: number, covered: number, uncovered: number, warmup: number;
   if (tartine) {
     const t = TARTINE,
-      initial = recipe.initialMix ?? TARTINE_MIX;
+      autolyse = recipe.autolyse ?? TARTINE_AUTOLYSE;
     push('leaven', 'leaven', 'Make leaven', 0, t.leaven, leavenNote(recipe, r, bowls), LEAVEN_CUE);
+    // The autolyse ends as the leaven is ready; then the leaven goes in with the salt (decision 13).
+    push(
+      'autolyse',
+      'autolyse',
+      'Start autolyse',
+      t.leaven - t.autolyse,
+      t.autolyse,
+      bowls > 1
+        ? `Split this mix between ${bowls} bowls, with an equal share of everything in each. ${autolyse}`
+        : autolyse,
+    );
     let at = t.leaven;
     push(
-      'autolyse',
-      'autolyse',
-      'Mix dough and rest',
-      at,
-      initial.rest,
-      bowls > 1
-        ? `Split this mix between ${bowls} bowls, with an equal share of everything in each. ${initial.note}`
-        : initial.note,
-    );
-    at += initial.rest;
-    push(
       'mix',
       'mix',
-      'Add salt and final water',
+      'Add leaven, salt and final water',
       at,
       0,
       bowls > 1
-        ? 'Work the salt and reserved water into each bowl. Keep mixing if the dough separates; it should come together again.'
-        : 'Work in the salt and reserved water. Keep mixing if the dough separates; it should come together again.',
+        ? 'Work the leaven, salt and reserved water into each bowl. Keep mixing if the dough separates; it should come together again.'
+        : 'Work in the leaven, salt and reserved water. Keep mixing if the dough separates; it should come together again.',
       undefined,
       additionsFor('mix', r.final, bowls),
     );

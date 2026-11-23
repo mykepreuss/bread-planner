@@ -50,15 +50,14 @@ export function formula(recipe: Recipe, s: Settings) {
     grams: clean((flour * part(key)) / parts),
     percent: (100 * part(key)) / parts,
   }));
-  const tartine = recipe.method === 'tartine';
+  // Every recipe autolyses its flour and first water, then adds the leaven with the salt (decision 13).
   const initial: Weighed[] = [
     ...flours.filter((f) => f.grams > 0 && !recipe.late.includes(f.key)).map((f): Weighed => [f.name, f.grams]),
     ['Water', water - finalWater],
   ];
-  if (tartine) initial.unshift(['Leaven used', used]);
   const final: Weighed[] = [
     ...flours.filter((f) => f.grams > 0 && recipe.late.includes(f.key)).map((f): Weighed => [f.name, f.grams]),
-    ...(tartine ? [] : [['Leaven used', used] as Weighed]),
+    ['Leaven used', used],
     ['Salt', salt],
     ['Water', finalWater],
   ];

@@ -41,8 +41,8 @@ export type Settings = {
 /**
  * `method` is how the dough is mixed and timed (see methods.ts). `late` flours go into the final mix. `buildFlour`
  * is the flour in the leaven build besides whole wheat. `addIns`, for Tartine recipes only, are worked in after the
- * first turn (see addins.ts). `initialMix`, for Tartine recipes only, replaces the Basic Country Bread's initial mix:
- * the rest after it, in minutes, and its step's note. Every later step moves with the rest.
+ * first turn (see addins.ts). `autolyse`, for Tartine recipes only, replaces the Basic Country Bread's autolyse note,
+ * for flour mixed with cooler water.
  */
 export type Recipe = {
   id: string;
@@ -53,7 +53,7 @@ export type Recipe = {
   late: FlourKey[];
   buildFlour: FlourKey;
   addIns?: AddIns;
-  initialMix?: { rest: number; note: string };
+  autolyse?: string;
   defaults: Settings;
 };
 
@@ -87,7 +87,7 @@ export const RECIPES: Recipe[] = [
     id: 'tartine',
     name: 'Original Tartine',
     description:
-      'The book’s 90/10 white and whole-wheat loaf, with leaven in the initial mix. Its 12-hour leaven suits an evening start.',
+      'The book’s 90/10 white and whole-wheat loaf. Its 12-hour leaven suits an evening start and a warm proof the next afternoon.',
     method: 'tartine',
     flours: ['white', 'wheat'],
     late: [],
@@ -153,7 +153,7 @@ export const RECIPES: Recipe[] = [
       note: 'Scatter over the dough {list}. Wet them with a splash of water, then work them in by hand, pinching the dough through your fingers and slicing through it with the side of your hand until the seeds are evenly spread. Bulk then carries on as planned.',
       items: [{ amount: 1, unit: ['cup', 'cups'], what: 'unhulled sesame seeds, toasted and cooled' }],
       // About 15 minutes to heat the oven, 10 minutes, a stir, 10 to 15 minutes more, then 20 minutes to cool: an hour,
-      // so the seeds are cool by Turn 1. It starts with the initial mix.
+      // so the seeds are cool by Turn 1. It starts half an hour before the leaven goes in.
       prep: {
         title: 'Toast the sesame seeds',
         note: 'Heat the oven to 400°F / 204°C. Give the seeds 10 minutes on a rimmed baking sheet in a single layer, then stir them so the darker ones at the edges move to the middle. Return them for another 10 to 15 minutes, until thoroughly toasted, and let them cool for 20 minutes. They go into the dough at Turn 1.',
@@ -177,16 +177,15 @@ export const RECIPES: Recipe[] = [
     id: 'whole-wheat',
     name: 'Tartine Whole Wheat',
     description:
-      'The book’s 70/30 whole-wheat and all-purpose loaf, mixed with cooler water and rested longer before the salt. If the dough runs lively, lower the leaven toward 15%.',
+      'The book’s 70/30 whole-wheat and all-purpose loaf, mixed with cooler water. If the dough runs lively, lower the leaven toward 15%.',
     method: 'tartine',
     flours: ['wheat', 'ap'],
     late: [],
     buildFlour: 'white',
-    // Whole wheat takes up more water, so the rest is 50 minutes, the middle of the book's 40 to 60.
-    initialMix: {
-      rest: 50,
-      note: 'Stir the leaven used into the initial water, about 75°F / 24°C, until it disperses. Add the whole-wheat and all-purpose flour and mix by hand until no dry flour is left. Cover and rest for 40 to 60 minutes while the whole wheat soaks up the water.',
-    },
+    // The book rests this dough 40 to 60 minutes after mixing, as whole wheat takes up more water. The 2-hour autolyse
+    // gives it longer.
+    autolyse:
+      'Mix the whole-wheat and all-purpose flour with the initial water, about 75°F / 24°C, by hand until no dry flour is left. Cover and rest until the leaven is ready, while the whole wheat soaks up the water.',
     // Tartine Bread, page 114: 700 g whole wheat, 300 g all-purpose; 800 g water; 200 g leaven, built as for Original
     // Tartine; 20 g salt. The page doesn't say how much water waits for the salt; 50 g is assumed, as for the Basic
     // Country Bread.
@@ -205,17 +204,15 @@ export const RECIPES: Recipe[] = [
     id: 'country-rye',
     name: 'Tartine Country Rye',
     description:
-      'The book’s country rye: just enough medium-fine whole rye with white bread flour for a sweet rye flavour without much sourness. Cooler water and a longer rest after mixing, as for whole wheat.',
+      'The book’s country rye: just enough medium-fine whole rye with white bread flour for a sweet rye flavour without much sourness. Mixed with cooler water, as for whole wheat.',
     method: 'tartine',
     flours: ['rye', 'white'],
     late: [],
     buildFlour: 'white',
-    initialMix: {
-      rest: 50,
-      note: 'Stir the leaven used into the initial water, about 75°F / 24°C, until it disperses. Add the rye and white-bread flour and mix by hand until no dry flour is left. Cover and rest for 40 to 60 minutes.',
-    },
+    autolyse:
+      'Mix the rye and white-bread flour with the initial water, about 75°F / 24°C, by hand until no dry flour is left. Cover and rest until the leaven is ready.',
     // Tartine Bread, page 118: 170 g medium-fine whole rye, 830 g white bread flour; 800 g water; 200 g leaven, built
-    // as for Original Tartine; 20 g salt, added after the rest. As for Tartine Whole Wheat, 50 g of the water is
+    // as for Original Tartine; 20 g salt, added with the leaven. As for Tartine Whole Wheat, 50 g of the water is
     // assumed to wait for the salt, as in the Basic Country Bread. Added at Michael's request on November 22, 2026.
     defaults: {
       count: 2,

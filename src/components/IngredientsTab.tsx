@@ -82,8 +82,7 @@ function LeavenBalance({
 export function IngredientsTab() {
   const { state, update } = usePlanner(),
     { recipe: d, settings: p } = selected(state),
-    r = formula(d, p),
-    book = d.method === 'tartine';
+    r = formula(d, p);
   const buildFlour = FLOUR_NAMES[d.buildFlour];
   // Mixed in several bowls, each stage lists one bowl's weights; see `mixingBowls`.
   const bowls = mixingBowls(p.count, state.mixCapacity),
@@ -220,22 +219,14 @@ export function IngredientsTab() {
                 </p>
               )}
               <Panel
-                title={book ? '01 / Initial mix and rest' : '01 / Autolyse'}
-                description={`${
-                  book
-                    ? 'Leaven goes into this mix before the initial rest.'
-                    : 'Mix the flour and first water addition. Keep the final-mix ingredients separate.'
-                }${eachBowl}`}
+                title="01 / Autolyse"
+                description={`Mix the flour and first water addition. Keep the final-mix ingredients separate.${eachBowl}`}
               >
                 <Weights rows={inBowl(r.initial)} />
               </Panel>
               <Panel
-                title={book ? '02 / Salt and remaining water' : '02 / Final mix'}
-                description={`${
-                  book
-                    ? 'Add after the initial rest, then begin bulk fermentation.'
-                    : 'Add after the autolyse, once the leaven is ready.'
-                }${eachBowl}`}
+                title="02 / Final mix"
+                description={`Add after the autolyse, once the leaven is ready.${eachBowl}`}
               >
                 <Weights rows={inBowl(r.final)} />
               </Panel>

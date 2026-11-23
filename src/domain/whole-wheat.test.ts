@@ -7,13 +7,14 @@ import { dateString } from './text.ts';
 
 /**
  * Tartine Whole Wheat, from Tartine Bread, page 114: the Basic Country Bread made with 700 g whole wheat and 300 g
- * all-purpose flour, 800 g water at about 75°F, and a 40- to 60-minute rest after the initial mix. Plans start the
- * leaven at 9:00 AM on October 21, 2026; every time is built and read in the local zone, so these tests hold in any
- * time zone. Original Tartine is checked against its plan as it was before this recipe was added.
+ * all-purpose flour and 800 g water at about 75°F. The book rests it 40 to 60 minutes after the initial mix; since
+ * decision 13 every Tartine recipe has a 2-hour autolyse alongside the leaven instead, so its times are Original
+ * Tartine's. Plans start the leaven at 9:00 AM on October 21, 2026; every time is built and read in the local zone, so
+ * these tests hold in any time zone. Original Tartine is checked against its plan as it was before decision 13.
  */
 
 const NOTE =
-  'Stir the leaven used into the initial water, about 75°F / 24°C, until it disperses. Add the whole-wheat and all-purpose flour and mix by hand until no dry flour is left. Cover and rest for 40 to 60 minutes while the whole wheat soaks up the water.';
+  'Mix the whole-wheat and all-purpose flour with the initial water, about 75°F / 24°C, by hand until no dry flour is left. Cover and rest until the leaven is ready, while the whole wheat soaks up the water.';
 
 const approx = (a: number, b: number, message?: string) => assert.ok(Math.abs(a - b) < 1e-7, message ?? `${a} != ${b}`);
 function recipe(id: string): Recipe {
@@ -56,7 +57,7 @@ function later(at: string, minutes: number) {
 type Row = [id: string, at: string, minutes: number, title: string];
 const rows = (steps: Step[]): Row[] => steps.map((s) => [s.id, local(s.at), s.minutes, s.title]);
 
-/** Original Tartine's steps up to the final shape, the same for either proof and oven capacity. */
+/** Original Tartine's steps up to the final shape before decision 13, the same for either proof and oven capacity. */
 const TO_SHAPE: Row[] = [
   ['leaven', '2026-10-21 09:00', 720, 'Make leaven'],
   ['autolyse', '2026-10-21 21:00', 30, 'Mix dough and rest'],
@@ -71,8 +72,8 @@ const TO_SHAPE: Row[] = [
   ['bench1', '2026-10-22 00:35', 30, 'Bench rest and prepare baskets'],
   ['fold', '2026-10-22 01:05', 5, 'Final shape'],
 ];
-/** Original Tartine's plan as it was before Tartine Whole Wheat, for each proof and oven capacity. */
-const TARTINE_PLANS: { name: string; change: Partial<PlanInput>; rows: Row[] }[] = [
+/** Original Tartine's plan as it was before decision 13, for each proof and oven capacity. */
+const BOOK_PLANS: { name: string; change: Partial<PlanInput>; rows: Row[] }[] = [
   {
     name: 'cold proof, both loaves together',
     change: { proof: 'cold', ovenCapacity: 2 },
@@ -133,14 +134,14 @@ const TARTINE_PLANS: { name: string; change: Partial<PlanInput>; rows: Row[] }[]
     ],
   },
 ];
-/** Original Tartine's notes and readiness cues with both loaves baked together, as they were. */
+/** Original Tartine's notes and readiness cues with both loaves baked together. */
 const REPEAT = 'Repeat the four-sided stretch and fold, with wet hands.';
 const TARTINE_NOTES: Record<string, string> = {
   leaven:
     'Mix 15 g (about 1 tbsp) of mature starter with 200 g water, then add 100 g white-bread flour and 100 g whole-wheat flour. Cover at room temperature. You use 200 g in the dough and keep 215 g.',
   autolyse:
-    'Disperse the leaven used in the initial water, about 80°F / 27°C. Add white and whole-wheat flour; mix until no dry flour remains. Cover for 25 to 40 minutes.',
-  mix: 'Work in the salt and reserved water. Keep mixing if the dough separates; it should come together again.',
+    'Mix the white and whole-wheat flour with the initial water, about 80°F / 27°C, until no dry flour remains. Cover and rest until the leaven is ready.',
+  mix: 'Work in the leaven, salt and reserved water. Keep mixing if the dough separates; it should come together again.',
   rest: 'Cover and keep at 75°F to 80°F / 24°C to 27°C.',
   turn1: 'Wet your hand. Stretch one quadrant over the dough; rotate and repeat to fold all four sides.',
   turn2: REPEAT,
@@ -179,15 +180,21 @@ const pick = (steps: Step[], all: Record<string, string>) =>
   Object.fromEntries(steps.filter((s) => s.id in all).map((s) => [s.id, all[s.id]]));
 
 /**
- * Tartine Whole Wheat's plan from Original Tartine's: the rest after the initial mix is 50 minutes rather than 30, so
- * the final mix and every step after it come 20 minutes later.
+ * A plan of the book's from decision 13 on: the autolyse is the last 2 hours of the leaven, and the leaven goes in with
+ * the salt as the leaven is ready. The book's 30-minute rest after the initial mix is gone, so the final mix and every
+ * step after it come 30 minutes earlier.
  */
-function wholeWheatRows(tartine: Row[]): Row[] {
-  const i = tartine.findIndex(([id]) => id === 'autolyse');
-  return tartine.map(([id, at, minutes, title], n): Row =>
-    n < i ? [id, at, minutes, title] : n === i ? [id, at, 50, title] : [id, later(at, 20), minutes, title],
+function decision13(book: Row[]): Row[] {
+  const i = book.findIndex(([id]) => id === 'autolyse');
+  return book.map(([id, at, minutes, title], n): Row =>
+    n < i
+      ? [id, at, minutes, title]
+      : n === i
+        ? [id, later(at, -120), 120, 'Start autolyse']
+        : [id, later(at, -30), minutes, id === 'mix' ? 'Add leaven, salt and final water' : title],
   );
 }
+const TARTINE_PLANS = BOOK_PLANS.map((p) => ({ ...p, rows: decision13(p.rows) }));
 
 test('Tartine Whole Wheat is on the menu after the two Tartine variations, made the Tartine way', () => {
   assert.deepEqual(
@@ -220,8 +227,8 @@ test('Tartine Whole Wheat is on the menu after the two Tartine variations, made 
     build: { starter: 15, flour: 100, wheat: 100, water: 200 },
   });
   assert.deepEqual(r.defaults.build, recipe('tartine').defaults.build, 'the leaven is built as for Original Tartine');
-  assert.deepEqual(r.initialMix, { rest: 50, note: NOTE });
-  assert.equal(recipe('tartine').initialMix, undefined, 'Original Tartine keeps the Basic Country initial mix');
+  assert.equal(r.autolyse, NOTE);
+  assert.equal(recipe('tartine').autolyse, undefined, 'Original Tartine keeps the Basic Country autolyse note');
   assert.match(r.description, /whole-wheat/);
   assert.match(r.description, /15%/);
   // The removed White & Whole Wheat had the id `white-wheat`; it stays gone and is not this recipe.
@@ -247,13 +254,14 @@ test('the formula is the book’s table: 700 g whole wheat, 300 g all-purpose, 8
   approx(r.water, 800);
   approx(r.used, 200);
   approx(r.salt, 20);
+  // The leaven goes in with the salt, after the autolyse (decision 13).
   stage(r.initial, [
-    ['Leaven used', 200],
     ['Whole-wheat flour', 700],
     ['All-purpose flour', 300],
     ['Water', 750],
   ]);
   stage(r.final, [
+    ['Leaven used', 200],
     ['Salt', 20],
     ['Water', 50],
   ]);
@@ -270,7 +278,7 @@ test('the formula is the book’s table: 700 g whole wheat, 300 g all-purpose, 8
   approx(r.totalWater, 900);
 });
 
-test('Original Tartine keeps exactly the schedule, notes and cues it had, for either proof and oven capacity', () => {
+test('Original Tartine has the book’s schedule with a 2-hour autolyse ending as the leaven is ready, for either proof and oven capacity', () => {
   for (const { name, change, rows: expected } of TARTINE_PLANS) {
     const steps = schedule(plan('tartine', change));
     assert.deepEqual(rows(steps), expected, name);
@@ -279,33 +287,33 @@ test('Original Tartine keeps exactly the schedule, notes and cues it had, for ei
       assert.deepEqual(readiness(steps), pick(steps, TARTINE_READINESS), name);
     }
   }
+  // Spelled out once: the autolyse from 7:00 PM, the leaven in at 9:00 PM, and the loaves out 30 minutes sooner.
+  const cold = schedule(plan('tartine'));
+  assert.deepEqual(rows(cold).slice(0, 4), [
+    ['leaven', '2026-10-21 09:00', 720, 'Make leaven'],
+    ['autolyse', '2026-10-21 19:00', 120, 'Start autolyse'],
+    ['mix', '2026-10-21 21:00', 0, 'Add leaven, salt and final water'],
+    ['rest', '2026-10-21 21:00', 30, 'Begin warm bulk fermentation'],
+  ]);
+  assert.equal(local(cold.find((s) => s.id === 'done')!.at), '2026-10-22 14:20');
+  assert.equal(
+    local(schedule(plan('tartine', { proof: 'warm' })).find((s) => s.id === 'done')!.at),
+    '2026-10-22 04:50',
+  );
 });
 
-test('Tartine Whole Wheat follows Original Tartine, but rests 50 minutes after the initial mix and everything after moves 20 minutes later', () => {
-  for (const { name, change, rows: tartine } of TARTINE_PLANS) {
-    const steps = schedule(plan('whole-wheat', change)),
-      expected = wholeWheatRows(tartine);
+test('Tartine Whole Wheat keeps Original Tartine’s times and cues, with its own autolyse note', () => {
+  for (const { name, change, rows: expected } of TARTINE_PLANS) {
+    const steps = schedule(plan('whole-wheat', change));
     assert.deepEqual(rows(steps), expected, name);
-    const at = (id: string) => +steps.find((s) => s.id === id)!.at;
-    assert.equal(
-      (at('mix') - at('autolyse')) / 60000,
-      50,
-      `${name}: the final mix is 50 minutes after the initial mix`,
-    );
     if (change.ovenCapacity === 2) {
       assert.deepEqual(notes(steps), { ...pick(steps, TARTINE_NOTES), autolyse: NOTE }, name);
       assert.deepEqual(readiness(steps), pick(steps, TARTINE_READINESS), name);
     }
   }
-  const cold = schedule(plan('whole-wheat'));
-  assert.equal(local(cold.find((s) => s.id === 'done')!.at), '2026-10-22 15:10');
-  assert.equal(
-    local(schedule(plan('whole-wheat', { proof: 'warm' })).find((s) => s.id === 'done')!.at),
-    '2026-10-22 05:40',
-  );
 });
 
-test('every Whole Wheat step is Original Tartine’s, 20 minutes later after the initial mix, whatever the count, oven or proof', () => {
+test('every Whole Wheat step is Original Tartine’s but the autolyse note, whatever the count, oven or proof', () => {
   for (const proof of ['cold', 'warm'] as const)
     for (const ovenCapacity of [1, 2, 3])
       for (const count of [1, 2, 3, 5])
@@ -325,28 +333,25 @@ test('every Whole Wheat step is Original Tartine’s, 20 minutes later after the
             mixed = t.findIndex((s) => s.id === 'autolyse');
           assert.ok(mixed > 0, name);
           const expected = t.map((s, n) =>
-            n < mixed
-              ? s
-              : n === mixed
-                ? {
-                    ...s,
-                    minutes: 50,
-                    // More than 2 loaves are mixed in bowls of up to 2 loaves each (Michael, November 22, 2026).
-                    note:
-                      count > 2
-                        ? `Split this mix between ${Math.ceil(count / 2)} bowls, with an equal share of everything in each. ${NOTE}`
-                        : NOTE,
-                  }
-                : { ...s, at: new Date(+s.at + 20 * 60000) },
+            n === mixed
+              ? {
+                  ...s,
+                  // More than 2 loaves are mixed in bowls of up to 2 loaves each (Michael, November 22, 2026).
+                  note:
+                    count > 2
+                      ? `Split this mix between ${Math.ceil(count / 2)} bowls, with an equal share of everything in each. ${NOTE}`
+                      : NOTE,
+                }
+              : s,
           );
           assert.deepEqual(w, expected, name);
         }
 });
 
 test('planning back from the last loaf out reproduces the forward Whole Wheat schedule', () => {
-  // The plan ends 20 minutes later than Original Tartine's, so planning back from 3:10 PM starts the leaven at 9:00 AM.
+  // The plan ends when Original Tartine's does, so planning back from 2:20 PM starts the leaven at 9:00 AM.
   assert.deepEqual(
-    schedule(plan('whole-wheat', { anchor: 'done', date: '2026-10-22', time: '15:10' })),
+    schedule(plan('whole-wheat', { anchor: 'done', date: '2026-10-22', time: '14:20' })),
     schedule(plan('whole-wheat')),
   );
   for (const proof of ['cold', 'warm'] as const)
@@ -361,13 +366,12 @@ test('planning back from the last loaf out reproduces the forward Whole Wheat sc
     }
 });
 
-test('the initial-mix note gives the cooler water, both flours and the longer rest, and nothing of the white loaf’s', () => {
+test('the autolyse note gives the cooler water and both flours, and nothing of the white loaf’s', () => {
   const step = schedule(plan('whole-wheat')).find((s) => s.id === 'autolyse')!;
-  assert.equal(step.title, 'Mix dough and rest');
-  assert.equal(step.minutes, 50);
+  assert.equal(step.title, 'Start autolyse');
+  assert.equal(step.minutes, 120);
   assert.equal(step.note, NOTE);
   assert.match(step.note, /75°F \/ 24°C/);
   assert.match(step.note, /whole-wheat and all-purpose flour/);
-  assert.match(step.note, /40 to 60 minutes/);
-  assert.doesNotMatch(step.note, /80°F|27°C|white|25 to 40/);
+  assert.doesNotMatch(step.note, /80°F|27°C|white|leaven used/i);
 });

@@ -26,8 +26,13 @@ export const HOUSE = {
 
 export const TARTINE = {
   leaven: 720,
-  /** The rest after the initial mix. A recipe's `initialMix` can set its own (see recipes.ts). */
-  rest: 30,
+  /**
+   * The autolyse: flour and water rest for the last 2 hours of the leaven, then the leaven, salt and reserved water
+   * go in together and bulk starts. Michael's change on November 22, 2026 (decision 13 in docs/BEHAVIOUR.md), for
+   * every Tartine recipe: an autolyse alongside the leaven, as in Preuss House, of at most 4 hours. Two hours keeps an
+   * evening leaven with a warm proof out of quiet hours: a 4-hour autolyse would start before 7:00 AM.
+   */
+  autolyse: 120,
   turnEvery: 30,
   bulk: 180,
   preshape: 5,

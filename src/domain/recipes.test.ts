@@ -185,13 +185,21 @@ test('base House stages, hydration and leaven reserve match the supplied recipe 
   grams(r.final, [100, 200, 20, 100]);
 });
 
-test('the book recipe keeps its quantities and leaven in the initial mix, and weighs no dusting flour', () => {
+test('the book recipe keeps its quantities, adds its leaven with the salt, and weighs no dusting flour', () => {
   const r = weigh(plan('tartine'));
   approx(r.total, 1970);
   approx(r.hydration, 75);
-  assert.equal(r.initial[0][0], 'Leaven used');
-  grams(r.initial, [200, 900, 100, 700]);
-  grams(r.final, [20, 50]);
+  // Since decision 13 the leaven goes in after the autolyse, with the salt and the reserved water.
+  assert.deepEqual(
+    r.initial.map((x) => x[0]),
+    ['White-bread flour', 'Whole-wheat flour', 'Water'],
+  );
+  grams(r.initial, [900, 100, 700]);
+  assert.deepEqual(
+    r.final.map((x) => x[0]),
+    ['Leaven used', 'Salt', 'Water'],
+  );
+  grams(r.final, [200, 20, 50]);
   approx(r.made, 415);
   approx(r.reserve, 215);
   // The basket and dusting flour card was removed at Michael's request on November 22, 2026.
