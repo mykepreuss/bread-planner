@@ -17,7 +17,7 @@
       - button "Done"
       - paragraph: "Then: Start leaven · Sunday, Nov 22 at 9:00 PM"
     - region "Quiet hours warning":
-      - heading "11 actions need you during quiet hours" [level=2]
+      - heading "12 actions need you during quiet hours" [level=2]
       - paragraph: Hands-on work is scheduled after 10:30 PM or before 7:00 AM. Try an earlier start or a different finish time. Overnight rests are fine.
       - heading "View affected steps" [level=3]:
         - button "View affected steps"
@@ -71,13 +71,13 @@
       - paragraph:
         - strong: "Ready when:"
         - text: Use when aerated and puffy, and a spoonful floats in room-temperature water. If it sinks, allow more fermentation before mixing.
-      - text: Next step in 30 min
-      - checkbox "Complete Start autolyse"
-      - time: 9:30 PM
-      - text: Start autolyse
-      - paragraph: Mix Anita's all-purpose flour (800 g), whole-wheat flour (100 g), water (680 g). Cover. Keep the remaining ingredients for the final mix.
-      - text: Next step in 4h 30m Day 2
+      - text: Next step in 3h 30m Day 2
       - heading "Monday, Nov 23" [level=3]
+      - checkbox "Complete Start autolyse"
+      - time: 12:30 AM
+      - text: Start autolyse Quiet hours
+      - paragraph: Mix Anita's all-purpose flour (800 g), whole-wheat flour (100 g), water (680 g). Cover. Keep the remaining ingredients for the final mix.
+      - text: Next step in 1h 30m
       - checkbox "Complete Mix final dough"
       - time: 2:00 AM
       - text: Mix final dough Quiet hours

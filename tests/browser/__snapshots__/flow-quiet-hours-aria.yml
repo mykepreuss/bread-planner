@@ -1,5 +1,5 @@
 - region "Quiet hours warning":
-  - heading "14 actions need you during quiet hours" [level=2]
+  - heading "13 actions need you during quiet hours" [level=2]
   - paragraph: Hands-on work is scheduled after 10:30 PM or before 7:00 AM. Try an earlier start or a different finish time. Overnight rests are fine.
   - heading "View affected steps" [level=3]:
     - button "View affected steps" [expanded]
@@ -8,9 +8,6 @@
       - listitem:
         - time: Saturday, Nov 21 at 5:01 AM
         - text: Start leaven
-      - listitem:
-        - time: Saturday, Nov 21 at 5:31 AM
-        - text: Start autolyse
       - listitem:
         - time: Sunday, Nov 22 at 3:51 AM
         - text: Take batch 1 out of fridge
