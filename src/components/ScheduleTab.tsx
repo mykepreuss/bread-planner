@@ -119,6 +119,7 @@ export function ScheduleTab({ onViewIngredients }: { onViewIngredients: () => vo
             mixCapacity={state.mixCapacity}
             bowls={v.bowls}
             leavenFirst={book && !v.recipe.autolyse}
+            maxAutolyse={v.recipe.maxAutolyse}
             onMixCapacity={(loaves) => update((s) => act.setMixCapacity(s, loaves))}
             onViewIngredients={onViewIngredients}
           />

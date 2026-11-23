@@ -1,5 +1,5 @@
 import {
-  MAX_AUTOLYSE,
+  MIN_AUTOLYSE,
   RECIPES,
   defaultSettings,
   recipeById,
@@ -40,19 +40,21 @@ function isTime(s: unknown): s is string {
 
 /**
  * A setting, or its default when missing or invalid. Counts are whole and at least 1, weights at least 1, the water
- * held back at most 100%, the autolyse whole minutes from 0 to 720, everything else at least 0.
+ * held back at most 100%, the autolyse whole minutes from 15 to the recipe's `maxAutolyse` (decision 23), everything
+ * else at least 0.
  */
-function setting(key: string, n: unknown, fallback: number) {
-  const min = key === 'count' || key === 'weight' ? 1 : 0,
+function setting(key: string, n: unknown, fallback: number, maxAutolyse = Infinity) {
+  const min = key === 'count' || key === 'weight' ? 1 : key === 'autolyse' ? MIN_AUTOLYSE : 0,
     whole = key === 'count' || key === 'autolyse',
-    max = key === 'reserve' ? 100 : key === 'autolyse' ? MAX_AUTOLYSE : Infinity;
+    max = key === 'reserve' ? 100 : key === 'autolyse' ? maxAutolyse : Infinity;
   return isFinite(n) && n >= min && n <= max && (!whole || Number.isInteger(n)) ? n : fallback;
 }
 
 /** Reads a recipe's settings through `get`, which names each value as the save does. */
 function settingsFrom(recipe: Recipe, get: (field: string) => unknown): Settings {
   const d = defaultSettings(recipe);
-  const scalar = (key: 'count' | 'weight' | 'hydration' | 'leaven' | 'salt' | 'reserve' | 'autolyse') =>
+  // The autolyse is read below, against the recipe's own longest.
+  const scalar = (key: 'count' | 'weight' | 'hydration' | 'leaven' | 'salt' | 'reserve') =>
     setting(key, get(key), d[key]);
   return {
     count: scalar('count'),
@@ -68,8 +70,9 @@ function settingsFrom(recipe: Recipe, get: (field: string) => unknown): Settings
       wheat: setting('wheat', get('build:wheat'), d.build.wheat),
       water: setting('water', get('build:water'), d.build.water),
     },
-    // Saves from before November 23, 2026 have none, and get the recipe's default.
-    autolyse: scalar('autolyse'),
+    // Saves from before November 23, 2026 have none, and get the recipe's default, as does a length outside the
+    // recipe's range: since decision 23, 15 minutes to what its book or the guides give.
+    autolyse: setting('autolyse', get('autolyse'), d.autolyse, recipe.maxAutolyse),
   };
 }
 

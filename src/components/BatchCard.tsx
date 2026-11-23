@@ -1,6 +1,6 @@
 import { Wheat } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { MAX_AUTOLYSE } from '@/domain/recipes';
+import { MIN_AUTOLYSE } from '@/domain/recipes';
 import { Panel } from './Panel';
 import { NumberField, SettingField, spec } from './NumberField';
 import { g } from './text';
@@ -8,6 +8,7 @@ import { g } from './text';
 /**
  * "Your batch" on the Schedule tab: the loaf count, how many loaves one bowl mixes, the autolyse, and the dough it
  * makes. `leavenFirst` is a recipe with the leaven in its initial mix, whose autolyse is the rest after that mix.
+ * `maxAutolyse` is the recipe's longest autolyse or rest; the shortest is 15 minutes for every recipe (decision 23).
  */
 export function BatchCard({
   weight,
@@ -16,6 +17,7 @@ export function BatchCard({
   mixCapacity,
   bowls,
   leavenFirst,
+  maxAutolyse,
   onMixCapacity,
   onViewIngredients,
 }: {
@@ -25,6 +27,7 @@ export function BatchCard({
   mixCapacity: number;
   bowls: number;
   leavenFirst: boolean;
+  maxAutolyse: number;
   onMixCapacity: (loaves: number) => void;
   onViewIngredients: () => void;
 }) {
@@ -42,8 +45,8 @@ export function BatchCard({
             cell: 'autolyse',
             label: 'Autolyse',
             unit: 'min',
-            min: 0,
-            max: MAX_AUTOLYSE,
+            min: MIN_AUTOLYSE,
+            max: maxAutolyse,
             step: 1,
           }}
         />

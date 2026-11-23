@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { RECIPES, defaultSettings, recipeById, type Settings } from '../domain/recipes.ts';
+import { MIN_AUTOLYSE, RECIPES, defaultSettings, recipeById, type Settings } from '../domain/recipes.ts';
 import { formula, totalHydration } from '../domain/formula.ts';
 import { schedule } from '../domain/schedule.ts';
 import { freshState, planOf, selected, tomorrow, type PlannerState } from './schema.ts';
@@ -184,9 +184,10 @@ test('every setting a version 5 or version 6 save holds loads as saved, for ever
         wheat: d.build.wheat + 7,
         water: d.build.water + 9,
       },
-      autolyse: d.autolyse + 15,
+      // 10 minutes shorter: Whole Wheat's default is already its longest (decision 23).
+      autolyse: d.autolyse - 10,
     };
-    // 0 wherever 0 is allowed: everything but the loaf count and weight.
+    // 0 wherever 0 is allowed: everything but the loaf count and weight, and the autolyse, whose least is 15 minutes.
     const zeros: Settings = {
       ...distinct,
       hydration: 0,
@@ -195,7 +196,7 @@ test('every setting a version 5 or version 6 save holds loads as saved, for ever
       reserve: 0,
       flours: Object.fromEntries(recipe.flours.map((k) => [k, 0])),
       build: { starter: 0, flour: 0, wheat: 0, water: 0 },
-      autolyse: 0,
+      autolyse: MIN_AUTOLYSE,
     };
     for (const [name, want] of [
       ['distinct values', distinct],
@@ -218,14 +219,32 @@ test('every setting a version 5 or version 6 save holds loads as saved, for ever
   }
 });
 
-test('the autolyse is whole minutes from 0 to 720, and a save without one, or with an invalid one, gets the recipe default (decision 22)', () => {
+test('the autolyse is whole minutes from 15 to the recipe’s longest, and a save without one, or with one outside that, gets the recipe default (decisions 22 and 23)', () => {
   const load = (autolyse: unknown, id = 'house') => {
     const settings = { ...defaultSettings(recipeById(id)!), autolyse };
     if (autolyse === undefined) delete (settings as Partial<Settings>).autolyse;
     return fromV6({ version: 6, plan: { recipes: { [id]: { settings } } } }, NOW)!.recipes[id].settings.autolyse;
   };
-  for (const kept of [0, 1, 60, 90, 270, 719, 720]) assert.equal(load(kept), kept, `${kept} is kept`);
-  for (const bad of [undefined, null, -1, 721, 90.5, '90', NaN, Infinity])
+  // Each recipe's longest is what its book pages or the autolyse guides give.
+  assert.deepEqual(Object.fromEntries(RECIPES.map((r) => [r.id, r.maxAutolyse])), {
+    house: 120,
+    tartine: 40,
+    olive: 120,
+    sesame: 120,
+    'whole-wheat': 120,
+    'country-rye': 60,
+  });
+  for (const r of RECIPES) {
+    const d = defaultSettings(r).autolyse;
+    assert.ok(d >= MIN_AUTOLYSE && d <= r.maxAutolyse, `${r.id}: its default ${d} is in its range`);
+    for (const kept of [MIN_AUTOLYSE, r.maxAutolyse - 1, r.maxAutolyse])
+      assert.equal(load(kept, r.id), kept, `${r.id}: ${kept} is kept`);
+    for (const bad of [r.maxAutolyse + 1, MIN_AUTOLYSE - 1, 0])
+      assert.equal(load(bad, r.id), d, `${r.id}: ${bad} falls back to ${d}`);
+  }
+  for (const kept of [15, 60, 90, 119, 120]) assert.equal(load(kept), kept, `${kept} is kept`);
+  // A save made between decisions 22 and 23 could hold up to 720 minutes, or 0.
+  for (const bad of [undefined, null, -1, 0, 14, 121, 270, 720, 90.5, '90', NaN, Infinity])
     assert.equal(load(bad), 90, `${String(bad)} falls back`);
   assert.equal(load(-5, 'whole-wheat'), 120, 'Whole Wheat falls back to its own default');
   assert.equal(load(undefined, 'country-rye'), 50, 'Country Rye falls back to its own default');
