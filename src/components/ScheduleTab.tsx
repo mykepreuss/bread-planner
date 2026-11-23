@@ -32,14 +32,14 @@ import { Timeline } from './Timeline';
 export function ScheduleTab({ onViewIngredients }: { onViewIngredients: () => void }) {
   const { state: saved, update } = usePlanner(),
     now = useNow();
-  // Until a start is chosen, the tab shows the planner's suggested one (decision 24).
+  // Until a start is chosen, the tab shows the planner's suggested one (decision 25).
   const state = useMemo(() => act.shownState(saved, now), [saved, now]),
     suggested = state !== saved;
   const v = useMemo(() => scheduleView(state, now, (at) => whenText(at, now)), [state, now]);
   const book = v.recipe.method === 'tartine',
     checks = v.bake.done;
   // A check that asks first is recorded at the tap, so what it skips is what the question counted.
-  // `shown` is the screen's moment, so a suggested start is kept as it was shown (decision 24).
+  // `shown` is the screen's moment, so a suggested start is kept as it was shown (decision 25).
   const [asking, setAsking] = useState<{ id: string; title: string; skips: number; at: number; shown: number } | null>(
     null,
   );

@@ -90,7 +90,7 @@ export const setTempUnit = (state: PlannerState, unit: TempUnit): PlannerState =
 
 /**
  * What the planner shows at `now`. While no start has been chosen and nothing is checked, that is the suggested start
- * (decision 24): the soonest whose plan has the fewest quiet-hour actions, from the quarter hour `now` is in (see
+ * (decision 25): the soonest whose plan has the fewest quiet-hour actions, from the quarter hour `now` is in (see
  * `suggestedStart`). A plan made from the last loaf out stays so, with that time moved to match. Otherwise, and when
  * there is no plan to suggest a start for, it is the saved state.
  */
@@ -145,7 +145,7 @@ export function startLeavenAt(state: PlannerState, at: Date, proof: 'cold' | 'wa
 
 /**
  * Starts the next bake: the checklist, its times and the dough temperatures clear (decision 1 in docs/BEHAVIOUR.md),
- * and the start is left to the planner, which suggests one (decision 24). The saved date moves to tomorrow for when it
+ * and the start is left to the planner, which suggests one (decision 25). The saved date moves to tomorrow for when it
  * can't. It is offered only once a plan has ended, when nothing is checked or every step is checked or skipped.
  */
 export function planNextBake(state: PlannerState, now: number): PlannerState {

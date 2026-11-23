@@ -331,7 +331,13 @@ export function schedule(input: PlanInput): Step[] {
       'Final shape',
       at,
       t.shape,
-      'Turn flour-side down. Stretch and fold the bottom, sides and top over the center; roll seam-side down into a taut round. Place seam-side up in a prepared basket.',
+      // A recipe can add to the book's shaping, as Emmer/Einkorn's bran coat does (decision 24).
+      [
+        'Turn flour-side down. Stretch and fold the bottom, sides and top over the center; roll seam-side down into a taut round. Place seam-side up in a prepared basket.',
+        recipe.finalShape,
+      ]
+        .filter(Boolean)
+        .join(' '),
     );
     at += t.shape;
     if (input.proof === 'cold') {

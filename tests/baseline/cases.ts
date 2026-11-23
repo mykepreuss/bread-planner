@@ -17,7 +17,7 @@ import { planOf } from '../../src/state/schema.ts';
 import { decode } from './format.ts';
 import { plannerState, stamp, local, type PlanInput, type FormulaInput, type HelperCall } from './observe.ts';
 
-export const RECIPES = ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye'];
+export const RECIPES = ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye', 'emmer'];
 const DAY = '2026-11-22',
   BEFORE = '2026-11-21 15:20';
 const minutes = (t: string, n: number) => stamp(local(t) + n * 60000).slice(0, 16);

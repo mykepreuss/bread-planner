@@ -32,7 +32,7 @@ export type PlannerState = {
   anchor: 'leaven' | 'done';
   /**
    * Whether Michael chose the date and time. Until he does, and while nothing is checked, the planner shows its own
-   * suggested start instead (decision 24; see `shownState`). A new planner and "Plan the next bake" leave it to the
+   * suggested start instead (decision 25; see `shownState`). A new planner and "Plan the next bake" leave it to the
    * planner; setting a date, a time or a suggested quiet start, or checking a step, chooses it.
    */
   timeChosen: boolean;

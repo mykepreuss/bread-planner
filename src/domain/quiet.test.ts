@@ -248,7 +248,7 @@ test('a House plan with night work finds the nearest start without any, by the l
   );
 });
 
-test('the suggested start is the soonest with the fewest quiet-hour actions, its first step from the current quarter hour (decision 24)', () => {
+test('the suggested start is the soonest with the fewest quiet-hour actions, its first step from the current quarter hour (decision 25)', () => {
   const now = new Date(2026, 9, 21, 15, 20).getTime();
   // House: the starter feed at 9:15 PM and the leaven at 8:15 AM leave nothing in quiet hours; a feed at 9:00 PM does not.
   const house = suggestedStart(plan('house'), now)!;

@@ -107,7 +107,7 @@ async function openIngredients(page: Page) {
   }
 }
 
-const RECIPES = ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye'];
+const RECIPES = ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye', 'emmer'];
 /** Screens recorded as a whole page too, at these widths. Kept to a few: whole pages are large. */
 const wholePage: Record<string, string[]> = {
   'mid-bulk': ['phone', 'desktop'],
@@ -547,7 +547,7 @@ test.describe('flows', () => {
     await expectSameAfterReload(page);
   });
 
-  test('A new planner suggests a start until one is chosen, by a new time or by a check (decision 24)', async ({
+  test('A new planner suggests a start until one is chosen, by a new time or by a check (decision 25)', async ({
     page,
   }) => {
     await open(page, 'fresh');
@@ -611,7 +611,7 @@ test.describe('flows', () => {
   test('Each recipe keeps its own autolyse length: an autolyse moves only its start, a Tartine rest moves what follows', async ({
     page,
   }) => {
-    // A start chosen for 9:00 AM tomorrow, so the times are the ones a new planner had before decision 24.
+    // A start chosen for 9:00 AM tomorrow, so the times are the ones a new planner had before decision 25.
     await open(page, 'recipe-house');
     const at = (id: string) => page.locator('.timeline-step', { has: page.locator(`#step-${id}`) }).locator('time');
     const field = (name: string) => page.getByLabel(name, { exact: true });
@@ -651,7 +651,7 @@ test.describe('flows', () => {
   });
 
   test('Loaf count and oven capacity on the Schedule tab set the batches', async ({ page }) => {
-    // A start chosen for 9:00 AM tomorrow, so the times are the ones a new planner had before decision 24.
+    // A start chosen for 9:00 AM tomorrow, so the times are the ones a new planner had before decision 25.
     await open(page, 'recipe-house');
     await page.getByLabel('Number of loaves').fill('3');
     await expect(page.getByText('2 batches')).toBeVisible();
@@ -661,7 +661,7 @@ test.describe('flows', () => {
     await expectSameAfterReload(page);
   });
 
-  test('The recipe menu offers Preuss Country Bread, Tartine Country Bread, Olive Bread, Sesame Bread and two more Tartine recipes', async ({
+  test('The recipe menu offers Preuss Country Bread, Tartine Country Bread, Olive Bread, Sesame Bread and three more Tartine recipes', async ({
     page,
   }) => {
     await open(page, 'fresh');
@@ -673,11 +673,12 @@ test.describe('flows', () => {
       'Sesame Bread',
       'Tartine Whole Wheat',
       'Tartine Country Rye',
+      'Tartine Emmer/Einkorn',
     ]);
   });
 
   test('Each recipe keeps its own checklist', async ({ page }) => {
-    // A start chosen for 9:00 AM tomorrow, so the times are the ones a new planner had before decision 24.
+    // A start chosen for 9:00 AM tomorrow, so the times are the ones a new planner had before decision 25.
     await open(page, 'recipe-house');
     await page.getByRole('checkbox', { name: 'Complete Feed starter' }).click();
     await expect(page.getByText('1 of 22 steps checked')).toBeVisible();

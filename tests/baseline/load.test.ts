@@ -113,8 +113,9 @@ test('every recorded save and saved plan loads into a valid planner that survive
     ...plans.map((p): [string, unknown] => [p.name, p.saved]),
     ...baseline.restores.map((c): [string, unknown] => [c.name, c.input]),
   ];
-  // 25 saved browser plans (four added for the Tartine recipes on November 22, 2026) and 24 recorded saves.
-  assert.equal(inputs.length, 25 + 24);
+  // 26 saved browser plans (four added for the Tartine recipes on November 22, 2026, and one for Emmer/Einkorn on
+  // November 23) and 24 recorded saves.
+  assert.equal(inputs.length, 26 + 24);
   const bad = inputs.flatMap(([name, saved]) => {
     const d = verdict(fromV5(JSON.parse(JSON.stringify(saved ?? null)), now));
     return d ? [`${name}: ${d}`] : [];

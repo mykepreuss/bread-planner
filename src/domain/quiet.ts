@@ -75,7 +75,7 @@ export function quietestStart(input: PlanInput, from: number): { at: Date; actio
 }
 
 /**
- * The leaven start the planner suggests when no start has been chosen (decision 24): of the plans whose first step
+ * The leaven start the planner suggests when no start has been chosen (decision 25): of the plans whose first step
  * starts on a quarter hour from the one `now` is in through the next 24 hours, the one with the fewest quiet-hour
  * actions, then the least far into quiet hours, then the soonest. The first step can be less than 15 minutes past, so a
  * start that has just come stays put until the next quarter hour. The date and time in `input` don't matter. Null when
