@@ -53,7 +53,8 @@ function setting(key: string, n: unknown, fallback: number, maxAutolyse = Infini
 /** Reads a recipe's settings through `get`, which names each value as the save does. */
 function settingsFrom(recipe: Recipe, get: (field: string) => unknown): Settings {
   const d = defaultSettings(recipe);
-  const scalar = (key: 'count' | 'weight' | 'hydration' | 'leaven' | 'salt' | 'reserve' | 'autolyse') =>
+  // The autolyse is read below, against the recipe's own longest.
+  const scalar = (key: 'count' | 'weight' | 'hydration' | 'leaven' | 'salt' | 'reserve') =>
     setting(key, get(key), d[key]);
   return {
     count: scalar('count'),

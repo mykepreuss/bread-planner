@@ -599,6 +599,7 @@ test.describe('flows', () => {
     // The book gives 25 to 40 minutes, so 40 is the longest.
     await field('Rest after mixing').fill('41');
     await expect(page.getByText('Use a whole number from 15 to 40')).toBeVisible();
+    await expect(at('mix')).toHaveText('9:30 PM');
     await field('Rest after mixing').fill('40');
     await expect(at('mix')).toHaveText('9:40 PM');
     await expect(at('turn1')).toHaveText('10:10 PM');

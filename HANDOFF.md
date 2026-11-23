@@ -1334,4 +1334,11 @@ Change:
 
 Record changes, checked by decoding both records: the 4½-hour Preuss autolyse and the 60-minute Tartine rest cases became a 2-hour autolyse and a 40-minute rest, and a 15-minute autolyse was added, giving 165 plans. No other plan, calculation, saved-data case or helper changed. In the browser record, Whole Wheat's two screens show the new description, and the autolyse flow's times moved with its 40-minute rest.
 
+Independent check (the verifier, on `ca3a516`): PASS on all seven criteria, with no defect.
+- It loaded every whole minute from −5 to 800 for each recipe: exactly 15 to the recipe's longest was kept, and everything else, including 270, 720, fractions, strings and null, came back as the default without touching the recipe's other settings or other recipes.
+- In the built site, every recipe's field had the right limits and refused values outside them with the matching message, and Restore recipe defaults reset all six.
+- It decoded both records (only the three autolyse cases differ) and compared `schedule()` at every recipe's defaults in 2,160 combinations with `main`: none differed.
+- All four of its breaks were caught: a wrong longest for Country Rye, the loader ignoring the longest, a 0-minute shortest, and a fixed field limit (the last by the browser flow only).
+- Fixed from its notes: the loader's general reader no longer lists the autolyse, so it can't be read without the recipe's longest; decision 23 says "just over 3½ hours" (211 minutes) rather than 3¾; it also says to finish a bake under way with an out-of-range length before deploying; and the browser flow checks that Tartine's plan keeps its time after 41 is refused.
+
 Not verified: a real phone.
