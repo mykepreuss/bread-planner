@@ -1,4 +1,5 @@
 import type { AddIns } from './addins.ts';
+import { HOUSE, TARTINE } from './methods.ts';
 
 /**
  * The recipes, as data. Each default is written as the sum it came from in the source spreadsheet or the book, so it
@@ -27,7 +28,9 @@ export function inSentence(name: string) {
 /**
  * What a baker sets for a recipe. Percentages are of added flour, except `reserve`, the share of added water held
  * back for the final mix. `hydration` is added water; the screen shows total hydration (see `totalHydration`). The
- * leaven build is in grams per 1,000 g of added flour.
+ * leaven build is in grams per 1,000 g of added flour. `autolyse` is in whole minutes from 0 to 720: the autolyse, which
+ * ends as the leaven is ready, or for a recipe with the leaven in its initial mix, the rest after that mix, which every
+ * later step follows (decision 21).
  */
 export type Settings = {
   count: number;
@@ -38,15 +41,18 @@ export type Settings = {
   reserve: number;
   flours: Partial<Record<FlourKey, number>>;
   build: { starter: number; flour: number; wheat: number; water: number };
+  autolyse: number;
 };
+/** The longest autolyse or rest, 12 hours, so it never starts before a House starter feed or a Tartine leaven. */
+export const MAX_AUTOLYSE = 720;
 
 /**
  * `method` is how the dough is mixed and timed (see methods.ts). `late` flours go into the final mix. `buildFlour`
  * is the flour in the leaven build besides whole wheat. `addIns` are worked in after the first turn, with either
- * method (see addins.ts). `initialMix`, for Tartine recipes only, replaces the Basic Country Bread's initial mix: the
- * rest after it, in minutes, and its step's note. Every later step moves with the rest. `autolyse`, for Tartine recipes
- * only, replaces the initial mix and rest instead: the flour and first water rest for `minutes`, ending as the leaven
- * is ready, and the leaven then goes in with the salt and reserved water. `coldProof`, for Tartine recipes only, is the
+ * method (see addins.ts). `initialMix`, for Tartine recipes only, replaces the note of the Basic Country Bread's
+ * initial mix. `autolyse`, for Tartine recipes only, replaces the initial mix and rest instead, with the note given:
+ * the flour and first water rest on their own, ending as the leaven is ready, and the leaven then goes in with the salt
+ * and reserved water. How long either rests is the setting `autolyse`. `coldProof`, for Tartine recipes only, is the
  * refrigerated final proof in minutes, in place of the book's 12 hours.
  */
 export type Recipe = {
@@ -58,8 +64,8 @@ export type Recipe = {
   late: FlourKey[];
   buildFlour: FlourKey;
   addIns?: AddIns;
-  initialMix?: { rest: number; note: string };
-  autolyse?: { minutes: number; note: string };
+  initialMix?: { note: string };
+  autolyse?: { note: string };
   coldProof?: number;
   defaults: Settings;
 };
@@ -81,6 +87,7 @@ const preussDefaults = (): Settings => ({
   reserve: share(100, 780),
   flours: { anita: 80, wheat: 10, rye: 10 },
   build: { ...houseBuild },
+  autolyse: HOUSE.autolyse,
 });
 
 export const RECIPES: Recipe[] = [
@@ -113,6 +120,7 @@ export const RECIPES: Recipe[] = [
       reserve: share(50, 750),
       flours: { white: 90, wheat: 10 },
       build: { starter: 15, flour: 100, wheat: 100, water: 200 },
+      autolyse: TARTINE.rest,
     },
   },
   {
@@ -180,7 +188,6 @@ export const RECIPES: Recipe[] = [
     // mostly whole wheat, and The Perfect Loaf's keeps the levain out. The loaves then proof 18½ hours in the fridge,
     // not 12, so a leaven from 9:00 to 10:30 PM keeps every step out of quiet hours and bakes two mornings later.
     autolyse: {
-      minutes: 120,
       note: 'Mix the whole-wheat and all-purpose flour with the initial water, about 75°F / 24°C, by hand until no dry flour is left. Cover and rest while the leaven finishes, so the bran softens before the leaven goes in.',
     },
     coldProof: 1110,
@@ -196,6 +203,7 @@ export const RECIPES: Recipe[] = [
       reserve: share(50, 800),
       flours: { wheat: 70, ap: 30 },
       build: { starter: 15, flour: 100, wheat: 100, water: 200 },
+      autolyse: 120,
     },
   },
   {
@@ -208,8 +216,7 @@ export const RECIPES: Recipe[] = [
     late: [],
     buildFlour: 'white',
     initialMix: {
-      rest: 50,
-      note: 'Stir the leaven used into the initial water, about 75°F / 24°C, until it disperses. Add the rye and white-bread flour and mix by hand until no dry flour is left. Cover and rest for 40 to 60 minutes.',
+      note: 'Stir the leaven used into the initial water, about 75°F / 24°C, until it disperses. Add the rye and white-bread flour and mix by hand until no dry flour is left. Cover and rest; the book gives 40 to 60 minutes.',
     },
     // Michael's choice on November 22, 2026 (decision 20), so a cold-proofed bake keeps out of quiet hours: the loaves
     // proof 17½ hours in the fridge, not 12, so a leaven from 9:00 to 10:30 PM keeps every step out of them. The book's
@@ -228,6 +235,8 @@ export const RECIPES: Recipe[] = [
       reserve: share(50, 800),
       flours: { rye: 17, white: 83 },
       build: { starter: 15, flour: 100, wheat: 100, water: 200 },
+      // The book's 50-minute rest with the leaven in, the middle of its 40 to 60.
+      autolyse: 50,
     },
   },
 ];

@@ -28,7 +28,10 @@
     - spinbutton "Number of loaves": "3"
     - text: loaves Loaves per mix
     - spinbutton "Loaves per mix": "2"
-    - text: loaves
+    - text: loaves Autolyse
+    - spinbutton "Autolyse": "90"
+    - text: min
+    - paragraph: It ends as the leaven is ready, so only its start moves.
     - strong: 1,000 g
     - text: per loaf
     - strong: 3,000 g

@@ -1,4 +1,12 @@
-import { RECIPES, defaultSettings, recipeById, type FlourKey, type Recipe, type Settings } from '../domain/recipes.ts';
+import {
+  MAX_AUTOLYSE,
+  RECIPES,
+  defaultSettings,
+  recipeById,
+  type FlourKey,
+  type Recipe,
+  type Settings,
+} from '../domain/recipes.ts';
 import { inTempRange, withReading, type BulkReading } from '../domain/bakeday.ts';
 import { emptyBake, freshState, tomorrow, type Bake, type PlannerState, type RecipeState } from './schema.ts';
 
@@ -30,18 +38,21 @@ function isTime(s: unknown): s is string {
   return !!m && +m[1] <= 23 && +m[2] <= 59;
 }
 
-/** A setting, or its default when missing or invalid. Counts are whole and at least 1, weights at least 1, the water held back at most 100%, everything else at least 0. */
+/**
+ * A setting, or its default when missing or invalid. Counts are whole and at least 1, weights at least 1, the water
+ * held back at most 100%, the autolyse whole minutes from 0 to 720, everything else at least 0.
+ */
 function setting(key: string, n: unknown, fallback: number) {
-  const min = key === 'count' || key === 'weight' ? 1 : 0;
-  return isFinite(n) && n >= min && (key !== 'count' || Number.isInteger(n)) && (key !== 'reserve' || n <= 100)
-    ? n
-    : fallback;
+  const min = key === 'count' || key === 'weight' ? 1 : 0,
+    whole = key === 'count' || key === 'autolyse',
+    max = key === 'reserve' ? 100 : key === 'autolyse' ? MAX_AUTOLYSE : Infinity;
+  return isFinite(n) && n >= min && n <= max && (!whole || Number.isInteger(n)) ? n : fallback;
 }
 
 /** Reads a recipe's settings through `get`, which names each value as the save does. */
 function settingsFrom(recipe: Recipe, get: (field: string) => unknown): Settings {
   const d = defaultSettings(recipe);
-  const scalar = (key: 'count' | 'weight' | 'hydration' | 'leaven' | 'salt' | 'reserve') =>
+  const scalar = (key: 'count' | 'weight' | 'hydration' | 'leaven' | 'salt' | 'reserve' | 'autolyse') =>
     setting(key, get(key), d[key]);
   return {
     count: scalar('count'),
@@ -57,6 +68,8 @@ function settingsFrom(recipe: Recipe, get: (field: string) => unknown): Settings
       wheat: setting('wheat', get('build:wheat'), d.build.wheat),
       water: setting('water', get('build:water'), d.build.water),
     },
+    // Saves from before November 23, 2026 have none, and get the recipe's default.
+    autolyse: scalar('autolyse'),
   };
 }
 

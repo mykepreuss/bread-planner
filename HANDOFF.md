@@ -1083,7 +1083,7 @@ Independent check (the verifier, on `11cda78`): PASS on all seven criteria.
 
 Release, recorded on the `mixing-bowls` branch: Michael asked to merge, and pull request #36 merged as `7dfe425` once both Vercel checks passed on `b554c5a`. Production deployment `dpl_DdU4EkB3cy2nGS4JX94rUofusKNw` served the new bundle within about a minute. `node scripts/verify-deployment.mjs https://bread.assemblydigital.com` passed 9 checks and 7 assets, and the live bundle holds "Add to the dough" and the new House note. In the in-app browser at 375 px, the live site's saved plan (Original Tartine) showed Salt 20 g and Water 50 g as tick-offs under "Add salt and final water", with a document width of 375 and no console errors. Preuss House's list was not opened live, to leave that saved plan as it was.
 
-## Mixing bowls, November 22, 2026: committed, pull request open
+## Mixing bowls, November 22, 2026: merged and verified live
 
 Why: Michael mixes a doubled batch in two bowls and a tripled one in three, then puts everything in one container from bulk on, so the planner's single list of final-mix weights still needed dividing by hand. In session he chose: a "Loaves per mix" setting (default 2); the autolyse and final mix in each bowl, with the leaven built once and divided; and, for pizza dough, to enter all the dough he mixes (he bakes an odd count only when one loaf's worth becomes pizza). Branch `mixing-bowls`, from `main` at `7dfe425`.
 
@@ -1115,6 +1115,8 @@ Independent check (the verifier, on `05ff435`): PASS on all nine criteria, with 
 - Five of its six breaks were caught. The sixth, the Ingredients tab not dividing by bowls, passed every test; the browser flow now checks the tab's per-bowl weights (800 g and 680 g at the autolyse, 20 g of salt).
 - Fixed from its nits: the leaven note's split now reads "Each of the 2 bowls gets 200 g." (it said "That is…", which read oddly after a short-build warning); HANDOFF says the field is under the loaf count and counts the 45 record files; the action count is 33, which was already one short before this change; and the Step notes bullet mentions the "to each bowl" wording.
 - Noted, not changed: a huge loaf count (2,000) makes 1,000 bowls of tick-offs and a slow page; a tick made with one bowl stays saved but hidden once there are several, so Clear checklist stays available with nothing visible ticked; uneven splits round to 0.1 g, so 5 loaves show 16.7 g of salt per bowl.
+
+Release (recorded on November 23, 2026, from the session that merged it): pull request 37 merged as `d8974e0` on Michael's "Yes, merge it", after both Vercel checks passed on `8338084`. The new bundle was live about a minute later, and `node scripts/verify-deployment.mjs https://bread.assemblydigital.com` passed (9 checks, 7 assets). On the live site at 375 px, his saved plan (Original Tartine, 2 loaves) showed Loaves per mix 2, "1 bowl to mix in" and one "Add to the dough" list, the page was 375 px wide and there were no console errors. The two-bowl split was not opened live, so his saved plan stayed as it was.
 
 ## Preuss House: a 1½-hour autolyse, November 22, 2026: merged and verified live
 
@@ -1237,3 +1239,25 @@ Verification: my own checks, not the verifier, because the change is one value o
 Not verified: a real phone, and a real bake with the 17½-hour fridge.
 
 Rebased onto `main` at `b31c6d2` (after pull requests 41, 42, 43, 39 and 40): records and browser snapshots regenerated, the Tartine-method quiet-hours test lists Tartine Country Bread only, and the decision is renumbered 20.
+
+## Autolyse length as a setting, November 23, 2026: committed, pull request open
+
+Why: Michael wants to try a shorter autolyse on his next Preuss bake, and asked for the autolyse length to be a setting with each recipe's own default. Branch `autolyse-length`, from `main` at `985e10f`.
+
+Done means: each recipe's batch card on the Schedule tab has the length at its current time (Preuss Country Bread, Olive Bread and Sesame Bread 90 minutes, Tartine Whole Wheat 120; Tartine Country Bread 30 and Country Rye 50 as "Rest after mixing"); changing Preuss's to 270 moves "Start autolyse" to 9:30 AM from a 9:00 AM leaven and nothing else; changing Tartine's rest to 60 moves the salt and every later step 30 minutes; the length is saved per recipe and restored with the defaults; and `npm test`, the build and `npm run test:browser` pass.
+
+Change:
+- `src/domain/recipes.ts`: `Settings.autolyse`, in whole minutes from 0 to `MAX_AUTOLYSE` (720), with each recipe's default in its `defaults`. The recipe's `autolyse` and `initialMix` keep only their notes. `methods.ts` keeps `HOUSE.autolyse` and `TARTINE.rest` as defaults only.
+- `src/domain/schedule.ts` reads the length from the settings. An autolyse still ends as the leaven is ready; a Tartine rest with the leaven in moves every later step. The two Tartine initial-mix notes now give the book's range ("Cover and rest; the book gives 25 to 40 minutes.", 40 to 60 for Country Rye) rather than a fixed length.
+- `src/state/`: the length loads only as whole minutes from 0 to 720, else the recipe's default, which is also what every earlier save gets. The save stays version 6. `setSetting` takes `autolyse`.
+- Screen: the Schedule tab's "Your batch" card has the field under Loaves per mix, labelled "Autolyse" or, for Tartine Country Bread and Country Rye, "Rest after mixing", unit "min", with a one-line note on what it moves. `FieldSpec` takes a `max`.
+- docs/BEHAVIOUR.md records decision 21, a Schedule bullet and the Saved data rule; README and BEHAVIOUR count 164 plans.
+
+Tests: `schedule.test.ts` checks every recipe's default, that an autolyse of 0, 60, 270 or 720 minutes moves only its own start (House, Olive, Whole Wheat), and that a Tartine or Country Rye rest 40 minutes longer moves every step after it by 40. `state.test.ts` checks that the length loads as saved from 0 to 720 and falls back to the recipe's default otherwise, from version 6, and from version 5, which never had it. The record gained three plans (a 4½-hour Preuss autolyse, a 60-minute Tartine rest, and a 1-hour Whole Wheat autolyse with the final mix up next). One browser flow: Preuss at 90, then 270 moves the autolyse to 9:30 AM and leaves the mix at 2:00 PM and the finish at 9:33 AM; 721 is refused; Tartine's rest at 60 moves the salt to 10:00 PM and Turn 1 to 10:30 PM; a reload keeps it; Preuss kept its own 270.
+
+Record changes, checked by decoding both records against `main`: 56 plans changed, all Tartine Country Bread or Country Rye, and only their initial-mix note; three plans were added; recipe calculations, saved-data cases and helpers are identical. The browser record: every Schedule-tab screen and flow gained the field and its note, and the Tartine screens the new note; five whole-page screenshots changed, no first-screen screenshot did; one record was added for the new flow.
+
+Evidence (this session, on `autolyse-length`): `npm test` passed 187 of 187 with the host zone and with `BASELINE_ZONE=rule`; `npm run build` (Prettier, `astro check` with 0 errors, 0 warnings and 0 hints, and the build) passed; `npm run test:browser` passed 57 of 57. In the dev server the batch card showed the Autolyse field at 90 min at 375 px (page 375 wide) and at desktop width, with no console errors.
+
+Not verified: a real phone, and a real bake.
+

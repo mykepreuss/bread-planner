@@ -184,6 +184,7 @@ test('every setting a version 5 or version 6 save holds loads as saved, for ever
         wheat: d.build.wheat + 7,
         water: d.build.water + 9,
       },
+      autolyse: d.autolyse + 15,
     };
     // 0 wherever 0 is allowed: everything but the loaf count and weight.
     const zeros: Settings = {
@@ -194,6 +195,7 @@ test('every setting a version 5 or version 6 save holds loads as saved, for ever
       reserve: 0,
       flours: Object.fromEntries(recipe.flours.map((k) => [k, 0])),
       build: { starter: 0, flour: 0, wheat: 0, water: 0 },
+      autolyse: 0,
     };
     for (const [name, want] of [
       ['distinct values', distinct],
@@ -201,7 +203,12 @@ test('every setting a version 5 or version 6 save holds loads as saved, for ever
     ] as const) {
       const params = v5(recipe, want);
       const five = fromV5({ version: 5, plan: { recipe: recipe.id, recipes: { [recipe.id]: { params } } } }, NOW);
-      assert.deepEqual(five.recipes[recipe.id].settings, want, `${recipe.id}, ${name}, from version 5`);
+      // Version 5 had no autolyse setting, so it loads at the recipe's default.
+      assert.deepEqual(
+        five.recipes[recipe.id].settings,
+        { ...want, autolyse: d.autolyse },
+        `${recipe.id}, ${name}, from version 5`,
+      );
       const six = fromV6(
         { version: 6, plan: { recipe: recipe.id, recipes: { [recipe.id]: { settings: want } } } },
         NOW,
@@ -209,6 +216,19 @@ test('every setting a version 5 or version 6 save holds loads as saved, for ever
       assert.deepEqual(six.recipes[recipe.id].settings, want, `${recipe.id}, ${name}, from version 6`);
     }
   }
+});
+
+test('the autolyse is whole minutes from 0 to 720, and a save without one, or with an invalid one, gets the recipe default (decision 21)', () => {
+  const load = (autolyse: unknown, id = 'house') => {
+    const settings = { ...defaultSettings(recipeById(id)!), autolyse };
+    if (autolyse === undefined) delete (settings as Partial<Settings>).autolyse;
+    return fromV6({ version: 6, plan: { recipes: { [id]: { settings } } } }, NOW)!.recipes[id].settings.autolyse;
+  };
+  for (const kept of [0, 1, 60, 90, 270, 719, 720]) assert.equal(load(kept), kept, `${kept} is kept`);
+  for (const bad of [undefined, null, -1, 721, 90.5, '90', NaN, Infinity])
+    assert.equal(load(bad), 90, `${String(bad)} falls back`);
+  assert.equal(load(-5, 'whole-wheat'), 120, 'Whole Wheat falls back to its own default');
+  assert.equal(load(undefined, 'country-rye'), 50, 'Country Rye falls back to its own default');
 });
 
 test('a saved date must be a real calendar date and a time must be from 00:00 to 23:59, or they fall back', () => {
@@ -615,8 +635,9 @@ test('Olive and Sesame saved with Original Tartine’s dough load fresh at Preus
   assert.deepEqual(s.recipes.olive.bake, { done: [], doneAt: {}, doughTemp: null, bulkTemps: [], added: [] });
   assert.deepEqual(s.recipes.sesame.settings, edited, 'a save in the new dough keeps its edits');
   assert.deepEqual(s.recipes.sesame.bake.done, ['leaven', 'autolyse']);
-  // Original Tartine still uses white and whole-wheat flour, so its save loads as it was.
-  assert.deepEqual(s.recipes.tartine.settings, tartineDough);
+  // Original Tartine still uses white and whole-wheat flour, so its save loads as it was, with the default rest
+  // after mixing, which saves from then didn't hold (decision 21).
+  assert.deepEqual(s.recipes.tartine.settings, { ...tartineDough, autolyse: 30 });
   assert.equal(s.recipes.tartine.bake.doughTemp, 78);
   // The rule is for Olive and Sesame only: Preuss House with a flour it doesn't use keeps its settings and checklist.
   const house = { ...defaultSettings(recipeById('house')!), count: 4 },

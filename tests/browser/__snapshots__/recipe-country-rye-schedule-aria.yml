@@ -39,7 +39,10 @@
     - spinbutton "Number of loaves": "2"
     - text: loaves Loaves per mix
     - spinbutton "Loaves per mix": "2"
-    - text: loaves
+    - text: loaves Rest after mixing
+    - spinbutton "Rest after mixing": "50"
+    - text: min
+    - paragraph: The leaven is in this mix, so the steps after it move with the rest.
     - strong: 1,010 g
     - text: per loaf
     - strong: 2,020 g
@@ -75,7 +78,7 @@
       - checkbox "Complete Mix dough and rest"
       - time: 9:00 PM
       - text: Mix dough and rest
-      - paragraph: Stir the leaven used into the initial water, about 75°F / 24°C, until it disperses. Add the rye and white-bread flour and mix by hand until no dry flour is left. Cover and rest for 40 to 60 minutes.
+      - paragraph: Stir the leaven used into the initial water, about 75°F / 24°C, until it disperses. Add the rye and white-bread flour and mix by hand until no dry flour is left. Cover and rest; the book gives 40 to 60 minutes.
       - text: Next step in 50 min
       - checkbox "Complete Add salt and final water"
       - time: 9:50 PM

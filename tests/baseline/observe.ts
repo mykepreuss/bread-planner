@@ -116,7 +116,7 @@ export type HelperCall = { fn: string; args: unknown[] };
 const BUILD = { buildSeed: 'starter', buildBread: 'flour', buildWheat: 'wheat', buildWater: 'water' } as const;
 const SCALARS = ['count', 'weight', 'hydration', 'leaven', 'salt', 'reserve'] as const;
 
-/** A recipe's settings with the input's version 5 `params` applied over its defaults. */
+/** A recipe's settings with the input's version 5 `params` applied over its defaults, and `autolyse`, which version 5 didn't have. */
 function settingsFrom(recipe: Recipe, params: Record<string, number> = {}): Settings {
   const s = defaultSettings(recipe);
   for (const [key, value] of Object.entries(params)) {
@@ -124,6 +124,7 @@ function settingsFrom(recipe: Recipe, params: Record<string, number> = {}): Sett
     if (key in BUILD) s.build[BUILD[key as keyof typeof BUILD]] = value;
     else if (key.startsWith('flour_') && recipe.flours.includes(flour)) s.flours[flour] = value;
     else if ((SCALARS as readonly string[]).includes(key)) s[key as (typeof SCALARS)[number]] = value;
+    else if (key === 'autolyse') s.autolyse = value;
     else throw new Error(`${recipe.id} has no setting ${key}`);
   }
   return s;

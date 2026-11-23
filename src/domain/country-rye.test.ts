@@ -11,7 +11,7 @@ import { schedule, type PlanInput } from './schedule.ts';
  */
 
 const NOTE =
-  'Stir the leaven used into the initial water, about 75°F / 24°C, until it disperses. Add the rye and white-bread flour and mix by hand until no dry flour is left. Cover and rest for 40 to 60 minutes.';
+  'Stir the leaven used into the initial water, about 75°F / 24°C, until it disperses. Add the rye and white-bread flour and mix by hand until no dry flour is left. Cover and rest; the book gives 40 to 60 minutes.';
 
 const near = (a: number, b: number, message: string) => assert.ok(Math.abs(a - b) < 1e-9, `${message}: ${a} != ${b}`);
 function recipe(id: string): Recipe {
@@ -52,7 +52,7 @@ test('Tartine Country Rye is last on the menu, made the Tartine way with rye and
     [r.name, r.method, r.flours, r.late, r.buildFlour, r.addIns],
     ['Tartine Country Rye', 'tartine', ['rye', 'white'], [], 'white', undefined],
   );
-  assert.deepEqual(r.initialMix, { rest: 50, note: NOTE });
+  assert.deepEqual(r.initialMix, { note: NOTE });
   assert.deepEqual(
     [r.coldProof, r.autolyse],
     [1050, undefined],
@@ -68,6 +68,7 @@ test('Tartine Country Rye is last on the menu, made the Tartine way with rye and
     reserve: (50 / 800) * 100,
     flours: { rye: 17, white: 83 },
     build: { starter: 15, flour: 100, wheat: 100, water: 200 },
+    autolyse: 50,
   });
 });
 
