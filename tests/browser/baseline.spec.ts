@@ -641,6 +641,26 @@ test.describe('flows', () => {
     );
   });
 
+  test('The quiet-hours warning suggests the quietest start and, for Tartine, a warm proof; each button moves the plan', async ({
+    page,
+  }) => {
+    // Original Tartine as it comes: a cold proof from a 9:00 AM leaven on November 22 (decision 15).
+    await open(page, 'recipe-tartine');
+    const warning = page.getByRole('region', { name: 'Quiet hours warning' });
+    expect(await warning.ariaSnapshot()).toMatchSnapshot('flow-quiet-fix.aria.yml');
+    await warning.getByRole('button', { name: 'Start at 6:15 AM' }).click();
+    await expect(page.locator('#plan-time')).toHaveValue('06:15');
+    await expect(page.locator('#plan-date')).toHaveValue('2026-11-22');
+    await expect(warning.getByRole('heading', { level: 2 })).toHaveText('1 action needs you during quiet hours');
+    await expect(warning.getByRole('button', { name: 'Start at 6:15 AM' })).toHaveCount(0);
+    await warning.getByRole('button', { name: 'Use a warm proof at 10:30 PM' }).click();
+    await expect(warning).toHaveCount(0);
+    await expect(page.locator('#plan-date')).toHaveValue('2026-11-21');
+    await expect(page.locator('#plan-time')).toHaveValue('22:30');
+    await expect(page.getByRole('combobox', { name: 'Final proof' })).toContainText('Warm');
+    await expectSameAfterReload(page);
+  });
+
   // Checks added in step 3b, for controls whose wiring no recorded flow exercised. They assert values, not snapshots.
   test('The plan time moves the schedule and leaves the date', async ({ page }) => {
     await open(page, 'fresh');

@@ -127,6 +127,7 @@ function shown(html: string) {
     daytimeProof: html.includes('class="notice overnight-warning"'),
     underway: html.includes('class="schedule-layout is-underway"'),
     quietHours: Number(first(html, /<h2>(\d+) (?:action needs|actions need) you during quiet hours<\/h2>/) ?? 0),
+    quietFixes: all(html, /<p class="quiet-fix"><span>([^<]*)<\/span><button[^>]*>([^<]*)<\/button><\/p>/),
     checked: first(html, /(\d+ of \d+ steps checked)/),
     total: first(timeline, /<span>([^<]*) total<\/span>/),
     finish: html.includes('Baking complete')
@@ -204,6 +205,16 @@ function expected(input: PlanInput, out: Recorded) {
     daytimeProof: !book && proof !== null && !proof.overnight,
     underway: v.underway,
     quietHours: v.quietHours,
+    // Each suggested start as the warning writes it, then its button.
+    quietFixes: v.quietFixes.map((f) => {
+      const time = f.at.slice(11, 16),
+        other = f.proof !== (input.proof ?? 'cold'),
+        leaves =
+          f.actions === 0
+            ? 'nothing falls in quiet hours'
+            : `${f.actions} ${f.actions === 1 ? 'action falls' : 'actions fall'} in quiet hours`;
+      return `${other ? `With a ${f.proof} proof, start` : 'Start'} the leaven at ${time} on ${f.at.slice(0, 10)} and ${leaves}. ${other ? `Use a ${f.proof} proof at ${time}` : `Start at ${time}`}`;
+    }),
     checked: `${v.checked} of ${steps.length} steps checked`,
     total: `${v.totalTime ?? 'Set a date and time'}`,
     finish: v.finish === null ? null : `${v.finish.slice(11, 16)} ${v.finish.slice(0, 10)}`,

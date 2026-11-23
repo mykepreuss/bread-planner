@@ -4,6 +4,7 @@ import { schedule } from '../domain/schedule.ts';
 import { freshState, planOf } from '../state/schema.ts';
 import * as act from '../state/actions.ts';
 import { scheduleView, skipsOnCheck } from './schedule.ts';
+import { clockText, dateString } from '../domain/text.ts';
 
 const NOW = new Date(2026, 10, 21, 15, 20).getTime();
 
@@ -185,4 +186,62 @@ test("the live schedule keeps the final mix's tick-offs through checks, a late s
     [ticked.completed, ticked.next?.id, ticked.underway, ticked.skipped],
     [before.completed, before.next?.id, before.underway, before.skipped],
   );
+});
+
+const local = (d: Date) => `${dateString(d)} ${clockText(d)}`;
+const fixes = (v: ReturnType<typeof scheduleView>) => v.quietFixes.map((f) => [f.proof, local(f.at), f.actions]);
+
+test('a fresh cold-proofed Tartine plan suggests its quietest start and a warm proof with none, and each moves the plan there', () => {
+  // The leaven tomorrow, November 22, at 9:00 AM.
+  const s = act.selectRecipe(freshState(NOW), 'tartine'),
+    v = scheduleView(s, NOW, String);
+  assert.ok(v.night.length > 1);
+  assert.deepEqual(fixes(v), [
+    ['cold', '2026-11-22 06:15', 1],
+    ['warm', '2026-11-22 19:00', 0],
+  ]);
+  const warm = act.startLeavenAt(s, v.quietFixes[1].at, 'warm');
+  assert.deepEqual([warm.proof, warm.date, warm.time, warm.anchor], ['warm', '2026-11-22', '19:00', 'leaven']);
+  assert.deepEqual([scheduleView(warm, NOW, String).night, scheduleView(warm, NOW, String).quietFixes], [[], []]);
+  // At the quietest cold start, the leaven is the one action left, and the warm proof is still offered: from 6:15 AM,
+  // 10:30 PM the evening before is the nearest night-free start.
+  const cold = scheduleView(act.startLeavenAt(s, v.quietFixes[0].at, 'cold'), NOW, String);
+  assert.deepEqual(
+    cold.night.map((a) => a.step.id),
+    ['leaven'],
+  );
+  assert.deepEqual(fixes(cold), [['warm', '2026-11-21 22:30', 0]]);
+  // A warm-proofed plan is offered only its own night-free start: a cold proof has more.
+  const warmFirst = scheduleView(act.setProof(s, 'warm'), NOW, String);
+  assert.deepEqual(fixes(warmFirst), [['warm', '2026-11-22 19:00', 0]]);
+});
+
+test('a suggestion keeps a plan made from the finish, clears the new bake, and none is offered once a step is checked or for a quiet plan', () => {
+  assert.deepEqual(scheduleView(freshState(NOW), NOW, String).quietFixes, []);
+  // A cold dough temperature left after unchecking every step lengthens bulk into the night, but the plan's own start
+  // is never suggested: it is already the quietest.
+  let cold = freshState(NOW);
+  for (const id of ['feed', 'leaven', 'autolyse', 'mix']) cold = act.setChecked(cold, id, true, NOW);
+  cold = act.setDoughTemp(cold, 60);
+  for (const id of ['feed', 'leaven', 'autolyse', 'mix']) cold = act.setChecked(cold, id, false, NOW);
+  const stale = scheduleView(cold, NOW, String);
+  assert.ok(stale.night.length > 0, 'the leftover temperature puts work in quiet hours');
+  assert.deepEqual(stale.quietFixes, []);
+  let s = act.setDoughTemp(act.setAnchor(act.selectRecipe(freshState(NOW), 'tartine'), 'done'), 78);
+  const warm = scheduleView(s, NOW, String).quietFixes.find((f) => f.proof === 'warm')!;
+  const moved = act.startLeavenAt(s, warm.at, 'warm'),
+    steps = schedule(planOf(moved));
+  assert.equal(moved.anchor, 'done');
+  // Made back from the same finish, a warm proof's leaven starts later than a cold one's, at 6:30 PM on November 22,
+  // so the nearest night-free start is that evening's 7:00 PM.
+  assert.equal(local(steps[0].at), '2026-11-22 19:00');
+  assert.equal(+steps[0].at, +warm.at);
+  assert.deepEqual(scheduleView(moved, NOW, String).night, []);
+  assert.equal(`${moved.date} ${moved.time}`, local(steps.find((x) => x.id === 'done')!.at));
+  assert.equal(moved.recipes.tartine.bake.doughTemp, null, 'nothing is checked, so it is a new bake');
+  // Underway, the warning stays without suggestions: the plan follows what has been checked.
+  s = act.setChecked(s, 'leaven', true, NOW);
+  const underway = scheduleView(s, NOW, String);
+  assert.ok(underway.night.length > 0);
+  assert.deepEqual(underway.quietFixes, []);
 });

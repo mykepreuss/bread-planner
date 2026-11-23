@@ -97,6 +97,16 @@ export function setAnchor(state: PlannerState, anchor: 'leaven' | 'done'): Plann
 }
 
 /**
+ * Starts the leaven at `at`, with the proof given: a start the quiet-hours warning suggests. A plan made from the last
+ * loaf out stays so, with that time moved to match. Before anything is checked it is a new bake, as for `setDate`.
+ */
+export function startLeavenAt(state: PlannerState, at: Date, proof: 'cold' | 'warm'): PlannerState {
+  const moved = { ...state, proof, anchor: 'leaven' as const, date: dateString(at), time: clockText(at) },
+    next = state.anchor === 'done' ? setAnchor(moved, 'done') : moved;
+  return bakeOf(state).done.length ? next : clearTemperatures(next);
+}
+
+/**
  * Moves the plan to tomorrow and starts the next bake: the checklist, its times and the dough temperatures clear
  * (decision 1 in docs/BEHAVIOUR.md). It is offered only once a plan has ended, when nothing is checked or every step is checked or skipped.
  */

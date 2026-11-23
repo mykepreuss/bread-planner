@@ -253,6 +253,7 @@ export function observePlan(i: PlanInput) {
       checkFrom: checkFrom ? stamp(checkFrom) : null,
       advice: v.advice ?? null,
       quietHours: v.night.length,
+      quietFixes: v.quietFixes.map((f) => ({ proof: f.proof, at: stamp(f.at), actions: f.actions })),
       coldProof: proof && {
         start: stamp(proof.start),
         end: stamp(proof.end),

@@ -91,7 +91,15 @@ export function ScheduleTab({ onViewIngredients }: { onViewIngredients: () => vo
           onAdded={onAdded}
         />
       )}
-      {v.night.length > 0 && <QuietWarning actions={v.night} />}
+      {v.night.length > 0 && (
+        <QuietWarning
+          actions={v.night}
+          fixes={v.quietFixes}
+          proof={state.proof}
+          fresh={v.bake.done.length === 0}
+          onFix={(fix) => update((s) => act.startLeavenAt(s, fix.at, fix.proof))}
+        />
+      )}
       <div className={`schedule-layout${v.underway ? ' is-underway' : ''}`}>
         <div className="schedule-sidebar">
           <PlanCard
