@@ -58,7 +58,12 @@ test('loading prefers version 6, falls back to version 5, and starts fresh from 
   // A saved menu gains the recipes it doesn't name, after its own (since November 22, 2026).
   assert.deepEqual(
     [fromFive.recipe, fromFive.order, fromFive.date, fromFive.time],
-    ['tartine', ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye', 'emmer'], '2026-11-13', '08:00'],
+    [
+      'tartine',
+      ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye', 'emmer', 'oat-porridge'],
+      '2026-11-13',
+      '08:00',
+    ],
   );
   const six = { ...freshState(NOW), recipe: 'tartine', date: '2026-12-01' };
   const both = storage({ [STORAGE_V5]: JSON.stringify(v5), [STORAGE_V6]: serialize(six) });
@@ -149,7 +154,14 @@ test('version 6 saves are checked as version 5 ones were', () => {
   // menu without House left it out, and Tartine was selected instead.
   assert.deepEqual(
     [loaded.order, loaded.recipe, loaded.ovenCapacity, loaded.reheat, loaded.tempUnit, loaded.date],
-    [['tartine', 'house', 'olive', 'sesame', 'whole-wheat', 'country-rye', 'emmer'], 'house', 2, 30, 'F', '2026-11-22'],
+    [
+      ['tartine', 'house', 'olive', 'sesame', 'whole-wheat', 'country-rye', 'emmer', 'oat-porridge'],
+      'house',
+      2,
+      30,
+      'F',
+      '2026-11-22',
+    ],
   );
   assert.equal(recipeById('manual-rye'), undefined);
 });
@@ -235,6 +247,7 @@ test('the autolyse is whole minutes from 15 to the recipe’s longest, and a sav
     'whole-wheat': 120,
     'country-rye': 60,
     emmer: 40,
+    'oat-porridge': 40,
   });
   for (const r of RECIPES) {
     const d = defaultSettings(r).autolyse;
@@ -572,7 +585,7 @@ test('a save with one of the four removed recipes selected opens on Preuss House
   ] as const) {
     const s = loadState(storage(saved), NOW);
     // The saved menu names none of the three Tartine recipes added the same day; the loader adds them after it.
-    const all = ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye', 'emmer'];
+    const all = ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye', 'emmer', 'oat-porridge'];
     assert.deepEqual([s.recipe, s.order, Object.keys(s.recipes)], ['house', all, all], name);
     assert.equal(s.recipes.tartine.settings.count, 3, `${name}: Tartine keeps its settings`);
     assert.deepEqual(s.recipes.tartine.bake.done, ['leaven'], `${name}: and its checklist`);
@@ -615,6 +628,7 @@ test('a saved menu keeps its own order and gains, at the end, every recipe it do
     'whole-wheat',
     'country-rye',
     'emmer',
+    'oat-porridge',
   ]);
   assert.deepEqual(load(['sesame', 'red-rye', 'sesame']), [
     'sesame',
@@ -624,6 +638,7 @@ test('a saved menu keeps its own order and gains, at the end, every recipe it do
     'whole-wheat',
     'country-rye',
     'emmer',
+    'oat-porridge',
   ]);
   assert.deepEqual(load(['four-flour']), [
     'house',
@@ -633,8 +648,18 @@ test('a saved menu keeps its own order and gains, at the end, every recipe it do
     'whole-wheat',
     'country-rye',
     'emmer',
+    'oat-porridge',
   ]);
-  assert.deepEqual(load('house'), ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye', 'emmer']);
+  assert.deepEqual(load('house'), [
+    'house',
+    'tartine',
+    'olive',
+    'sesame',
+    'whole-wheat',
+    'country-rye',
+    'emmer',
+    'oat-porridge',
+  ]);
   const s = loadState(
     storage({ [STORAGE_V6]: JSON.stringify({ version: 6, plan: { recipe: 'tartine', order: ['tartine'] } }) }),
     NOW,

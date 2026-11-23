@@ -14,7 +14,7 @@ import {
   AlertDialogAction,
 } from '@/components/ui/alert-dialog';
 import { FLOUR_NAMES } from '@/domain/recipes';
-import { addInLines } from '@/domain/addins';
+import { addInLines, isWeighed } from '@/domain/addins';
 import { mixingBowls } from '@/domain/schedule';
 import { formula, totalHydration } from '@/domain/formula';
 import { selected } from '@/state/schema';
@@ -243,10 +243,10 @@ export function IngredientsTab() {
               {d.addIns && (
                 <Panel
                   title="03 / Add-ins"
-                  description="Work in after the first turn. The book's measures, scaled to your batch."
+                  description={`Work in after ${(d.addIns.afterTurn ?? 1) === 1 ? 'the first turn' : `Turn ${d.addIns.afterTurn}`}. The book's ${d.addIns.items.some(isWeighed) ? 'weights' : 'measures'}, scaled to your batch.`}
                 >
                   <ul className="add-ins">
-                    {addInLines(d.addIns, p, d.defaults).map((line, i) => (
+                    {addInLines(d.addIns, p, d.defaults, r.flour).map((line, i) => (
                       <li key={i}>{line}</li>
                     ))}
                   </ul>

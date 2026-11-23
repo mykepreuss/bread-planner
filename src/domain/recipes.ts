@@ -107,6 +107,11 @@ const preussDefaults = (): Settings => ({
   autolyse: HOUSE.autolyse,
 });
 
+/** The initial mix of Tartine Book No. 3's wheat-germ doughs, Emmer/Einkorn and Oat Porridge. */
+const BOOK_3_MIX = {
+  note: 'Disperse the leaven used in the initial water, about 80°F / 27°C. Add the flours and the wheat germ; mix until no dry flour remains. Cover and rest; the book gives 25 to 40 minutes.',
+};
+
 export const RECIPES: Recipe[] = [
   {
     id: 'house',
@@ -283,9 +288,7 @@ export const RECIPES: Recipe[] = [
     flours: ['white', 'emmer', 'highext'],
     late: [],
     buildFlour: 'white',
-    initialMix: {
-      note: 'Disperse the leaven used in the initial water, about 80°F / 27°C. Add the flours and the wheat germ; mix until no dry flour remains. Cover and rest; the book gives 25 to 40 minutes.',
-    },
+    initialMix: BOOK_3_MIX,
     extras: [{ name: 'Wheat germ', percent: 7 }],
     finalShape: 'For a bran crust, roll the round in coarse bran before it goes into the basket, bran side down.',
     coldProof: 1080,
@@ -303,6 +306,65 @@ export const RECIPES: Recipe[] = [
       salt: 2.5,
       reserve: share(50, 850),
       flours: { white: 40, emmer: 30, highext: 30 },
+      build: { starter: 15, flour: 100, wheat: 100, water: 200 },
+      autolyse: TARTINE.rest,
+    },
+  },
+  {
+    // Tartine Book No. 3, page 178, "Oat Porridge", added at Michael's request on November 23, 2026 (decision 27). Made
+    // by the book's master method, the Basic Country Bread (decision 24), as Emmer/Einkorn is: Tartine Country Bread's
+    // plan, rest and 18-hour fridge. After the first two series of turns, about an hour into bulk, the cooked, cooled
+    // porridge goes in, with the almonds and almond oil if wanted. The porridge is page 168's: 2 parts water to 1 part
+    // rolled oats, cooked until creamy, about 15 minutes, seasoned with salt and spread thin to cool. The book's option
+    // of fermenting the oats overnight before cooking them is left out.
+    id: 'oat-porridge',
+    name: 'Tartine Oat Porridge',
+    description:
+      'From Tartine Book No. 3: high-extraction and medium-strong wheat flour with a little wheat germ, and cooked rolled-oat porridge worked in an hour into bulk, for a moist, custardy crumb. Toasted almonds and almond oil are optional. Made the Basic Country Bread way, with 18 hours in the fridge, so a leaven started in the evening bakes two mornings later. Roll the shaped loaves in chopped oats if you like.',
+    method: 'tartine',
+    // Medium-strong wheat flour is the white-bread flour, as for Emmer/Einkorn (decision 24).
+    flours: ['highext', 'white'],
+    late: [],
+    buildFlour: 'white',
+    initialMix: BOOK_3_MIX,
+    extras: [{ name: 'Wheat germ', percent: 7 }],
+    addIns: {
+      title: 'Add the oat porridge',
+      note: 'Add the cooled porridge and, if you are using them, the almonds and almond oil. Work them in gently by hand, folding and pinching, until they are evenly spread through the dough. Then carry on with bulk as planned.',
+      // The book's baker's percentages: 500 g porridge, 200 g almonds and 50 g almond oil to 1,000 g flour.
+      items: [
+        { name: 'Oat porridge', percent: 50, what: 'cooked oat porridge, cooled' },
+        { name: 'Almonds', percent: 20, what: 'almonds, toasted and coarsely chopped', optional: true },
+        { name: 'Almond oil', percent: 5, what: 'almond oil', optional: true },
+      ],
+      afterTurn: 2,
+      // Page 168 makes about 500 g of porridge from 250 g oats and 500 g water. Started 2 hours before Turn 2, half an
+      // hour before the initial mix, it has cooked by the mix and had 1½ hours spread thin to cool.
+      prep: {
+        title: 'Cook the oat porridge',
+        note: 'In a saucepan over medium heat, stir {g:25} rolled oats into {g:50} water. Cook, stirring now and then, until the oats soften and turn creamy, about 15 minutes, and season with a pinch of salt. Spread the porridge thinly on a baking sheet to cool to room temperature; it goes into the dough after Turn 2. If you are adding almonds, toast {g:20} almonds until fragrant and chop them coarsely. Porridge made up to a week ahead and kept covered in the fridge works too: take it out now to warm up.',
+        minutesBefore: 120,
+      },
+    },
+    // Page 178: roll the dough in chopped oat flakes and place it in the basket flake side down. Page 170 chops flakes
+    // by pulsing them in a food processor.
+    finalShape:
+      'For an oat crust, roll the round in rolled oats pulsed coarse in a food processor before it goes into the basket, oat side down.',
+    coldProof: 1080,
+    // The Basic Country Bread's 25 to 40 minutes for the rest with the leaven in (decision 23).
+    maxAutolyse: 40,
+    // Page 178: 500 g high-extraction wheat flour, 500 g medium-strong wheat flour; 70 g wheat germ (7%); 750 g water
+    // (75%); 150 g leaven (15%), built as for Tartine Country Bread; 25 g fine sea salt (2.5%); 500 g porridge (50%),
+    // 200 g almonds (20%) and 50 g almond oil (5%). Two loaves of 2,745 g / 2. As for Emmer/Einkorn, 50 g of the water
+    // is assumed to wait for the salt, as in the Basic Country Bread.
+    defaults: {
+      count: 2,
+      weight: 1372.5,
+      hydration: 75,
+      leaven: 15,
+      salt: 2.5,
+      reserve: share(50, 750),
+      flours: { highext: 50, white: 50 },
       build: { starter: 15, flour: 100, wheat: 100, water: 200 },
       autolyse: TARTINE.rest,
     },

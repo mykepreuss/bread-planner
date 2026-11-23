@@ -1,0 +1,120 @@
+- banner:
+  - heading "Bread Planner" [level=1]
+- main:
+  - tablist:
+    - tab "Schedule"
+    - tab "Ingredients" [selected]
+  - text: Recipe
+  - combobox "Recipe": Tartine Oat Porridge
+  - paragraph: "From Tartine Book No. 3: high-extraction and medium-strong wheat flour with a little wheat germ, and cooked rolled-oat porridge worked in an hour into bulk, for a moist, custardy crumb. Toasted almonds and almond oil are optional. Made the Basic Country Bread way, with 18 hours in the fridge, so a leaven started in the evening bakes two mornings later. Roll the shaped loaves in chopped oats if you like."
+  - tabpanel "Ingredients":
+    - text: Your batch Each recipe remembers its own settings. Number of loaves
+    - spinbutton "Number of loaves": "2"
+    - text: loaves Dough weight per loaf
+    - spinbutton "Dough weight per loaf": "1372.5"
+    - text: g Total hydration
+    - spinbutton "Total hydration": "77"
+    - text: "%"
+    - slider "Adjust total hydration"
+    - paragraph: Includes the flour and water in the leaven used.
+    - text: Flour blend Parts set the balance between flours. The gram weights scale to your batch.
+    - table:
+      - rowgroup:
+        - row "Flour Blend parts":
+          - columnheader "Flour"
+          - columnheader "Blend parts"
+      - rowgroup:
+        - row "High-extraction wheat flour 500 g in this batch · 50% 50 parts":
+          - cell "High-extraction wheat flour 500 g in this batch · 50%"
+          - cell "50 parts":
+            - spinbutton "High-extraction wheat flour proportion": "50"
+            - text: parts
+        - row "White-bread flour 500 g in this batch · 50% 50 parts":
+          - cell "White-bread flour 500 g in this batch · 50%"
+          - cell "50 parts":
+            - spinbutton "White-bread flour proportion": "50"
+            - text: parts
+    - heading "Leaven, salt & water split" [level=3]:
+      - button "Leaven, salt & water split" [expanded]
+    - region "Leaven, salt & water split":
+      - text: Leaven / added flour
+      - spinbutton "Leaven / added flour": "15"
+      - text: "%"
+      - slider "Adjust leaven / added flour"
+      - text: Salt / added flour
+      - spinbutton "Salt / added flour": "2.5"
+      - text: "%"
+      - slider "Adjust salt / added flour"
+      - text: Water reserved for final mix
+      - spinbutton "Water reserved for final mix": "6.667"
+      - text: "%"
+      - slider "Adjust water reserved for final mix"
+      - paragraph: The water split is a percentage of total added water.
+    - heading "Leaven build" [level=3]:
+      - button "Leaven build" [expanded]
+    - region "Leaven build":
+      - paragraph: Build quantities per 1,000 g added flour. The amounts made scale with your batch. Mature starter is equal weights flour and water. If the build is empty, the leaven is treated as 100% hydration.
+      - text: Mature starter
+      - spinbutton "Mature starter": "15"
+      - text: g White-bread flour
+      - spinbutton "White-bread flour": "100"
+      - text: g Whole-wheat flour
+      - spinbutton "Whole-wheat flour": "100"
+      - text: g Water
+      - spinbutton "Water": "200"
+      - text: g
+      - term: Mature starter
+      - definition: 15 g
+      - term: White-bread flour
+      - definition: 100 g
+      - term: Whole-wheat flour
+      - definition: 100 g
+      - term: Water
+      - definition: 200 g
+      - term: Total
+      - definition: 415 g
+      - text: Made
+      - strong: 415 g
+      - text: Used in dough
+      - strong: 150 g
+      - text: Reserved
+      - strong: 265 g
+    - heading "Recipe defaults" [level=3]:
+      - button "Recipe defaults" [expanded]
+    - region "Recipe defaults":
+      - button "Restore recipe defaults"
+    - text: 2,745g
+    - paragraph: Total dough for 2 loaves
+    - text: 77% total hydration 1,372.5 g per loaf 01 / Initial mix and rest Leaven goes into this mix before the initial rest.
+    - term: Leaven used
+    - definition: 150 g
+    - term: High-extraction wheat flour
+    - definition: 500 g
+    - term: White-bread flour
+    - definition: 500 g
+    - term: Wheat germ
+    - definition: 70 g
+    - term: Water
+    - definition: 700 g
+    - text: 02 / Salt and remaining water Add after the initial rest, then begin bulk fermentation.
+    - term: Salt
+    - definition: 25 g
+    - term: Water
+    - definition: 50 g
+    - text: 03 / Add-ins Work in after Turn 2. The book's weights, scaled to your batch.
+    - list:
+      - listitem: 500 g cooked oat porridge, cooled
+      - listitem: 200 g almonds, toasted and coarsely chopped (optional)
+      - listitem: 50 g almond oil (optional)
+    - strong: 1,000 g
+    - text: added flour
+    - strong: 750 g
+    - text: added water
+    - strong: 150 g
+    - text: leaven used
+  - heading "Mature starter and readiness guide" [level=3]:
+    - button "Mature starter and readiness guide"
+  - heading "Establishing a starter from scratch" [level=3]:
+    - button "Establishing a starter from scratch"
+  - heading "Shaping, basket preparation and baking" [level=3]:
+    - button "Shaping, basket preparation and baking"

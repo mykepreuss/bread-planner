@@ -1,7 +1,7 @@
 import { formula, type Formula, type Weighed } from './formula.ts';
 import { HOUSE, TARTINE, COOLING } from './methods.ts';
 import { FLOUR_NAMES, inSentence, type Recipe, type Settings } from './recipes.ts';
-import { addInLines, addInNote } from './addins.ts';
+import { addInLines, addInNote, prepNote } from './addins.ts';
 import { dateString } from './text.ts';
 
 /** What a step is. Saved checklists use its id, which this file keeps exactly as before. */
@@ -234,16 +234,17 @@ export function schedule(input: PlanInput): Step[] {
   // Mixed in several bowls, the dough comes together in one container at the start of bulk.
   const bowls = mixingBowls(count, input.mixCapacity ?? 2),
     combine = bowls > 1 ? `Combine ${allBowls(bowls)} in one container. ` : '';
-  // Add-ins go in right after the first turn, as the book works them in, with any prep finished by then. The prep lasts
-  // until the next step starts: that turn and every step before it are already on the plan, so the next one is among
-  // them.
+  // Add-ins go in right after their turn, the first unless the recipe says otherwise, as the book works them in, with
+  // any prep finished by then. The prep lasts until the next step starts: that turn and every step before it are
+  // already on the plan, so the next one is among them. Weighed add-ins are ticked off at the step, like the salt.
+  const addInTurn = recipe.addIns?.afterTurn ?? 1;
   const addInsAfter = (turnAt: number) => {
     if (!recipe.addIns) return;
     const { prep } = recipe.addIns;
     if (prep) {
       const start = turnAt - prep.minutesBefore,
         next = Math.min(...rows.map((r) => r.offset).filter((offset) => offset > start));
-      push('toast', 'prep', prep.title, start, next - start, prep.note);
+      push('toast', 'prep', prep.title, start, next - start, prepNote(prep, r.flour));
     }
     push(
       'addins',
@@ -251,7 +252,9 @@ export function schedule(input: PlanInput): Step[] {
       recipe.addIns.title,
       turnAt,
       0,
-      addInNote(recipe.addIns, addInLines(recipe.addIns, settings, recipe.defaults)),
+      addInNote(recipe.addIns, addInLines(recipe.addIns, settings, recipe.defaults, r.flour)),
+      undefined,
+      additionsFor('addins', r.addIns, 1),
     );
   };
   let firstBake: number, preheat: number, covered: number, uncovered: number, warmup: number;
@@ -303,7 +306,7 @@ export function schedule(input: PlanInput): Step[] {
           ? 'Wet your hand. Stretch one quadrant over the dough; rotate and repeat to fold all four sides.'
           : 'Repeat the four-sided stretch and fold, with wet hands.',
       );
-      if (n === 1) addInsAfter(at + elapsed);
+      if (n === addInTurn) addInsAfter(at + elapsed);
     }
     at += t.bulk;
     push(
@@ -430,7 +433,7 @@ export function schedule(input: PlanInput): Step[] {
     at += h.turnEvery;
     for (let n = 1; n <= h.turns; n++) {
       push(`turn${n}`, 'turn', `Turn ${n}`, at, h.turnEvery, houseTurnNote(n));
-      if (n === 1) addInsAfter(at);
+      if (n === addInTurn) addInsAfter(at);
       at += h.turnEvery;
     }
     push(

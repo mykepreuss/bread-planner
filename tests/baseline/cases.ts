@@ -17,7 +17,7 @@ import { planOf } from '../../src/state/schema.ts';
 import { decode } from './format.ts';
 import { plannerState, stamp, local, type PlanInput, type FormulaInput, type HelperCall } from './observe.ts';
 
-export const RECIPES = ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye', 'emmer'];
+export const RECIPES = ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye', 'emmer', 'oat-porridge'];
 const DAY = '2026-11-22',
   BEFORE = '2026-11-21 15:20';
 const minutes = (t: string, n: number) => stamp(local(t) + n * 60000).slice(0, 16);
@@ -375,6 +375,19 @@ function bakeDays(): [string, PlanInput][] {
     [
       'sesame with its toast step up next, as the autolyse finishes',
       { ...upTo(tartine({ recipe: 'sesame' }), 'autolyse'), now: '2026-11-22 13:50' },
+    ],
+    // Oat Porridge, added November 23, 2026 (decision 27).
+    [
+      'oat porridge with its porridge step up next, before the initial mix',
+      { ...upTo(tartine({ recipe: 'oat-porridge' }), 'leaven'), now: '2026-11-22 20:25' },
+    ],
+    [
+      'oat porridge with its add-in step up next after Turn 2, the porridge ticked',
+      {
+        ...upTo(tartine({ recipe: 'oat-porridge' }), 'turn2'),
+        added: ['addins:oat-porridge'],
+        now: '2026-11-22 22:32',
+      },
     ],
     // The final mix's tick-offs, added November 22, 2026.
     [

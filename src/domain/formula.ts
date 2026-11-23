@@ -1,4 +1,5 @@
 import { FLOUR_NAMES, type FlourKey, type Recipe, type Settings } from './recipes.ts';
+import { isWeighed } from './addins.ts';
 
 /** Tiny values from subtracting nearly equal numbers count as zero. */
 const clean = (n: number) => (Math.abs(n) < 1e-12 ? 0 : n);
@@ -31,14 +32,16 @@ export type Weighed = [name: string, grams: number];
 
 /**
  * The weights for a recipe's settings: the dough's flour, water, leaven and salt, each flour's share, any dry
- * ingredients that are not flour (`extras`), the two mixing stages, and the leaven build made, used, kept or still
- * needed. Null when there is no flour to scale from.
+ * ingredients that are not flour (`extras`), the two mixing stages, the weighed add-ins worked in during bulk
+ * (`addIns`), and the leaven build made, used, kept or still needed. Extras and weighed add-ins count in the dough's
+ * weight but not its hydration. Null when there is no flour to scale from.
  */
 export function formula(recipe: Recipe, s: Settings) {
   const total = s.count * s.weight,
     part = (key: FlourKey) => s.flours[key] || 0,
     parts = recipe.flours.reduce((a, k) => a + part(k), 0),
-    extraPercent = (recipe.extras ?? []).reduce((a, x) => a + x.percent, 0),
+    weighed = (recipe.addIns?.items ?? []).filter(isWeighed),
+    extraPercent = [...(recipe.extras ?? []), ...weighed].reduce((a, x) => a + x.percent, 0),
     denominator = 1 + (s.hydration + s.leaven + s.salt + extraPercent) / 100;
   if (parts <= 0 || !Number.isFinite(total) || denominator <= 0) return null;
   const flour = total / denominator,
@@ -56,6 +59,8 @@ export function formula(recipe: Recipe, s: Settings) {
   const tartine = recipe.method === 'tartine' && !recipe.autolyse;
   // Dry ingredients that are not flour, such as wheat germ, go in with the first flours.
   const extras: Weighed[] = (recipe.extras ?? []).map((x) => [x.name, (flour * x.percent) / 100]);
+  // Weighed add-ins, such as Oat Porridge's porridge, go in during bulk, at the add-in step (decision 27).
+  const addIns: Weighed[] = weighed.map((x) => [x.name, (flour * x.percent) / 100]);
   const initial: Weighed[] = [
     ...flours.filter((f) => f.grams > 0 && !recipe.late.includes(f.key)).map((f): Weighed => [f.name, f.grams]),
     ...extras,
@@ -85,6 +90,7 @@ export function formula(recipe: Recipe, s: Settings) {
     totalWater,
     flours,
     extras,
+    addIns,
     initial,
     final,
     madeParts,

@@ -107,7 +107,7 @@ async function openIngredients(page: Page) {
   }
 }
 
-const RECIPES = ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye', 'emmer'];
+const RECIPES = ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye', 'emmer', 'oat-porridge'];
 /** Screens recorded as a whole page too, at these widths. Kept to a few: whole pages are large. */
 const wholePage: Record<string, string[]> = {
   'mid-bulk': ['phone', 'desktop'],
@@ -727,6 +727,7 @@ test.describe('flows', () => {
       'Tartine Whole Wheat',
       'Tartine Country Rye',
       'Tartine Emmer/Einkorn',
+      'Tartine Oat Porridge',
     ]);
   });
 

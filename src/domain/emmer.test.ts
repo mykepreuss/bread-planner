@@ -46,10 +46,10 @@ function stage(rows: Weighed[], expected: [string, number][], message: string) {
   rows.forEach(([name, g], i) => near(g, expected[i][1], `${message} ${name}`));
 }
 
-test('Tartine Emmer/Einkorn is last on the menu, made the Tartine way with three flours, wheat germ and an 18-hour fridge', () => {
+test('Tartine Emmer/Einkorn is on the menu after Country Rye, made the Tartine way with three flours, wheat germ and an 18-hour fridge', () => {
   assert.deepEqual(
     RECIPES.map((r) => r.id),
-    ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye', 'emmer'],
+    ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye', 'emmer', 'oat-porridge'],
   );
   const r = recipe('emmer');
   assert.deepEqual(

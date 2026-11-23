@@ -45,7 +45,7 @@ function stage(rows: Weighed[], expected: [string, number][], message: string) {
 test('Tartine Country Rye is on the menu after Whole Wheat, made the Tartine way with rye and white-bread flour', () => {
   assert.deepEqual(
     RECIPES.map((r) => r.id),
-    ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye', 'emmer'],
+    ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye', 'emmer', 'oat-porridge'],
   );
   const r = recipe('country-rye');
   assert.deepEqual(

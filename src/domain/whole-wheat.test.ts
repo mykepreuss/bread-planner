@@ -219,6 +219,7 @@ test('Tartine Whole Wheat is on the menu after Olive and Sesame, made the Tartin
       ['whole-wheat', 'Tartine Whole Wheat', 'tartine'],
       ['country-rye', 'Tartine Country Rye', 'tartine'],
       ['emmer', 'Tartine Emmer/Einkorn', 'tartine'],
+      ['oat-porridge', 'Tartine Oat Porridge', 'tartine'],
     ],
   );
   const r = recipe('whole-wheat');
