@@ -50,7 +50,8 @@ export function formula(recipe: Recipe, s: Settings) {
     grams: clean((flour * part(key)) / parts),
     percent: (100 * part(key)) / parts,
   }));
-  const tartine = recipe.method === 'tartine';
+  // The book's Tartine method puts the leaven in the initial mix; a Tartine recipe with its own autolyse adds it later.
+  const tartine = recipe.method === 'tartine' && !recipe.autolyse;
   const initial: Weighed[] = [
     ...flours.filter((f) => f.grams > 0 && !recipe.late.includes(f.key)).map((f): Weighed => [f.name, f.grams]),
     ['Water', water - finalWater],

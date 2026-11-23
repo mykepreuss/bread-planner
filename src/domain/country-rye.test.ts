@@ -90,19 +90,30 @@ test('its weights are the book’s table: 170 g rye, 830 g bread flour, 800 g wa
   near(f.reserve, 215, 'leaven kept');
 });
 
-test('its schedule is Tartine Whole Wheat’s, with its own initial-mix note', () => {
+test('its schedule is Original Tartine’s with a 50-minute rest, so every step after the initial mix is 20 minutes later', () => {
+  // Tartine Whole Wheat had this schedule too until decision 16 gave it an autolyse and a longer fridge.
   for (const proof of ['cold', 'warm'] as const)
     for (const anchor of ['leaven', 'done'] as const) {
-      const change = anchor === 'done' ? { anchor, date: '2026-10-22', time: '15:10' } : { anchor };
-      const rye = schedule(plan('country-rye', { proof, ...change })),
-        wheat = schedule(plan('whole-wheat', { proof, ...change }));
+      const change =
+        anchor === 'done' ? { anchor, date: '2026-10-22', time: proof === 'cold' ? '15:10' : '05:40' } : { anchor };
+      const rye = schedule(plan('country-rye', { proof, ...change }));
+      const tartine = schedule(
+        plan('tartine', {
+          proof,
+          ...(anchor === 'done'
+            ? { anchor, date: '2026-10-22', time: proof === 'cold' ? '14:50' : '05:20' }
+            : { anchor }),
+        }),
+      );
+      const mixed = tartine.findIndex((s) => s.id === 'autolyse');
       assert.deepEqual(
         rye.map((s) => [s.id, s.title, +s.at, s.minutes]),
-        wheat.map((s) => [s.id, s.title, +s.at, s.minutes]),
+        tartine.map((s, n) => [s.id, s.title, n <= mixed ? +s.at : +s.at + 20 * 60000, n === mixed ? 50 : s.minutes]),
         `${proof} ${anchor}`,
       );
       const mix = rye.find((s) => s.id === 'autolyse')!;
       assert.equal(mix.note, NOTE);
       assert.equal(+rye.find((s) => s.id === 'mix')!.at - +mix.at, 50 * 60000, 'a 50-minute rest');
+      assert.equal(rye.find((s) => s.id === 'leaven')!.at.getHours(), 9, `${proof} ${anchor}: the leaven at 9:00 AM`);
     }
 });

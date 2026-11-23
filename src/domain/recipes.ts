@@ -44,7 +44,10 @@ export type Settings = {
  * `method` is how the dough is mixed and timed (see methods.ts). `late` flours go into the final mix. `buildFlour`
  * is the flour in the leaven build besides whole wheat. `addIns` are worked in after the first turn, with either
  * method (see addins.ts). `initialMix`, for Tartine recipes only, replaces the Basic Country Bread's initial mix: the
- * rest after it, in minutes, and its step's note. Every later step moves with the rest.
+ * rest after it, in minutes, and its step's note. Every later step moves with the rest. `autolyse`, for Tartine recipes
+ * only, replaces the initial mix and rest instead: the flour and first water rest for `minutes`, ending as the leaven
+ * is ready, and the leaven then goes in with the salt and reserved water. `coldProof`, for Tartine recipes only, is the
+ * refrigerated final proof in minutes, in place of the book's 12 hours.
  */
 export type Recipe = {
   id: string;
@@ -56,6 +59,8 @@ export type Recipe = {
   buildFlour: FlourKey;
   addIns?: AddIns;
   initialMix?: { rest: number; note: string };
+  autolyse?: { minutes: number; note: string };
+  coldProof?: number;
   defaults: Settings;
 };
 
@@ -164,16 +169,21 @@ export const RECIPES: Recipe[] = [
     id: 'whole-wheat',
     name: 'Tartine Whole Wheat',
     description:
-      'The book’s 70/30 whole-wheat and all-purpose loaf, mixed with cooler water and rested longer before the salt. If the dough runs lively, lower the leaven toward 15%.',
+      'The book’s 70/30 whole-wheat and all-purpose loaf. The flour soaks in cool water for 2 hours before the leaven goes in, and the loaves proof 18½ hours in the fridge, so a leaven started in the evening bakes two mornings later. If the dough runs lively, lower the leaven toward 15%.',
     method: 'tartine',
     flours: ['wheat', 'ap'],
     late: [],
     buildFlour: 'white',
-    // Whole wheat takes up more water, so the rest is 50 minutes, the middle of the book's 40 to 60.
-    initialMix: {
-      rest: 50,
-      note: 'Stir the leaven used into the initial water, about 75°F / 24°C, until it disperses. Add the whole-wheat and all-purpose flour and mix by hand until no dry flour is left. Cover and rest for 40 to 60 minutes while the whole wheat soaks up the water.',
+    // Michael's choices on November 22, 2026 (decision 16), so a cold-proofed bake keeps out of quiet hours. The book
+    // rests this dough 40 to 60 minutes with the leaven in. Instead the flour and water rest 2 hours on their own, as
+    // the leaven finishes: SourdoughGuru's autolyse guide gives 1 to 2 hours at room temperature for dough that is
+    // mostly whole wheat, and The Perfect Loaf's keeps the levain out. The loaves then proof 18½ hours in the fridge,
+    // not 12, so a leaven from 9:00 to 10:30 PM keeps every step out of quiet hours and bakes two mornings later.
+    autolyse: {
+      minutes: 120,
+      note: 'Mix the whole-wheat and all-purpose flour with the initial water, about 75°F / 24°C, by hand until no dry flour is left. Cover and rest while the leaven finishes, so the bran softens before the leaven goes in.',
     },
+    coldProof: 1110,
     // Tartine Bread, page 114: 700 g whole wheat, 300 g all-purpose; 800 g water; 200 g leaven, built as for Original
     // Tartine; 20 g salt. The page doesn't say how much water waits for the salt; 50 g is assumed, as for the Basic
     // Country Bread.
