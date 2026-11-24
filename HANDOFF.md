@@ -1506,3 +1506,20 @@ Release: pull request 53 merged as `b6332b0` on Michael's "Check and merge", aft
 
 In the in-app browser, the live save (Tartine Oat Porridge selected) showed the Schedule tab's recipe card with the menu alone and "Suggested start" on Up next. The Ingredients tab showed "Cook oat porridge the morning you mix. It goes in after Turn 2, with almonds and almond oil if you like. Start the leaven in the evening. With the cold proof, it bakes two mornings later.", "Your batch" with no description and "Parts set the balance between flours.", with nothing wider than the screen and no console errors. The save was not changed.
 
+## Oat Porridge takes The Perfect Loaf's lessons, November 23, 2026: committed, pull request open
+
+Why: Michael asked whether our Oat Porridge is like The Perfect Loaf's Oat Porridge Sourdough (https://www.theperfectloaf.com/oat-porridge-sourdough/), read in the in-app browser. It comes from the same Tartine page, and its four documented test bakes gave five lessons that bear on ours; he chose all five. Branch `oat-porridge-lessons`, from `main` at `e287ab2`.
+
+Change (decision 29 in docs/BEHAVIOUR.md):
+- `src/domain/recipes.ts`, Oat Porridge only: the porridge note (covered, low end of medium-low, about 16 minutes, salted at the start, cooled under foil) and its start 2½ hours before Turn 2; the add-in note's warnings about extra water and clumps; whole rolled oats for the coat; a 60-minute default rest and longest; and a new `bake` field, 35 minutes uncovered with a note on lowering the oven.
+- `src/domain/schedule.ts`: a Tartine recipe's `bake` sets the uncovered minutes and adds its note to "Remove lid".
+- `src/domain/oat-porridge.test.ts` compares the plan with Tartine Country Bread's given the same rest and bake, checks the 35-minute uncovered steps and that the other Tartine recipes keep 20, and the night-free starts (8:30 to 10:30 PM cold, 7:30 to 10:30 PM warm). The autolyse length and range lists give Oat Porridge 60.
+
+Record changes, checked by decoding both records: the 10 Oat Porridge plans changed; every other plan, all 50 calculations, 53 helpers and 24 saved-data cases are identical. A second `npm run baseline:update` left the record unchanged. The browser record's Oat Porridge schedule screen changed only in the rest, times, notes and quiet-hours count that follow from these changes.
+
+Evidence (this session): `npm test` passed 207 of 207, also with `BASELINE_ZONE=rule`. `npm run build` passed with 0 errors and 0 warnings. `npm run test:browser` passed 66 of 66 after updating that one screen.
+
+Known: a save made before this keeps its Oat Porridge rest (30 minutes in the live save); set Autolyse to 60 or restore the recipe's defaults to take the new one.
+
+Not verified: a real bake, which is what will show whether the longer rest and bake suit the book's flours.
+

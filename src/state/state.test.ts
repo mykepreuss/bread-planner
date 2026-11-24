@@ -247,7 +247,7 @@ test('the autolyse is whole minutes from 15 to the recipe’s longest, and a sav
     'whole-wheat': 120,
     'country-rye': 60,
     emmer: 40,
-    'oat-porridge': 40,
+    'oat-porridge': 60,
   });
   for (const r of RECIPES) {
     const d = defaultSettings(r).autolyse;

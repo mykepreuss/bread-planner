@@ -382,7 +382,8 @@ export function schedule(input: PlanInput): Step[] {
     firstBake = at;
     preheat = t.preheat;
     covered = t.covered;
-    uncovered = t.uncovered;
+    // A recipe can bake longer uncovered, as Oat Porridge does (decision 29).
+    uncovered = recipe.bake?.uncovered ?? t.uncovered;
   } else {
     const h = HOUSE;
     push(
@@ -549,7 +550,9 @@ export function schedule(input: PlanInput): Step[] {
       single ? 'Remove lid' : `Batch ${n}: remove lid`,
       start + covered,
       uncovered,
-      `Remove lid carefully: hot steam can escape. Continue at ${method.bakeAt}.`,
+      [`Remove lid carefully: hot steam can escape. Continue at ${method.bakeAt}.`, tartine && recipe.bake?.note]
+        .filter(Boolean)
+        .join(' '),
       'Bake until the crust is a rich golden brown; extend the uncovered bake if needed.',
     );
     const out = start + covered + uncovered;
