@@ -386,7 +386,7 @@ function bakeDays(): [string, PlanInput][] {
       {
         ...upTo(tartine({ recipe: 'oat-porridge' }), 'turn2'),
         added: ['addins:oat-porridge'],
-        now: '2026-11-22 22:32',
+        now: '2026-11-22 23:02',
       },
     ],
     // The final mix's tick-offs, added November 22, 2026.

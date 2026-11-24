@@ -67,7 +67,8 @@ const PREUSS_MAX_AUTOLYSE = 120;
  * baker can set, in minutes: what the recipe's book pages or the autolyse guides give (decision 23). `extras` are dry
  * ingredients that are not flour, such as wheat germ, as a percentage of the flour: they go into the first mix with
  * the flour and count in the dough's weight, but not in its hydration. `finalShape`, for Tartine recipes only, is
- * added to the final shape step's note.
+ * added to the final shape step's note. `bake`, for Tartine recipes only, replaces the book's 20-minute uncovered bake
+ * and adds its note to the "Remove lid" step (decision 29).
  */
 export type Recipe = {
   id: string;
@@ -84,6 +85,7 @@ export type Recipe = {
   maxAutolyse: number;
   extras?: { name: string; percent: number }[];
   finalShape?: string;
+  bake?: { uncovered: number; note: string };
   defaults: Settings;
 };
 
@@ -107,7 +109,7 @@ const preussDefaults = (): Settings => ({
   autolyse: HOUSE.autolyse,
 });
 
-/** The initial mix of Tartine Book No. 3's wheat-germ doughs, Emmer/Einkorn and Oat Porridge. */
+/** The initial mix of Tartine Book No. 3's Emmer/Einkorn; Oat Porridge's rests longer (decision 29). */
 const BOOK_3_MIX = {
   note: 'Disperse the leaven used in the initial water, about 80°F / 27°C. Add the flours and the wheat germ; mix until no dry flour remains. Cover and rest; the book gives 25 to 40 minutes.',
 };
@@ -325,11 +327,15 @@ export const RECIPES: Recipe[] = [
     flours: ['highext', 'white'],
     late: [],
     buildFlour: 'white',
-    initialMix: BOOK_3_MIX,
+    // The book's mix, resting an hour rather than its 25 to 40 minutes (decision 29).
+    initialMix: {
+      note: 'Disperse the leaven used in the initial water, about 80°F / 27°C. Add the flours and the wheat germ; mix until no dry flour remains. Cover and rest about an hour: longer than the book’s 25 to 40 minutes, so the dough stretches to take the porridge.',
+    },
     extras: [{ name: 'Wheat germ', percent: 7 }],
     addIns: {
       title: 'Add the oat porridge',
-      note: 'Add the cooled porridge and, if you are using them, the almonds and almond oil. Work them in gently by hand, folding and pinching, until they are evenly spread through the dough. Then carry on with bulk as planned.',
+      // The Perfect Loaf's lessons (decision 29): no extra water, and clumps pinched apart at every later turn.
+      note: "Add the cooled porridge and, if you are using them, the almonds and almond oil. Work them in gently by hand, folding and pinching, until they are evenly spread through the dough. Don't add extra water: the porridge releases water during bulk. At each turn after this, pinch apart any clumps of porridge. Then carry on with bulk as planned.",
       // The book's baker's percentages: 500 g porridge, 200 g almonds and 50 g almond oil to 1,000 g flour.
       items: [
         { name: 'Oat porridge', percent: 50, what: 'cooked oat porridge, cooled' },
@@ -337,21 +343,29 @@ export const RECIPES: Recipe[] = [
         { name: 'Almond oil', percent: 5, what: 'almond oil', optional: true },
       ],
       afterTurn: 2,
-      // Page 168 makes about 500 g of porridge from 250 g oats and 500 g water. Started 2 hours before Turn 2, half an
-      // hour before the initial mix, it has cooked by the mix and had 1½ hours spread thin to cool.
+      // Page 168 makes about 500 g of porridge from 250 g oats and 500 g water. The Perfect Loaf's Oat Porridge
+      // Sourdough, made from this page, found the book's medium heat dries it stiff: covered, at the low end of
+      // medium-low for about 16 minutes, it stays creamy and folds in (decision 29). Started 2½ hours before Turn 2,
+      // half an hour before the initial mix with the default 1-hour rest, it has cooked by the mix and cools for 2 hours.
       prep: {
         title: 'Cook the oat porridge',
-        note: 'In a saucepan over medium heat, stir {g:25} rolled oats into {g:50} water. Cook, stirring now and then, until the oats soften and turn creamy, about 15 minutes, and season with a pinch of salt. Spread the porridge thinly on a baking sheet to cool to room temperature; it goes into the dough after Turn 2. If you are adding almonds, toast {g:20} almonds until fragrant and chop them coarsely. Porridge made up to a week ahead and kept covered in the fridge works too: take it out now to warm up.',
-        minutesBefore: 120,
+        note: 'In a saucepan, stir {g:25} rolled oats and a pinch of salt into {g:50} water. Cover and cook at the low end of medium-low, stirring now and then, until the oats are soft, creamy and still slightly loose, about 16 minutes. Spread the porridge thinly on a baking sheet and cover it with foil to cool to room temperature without drying out; it goes into the dough after Turn 2. If you are adding almonds, toast {g:20} almonds until fragrant and chop them coarsely. Porridge made up to a week ahead and kept covered in the fridge works too: take it out now to warm up.',
+        minutesBefore: 150,
       },
     },
-    // Page 178: roll the dough in chopped oat flakes and place it in the basket flake side down. Page 170 chops flakes
-    // by pulsing them in a food processor.
-    finalShape:
-      'For an oat crust, roll the round in rolled oats pulsed coarse in a food processor before it goes into the basket, oat side down.',
+    // Page 178 rolls the dough in chopped oat flakes; Michael chose The Perfect Loaf's whole rolled oats, for their
+    // crunch (decision 29).
+    finalShape: 'For an oat crust, roll the round in whole rolled oats before it goes into the basket, oat side down.',
+    // The Perfect Loaf needed about 35 minutes uncovered, not 20, for the wet crumb to bake through and the crust to
+    // colour (decision 29).
+    bake: {
+      uncovered: 35,
+      note: 'The porridge keeps the crumb wet, so this loaf bakes longer uncovered. If the crust darkens too fast, lower the oven toward 425°F / 218°C for the last 10 minutes.',
+    },
     coldProof: 1080,
-    // The Basic Country Bread's 25 to 40 minutes for the rest with the leaven in (decision 23).
-    maxAutolyse: 40,
+    // The Perfect Loaf found the book's 40 minutes left the dough too tight to take the porridge, and 1 hour fixed it
+    // (decision 29). With the fridge at 18 hours, a leaven from 8:30 to 10:30 PM keeps every step out of quiet hours.
+    maxAutolyse: 60,
     // Page 178: 500 g high-extraction wheat flour, 500 g medium-strong wheat flour; 70 g wheat germ (7%); 750 g water
     // (75%); 150 g leaven (15%), built as for Tartine Country Bread; 25 g fine sea salt (2.5%); 500 g porridge (50%),
     // 200 g almonds (20%) and 50 g almond oil (5%). Two loaves of 2,745 g / 2. As for Emmer/Einkorn, 50 g of the water
@@ -365,7 +379,7 @@ export const RECIPES: Recipe[] = [
       reserve: share(50, 750),
       flours: { highext: 50, white: 50 },
       build: { starter: 15, flour: 100, wheat: 100, water: 200 },
-      autolyse: TARTINE.rest,
+      autolyse: 60,
     },
   },
 ];

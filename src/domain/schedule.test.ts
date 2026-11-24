@@ -252,7 +252,7 @@ test('each recipe sets its own autolyse length, by default as before (decision 2
     'whole-wheat': [120, 120],
     'country-rye': [50, 50],
     emmer: [30, 30],
-    'oat-porridge': [30, 30],
+    'oat-porridge': [60, 60],
   });
 });
 

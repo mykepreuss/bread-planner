@@ -13,19 +13,22 @@ import { clockText } from './text.ts';
  * Basic Country Bread, decision 24), with 500 g of cooked, cooled oat porridge and, if wanted, 200 g toasted almonds
  * and 50 g almond oil worked in after the first two series of turns, about an hour into bulk. The porridge is page 168's:
  * 2 parts water to 1 part rolled oats, cooked until creamy, about 15 minutes, and spread thin to cool. Added at
- * Michael's request on November 23, 2026 (decision 27). Plans start the leaven at 9:00 AM on October 21, 2026, in the
- * local zone.
+ * Michael's request on November 23, 2026 (decision 27). The same day he took five lessons from The Perfect Loaf's Oat
+ * Porridge Sourdough (decision 29): the porridge cooked covered on lower heat, a 1-hour rest, 35 minutes uncovered,
+ * warnings about water and clumps at the add-in step, and whole rolled oats for the coat. Plans start the leaven at
+ * 9:00 AM on October 21, 2026, in the local zone.
  */
 
 const NOTE =
-  'Disperse the leaven used in the initial water, about 80°F / 27°C. Add the flours and the wheat germ; mix until no dry flour remains. Cover and rest; the book gives 25 to 40 minutes.';
-const OATS =
-  'For an oat crust, roll the round in rolled oats pulsed coarse in a food processor before it goes into the basket, oat side down.';
+  'Disperse the leaven used in the initial water, about 80°F / 27°C. Add the flours and the wheat germ; mix until no dry flour remains. Cover and rest about an hour: longer than the book’s 25 to 40 minutes, so the dough stretches to take the porridge.';
+const OATS = 'For an oat crust, roll the round in whole rolled oats before it goes into the basket, oat side down.';
 const ADD_NOTE =
-  'Add the cooled porridge and, if you are using them, the almonds and almond oil. Work them in gently by hand, folding and pinching, until they are evenly spread through the dough. Then carry on with bulk as planned.';
+  "Add the cooled porridge and, if you are using them, the almonds and almond oil. Work them in gently by hand, folding and pinching, until they are evenly spread through the dough. Don't add extra water: the porridge releases water during bulk. At each turn after this, pinch apart any clumps of porridge. Then carry on with bulk as planned.";
+const BAKE =
+  'The porridge keeps the crumb wet, so this loaf bakes longer uncovered. If the crust darkens too fast, lower the oven toward 425°F / 218°C for the last 10 minutes.';
 /** The porridge step's note for this much oats, water and almonds. */
 const cookNote = (oats: string, water: string, almonds: string) =>
-  `In a saucepan over medium heat, stir ${oats} rolled oats into ${water} water. Cook, stirring now and then, until the oats soften and turn creamy, about 15 minutes, and season with a pinch of salt. Spread the porridge thinly on a baking sheet to cool to room temperature; it goes into the dough after Turn 2. If you are adding almonds, toast ${almonds} until fragrant and chop them coarsely. Porridge made up to a week ahead and kept covered in the fridge works too: take it out now to warm up.`;
+  `In a saucepan, stir ${oats} rolled oats and a pinch of salt into ${water} water. Cover and cook at the low end of medium-low, stirring now and then, until the oats are soft, creamy and still slightly loose, about 16 minutes. Spread the porridge thinly on a baking sheet and cover it with foil to cool to room temperature without drying out; it goes into the dough after Turn 2. If you are adding almonds, toast ${almonds} until fragrant and chop them coarsely. Porridge made up to a week ahead and kept covered in the fridge works too: take it out now to warm up.`;
 
 const near = (a: number, b: number, message: string) => assert.ok(Math.abs(a - b) < 1e-9, `${message}: ${a} != ${b}`);
 function recipe(id: string): Recipe {
@@ -74,13 +77,17 @@ test('Tartine Oat Porridge is last on the menu, made the Tartine way with two fl
   assert.deepEqual(r.initialMix, { note: NOTE });
   assert.deepEqual(r.extras, [{ name: 'Wheat germ', percent: 7 }]);
   assert.equal(r.finalShape, OATS);
-  assert.deepEqual([r.coldProof, r.maxAutolyse], [1080, 40], 'Tartine Country Bread’s fridge and rest');
+  assert.deepEqual(
+    [r.coldProof, r.maxAutolyse, r.bake],
+    [1080, 60, { uncovered: 35, note: BAKE }],
+    'Tartine Country Bread’s fridge, a rest of up to an hour and a longer uncovered bake (decision 29)',
+  );
   assert.equal(r.addIns?.title, 'Add the oat porridge');
   assert.equal(r.addIns?.afterTurn, 2, 'after the first two series of turns');
   assert.deepEqual(
     [r.addIns?.prep?.title, r.addIns?.prep?.minutesBefore],
-    ['Cook the oat porridge', 120],
-    'cooked two hours before it goes in',
+    ['Cook the oat porridge', 150],
+    'cooked 2½ hours before it goes in',
   );
   // The description says what to prepare and when to start (decision 28).
   assert.match(
@@ -98,7 +105,8 @@ test('Tartine Oat Porridge is last on the menu, made the Tartine way with two fl
     reserve: (50 / 750) * 100,
     flours: { highext: 50, white: 50 },
     build: { starter: 15, flour: 100, wheat: 100, water: 200 },
-    autolyse: 30,
+    // A 1-hour rest with the leaven in (decision 29).
+    autolyse: 60,
   });
 });
 
@@ -174,7 +182,13 @@ test('the add-ins read in grams, scaled to the batch', () => {
   ]);
 });
 
-test('its schedule is Tartine Country Bread’s, with the porridge cooked two hours before Turn 2 and worked in after it', () => {
+test('its schedule is Tartine Country Bread’s with a 1-hour rest and a 35-minute uncovered bake, with the porridge cooked 2½ hours before Turn 2 and worked in after it', () => {
+  // Tartine Country Bread given the same rest and bake, so every other step should match.
+  const country = { ...recipe('tartine'), bake: recipe('oat-porridge').bake },
+    countryPlan = (change: Partial<PlanInput>) => {
+      const p = plan('tartine', change);
+      return { ...p, recipe: country, settings: { ...p.settings, autolyse: 60 } };
+    };
   const view = (s: Step[]) =>
     s.filter((x) => x.id !== 'toast' && x.id !== 'addins').map((x) => [x.id, x.title, +x.at, x.minutes, x.kind]);
   for (const proof of ['cold', 'warm'] as const)
@@ -183,8 +197,13 @@ test('its schedule is Tartine Country Bread’s, with the porridge cooked two ho
         const change = { proof, ovenCapacity, anchor, ...(anchor === 'done' && { date: '2026-10-23', time: '08:00' }) },
           name = `${proof}, ${ovenCapacity} at once, from the ${anchor}`;
         const oat = schedule(plan('oat-porridge', change)),
-          country = schedule(plan('tartine', change));
+          country = schedule(countryPlan(change));
         assert.deepEqual(view(oat), view(country), name);
+        assert.deepEqual(
+          oat.filter((x) => x.kind === 'uncovered').map((x) => [x.minutes, x.note.endsWith(BAKE)]),
+          oat.filter((x) => x.kind === 'uncovered').map(() => [35, true]),
+          `${name}: 35 minutes uncovered`,
+        );
         const notes = (s: Step[]) => Object.fromEntries(s.map((x) => [x.id, x.note]));
         const { toast, addins, ...rest } = notes(oat);
         assert.deepEqual(
@@ -210,7 +229,7 @@ test('its schedule is Tartine Country Bread’s, with the porridge cooked two ho
           cook = find(oat, 'toast'),
           add = find(oat, 'addins');
         assert.equal(+add.at, +turn2.at, name);
-        assert.equal(+turn2.at - +cook.at, 120 * 60000, name);
+        assert.equal(+turn2.at - +cook.at, 150 * 60000, name);
         assert.equal(cook.minutes, 30, `${name}: until the initial mix`);
         assert.deepEqual(
           [cook.kind, cook.handsOn, cook.movesPlan, add.kind, add.minutes, add.bulk, add.movesPlan],
@@ -230,10 +249,15 @@ test('its schedule is Tartine Country Bread’s, with the porridge cooked two ho
   const cold = schedule(plan('oat-porridge'));
   assert.deepEqual(
     [clockText(find(cold, 'toast').at), clockText(find(cold, 'autolyse').at), clockText(find(cold, 'addins').at)],
-    ['20:30', '21:00', '22:30'],
+    ['20:30', '21:00', '23:00'],
   );
+  assert.equal(find(cold, 'autolyse').minutes, 60);
   assert.equal(find(cold, 'fridge').note, 'Cover the baskets and refrigerate for about 18 hours.');
-  assert.equal(clockText(find(cold, 'done').at), '20:50');
+  // Tartine Country Bread's 8:50 PM, 30 minutes later for the rest and 15 for the bake.
+  assert.equal(clockText(find(cold, 'done').at), '21:35');
+  // The other Tartine recipes keep the book's 20 minutes uncovered.
+  for (const id of ['tartine', 'whole-wheat', 'country-rye', 'emmer'])
+    assert.equal(find(schedule(plan(id)), 'uncovered').minutes, 20, id);
   // One loaf: half the porridge, and half the oats and water to cook it.
   const one = plan('oat-porridge');
   one.settings = { ...one.settings, count: 1 };
@@ -245,7 +269,7 @@ test('its schedule is Tartine Country Bread’s, with the porridge cooked two ho
   );
 });
 
-test('a leaven from 9:00 to 10:30 PM keeps every step out of quiet hours with a cold proof, and from 7:30 PM with a warm one', () => {
+test('a leaven from 8:30 to 10:30 PM keeps every step out of quiet hours with a cold proof (decision 29)', () => {
   const free = (proof: 'cold' | 'warm') => {
     const times: string[] = [];
     for (let m = 0; m < 1440; m += 15) {
@@ -254,8 +278,8 @@ test('a leaven from 9:00 to 10:30 PM keeps every step out of quiet hours with a 
     }
     return times;
   };
-  assert.deepEqual(free('cold'), ['21:00', '21:15', '21:30', '21:45', '22:00', '22:15', '22:30']);
-  // A 7:00 PM leaven would have the porridge on the stove at 6:30 AM.
+  assert.deepEqual(free('cold'), ['20:30', '20:45', '21:00', '21:15', '21:30', '21:45', '22:00', '22:15', '22:30']);
+  // With a warm proof, from 7:30 PM: a 7:00 PM leaven would have the porridge on the stove at 6:30 AM.
   assert.equal(free('warm')[0], '19:30');
   assert.equal(free('warm').at(-1), '22:30');
   assert.equal(free('warm').length, 13, 'every quarter hour from 7:30 to 10:30 PM');
