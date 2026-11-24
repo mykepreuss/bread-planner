@@ -1447,7 +1447,7 @@ Release: pull request 51 merged as `48cb27b` on Michael's "Check and merge", aft
 
 At 11:34 AM, the in-app browser's test save (Tartine Country Bread, chosen for Nov 8 at 9:00 AM, nothing checked) opened on a plain reload as "Make leaven · 9:00 PM · in 9h 25m". It showed the Suggested line, no "This plan ended", no quiet-hours warning or badges, and no console errors. The save itself was unchanged. Merged by hand, since GitHub auto-merge is turned off for this repository.
 
-## Tartine Oat Porridge, November 23, 2026: committed, pull request open
+## Tartine Oat Porridge, November 23, 2026: released and verified live
 
 Why: Michael sent photos of Tartine Book No. 3, pages 168 to 171 and 178, and asked to add Oat Porridge "and update all relevant processes". Branch `oat-porridge`, from `main` at `48cb27b`. This entry also records pull request 51's release, in the section above.
 
@@ -1481,3 +1481,7 @@ Independent check (the verifier, on `31d58c2`): PASS on all seven criteria.
 - Fixed from its nits without a re-check, under relaxed verification: BEHAVIOUR.md said a longer rest could move the porridge step past the initial mix; at the longest allowed rest, 40 minutes, it starts 20 minutes before it. The matching test comment now says so. Left as it is: the record's `recordedFrom` reads "with uncommitted changes", as `main`'s does.
 
 Not verified: a real phone, or a real bake. Porridge doughs are wetter; the 18-hour fridge is worth watching on the first bake.
+
+Release: pull request 52 merged as `0554145` on Michael's "Check and merge", after both Vercel checks passed on `4fde727`. The commit's status turned to success; the live site served the new bundle (`App.PKdGywx0.js`, containing "Tartine Oat Porridge" and "Cook the oat porridge"), and `node scripts/verify-deployment.mjs https://bread.assemblydigital.com` passed with 7 assets and the negative fixture rejected.
+
+In the in-app browser at 375 px, the live test save (Tartine Whole Wheat selected) had already gained Oat Porridge at the end of its menu. Choosing it showed "Cook the oat porridge" at 8:30 AM with 250 g oats and 500 g water, "Mix dough and rest" at 9:00 AM, "Add the oat porridge" at 10:30 AM, the final shape at 1:05 PM and the fridge at 1:10 PM for about 18 hours, with nothing wider than the screen and no console errors. The save was then restored byte for byte, showing Tartine Whole Wheat again.
