@@ -6,9 +6,9 @@
     - tab "Ingredients" [selected]
   - text: Recipe
   - combobox "Recipe": Tartine Oat Porridge
-  - paragraph: "From Tartine Book No. 3: high-extraction and medium-strong wheat flour with a little wheat germ, and cooked rolled-oat porridge worked in an hour into bulk, for a moist, custardy crumb. Toasted almonds and almond oil are optional. Made the Basic Country Bread way, with 18 hours in the fridge, so a leaven started in the evening bakes two mornings later. Roll the shaped loaves in chopped oats if you like."
+  - paragraph: Cook oat porridge the morning you mix. It goes in after Turn 2, with almonds and almond oil if you like. Start the leaven in the evening. With the cold proof, it bakes two mornings later.
   - tabpanel "Ingredients":
-    - text: Your batch Each recipe remembers its own settings. Number of loaves
+    - text: Your batch Number of loaves
     - spinbutton "Number of loaves": "2"
     - text: loaves Dough weight per loaf
     - spinbutton "Dough weight per loaf": "1372.5"
@@ -17,7 +17,7 @@
     - text: "%"
     - slider "Adjust total hydration"
     - paragraph: Includes the flour and water in the leaven used.
-    - text: Flour blend Parts set the balance between flours. The gram weights scale to your batch.
+    - text: Flour blend Parts set the balance between flours.
     - table:
       - rowgroup:
         - row "Flour Blend parts":
@@ -85,7 +85,7 @@
       - button "Restore recipe defaults"
     - text: 2,745g
     - paragraph: Total dough for 2 loaves
-    - text: 77% total hydration 1,372.5 g per loaf 01 / Initial mix and rest Leaven goes into this mix before the initial rest.
+    - text: 77% total hydration 1,372.5 g per loaf 01 / Initial mix and rest
     - term: Leaven used
     - definition: 150 g
     - term: High-extraction wheat flour

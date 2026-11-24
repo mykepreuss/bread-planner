@@ -6,9 +6,9 @@
     - tab "Ingredients" [selected]
   - text: Recipe
   - combobox "Recipe": Tartine Country Rye
-  - paragraph: "The book’s country rye: just enough medium-fine whole rye with white bread flour for a sweet rye flavour without much sourness. Cooler water and a longer rest after mixing than Tartine Country Bread, and 17½ hours in the fridge, so a leaven started in the evening bakes two mornings later."
+  - paragraph: A mild, barely sour rye. Use medium-fine whole rye. Start the leaven in the evening. With the cold proof, it bakes two mornings later.
   - tabpanel "Ingredients":
-    - text: Your batch Each recipe remembers its own settings. Number of loaves
+    - text: Your batch Number of loaves
     - spinbutton "Number of loaves": "2"
     - text: loaves Dough weight per loaf
     - spinbutton "Dough weight per loaf": "1010"
@@ -17,7 +17,7 @@
     - text: "%"
     - slider "Adjust total hydration"
     - paragraph: Includes the flour and water in the leaven used.
-    - text: Flour blend Parts set the balance between flours. The gram weights scale to your batch.
+    - text: Flour blend Parts set the balance between flours.
     - table:
       - rowgroup:
         - row "Flour Blend parts":
@@ -85,7 +85,7 @@
       - button "Restore recipe defaults"
     - text: 2,020g
     - paragraph: Total dough for 2 loaves
-    - text: 82% total hydration 1,010 g per loaf 01 / Initial mix and rest Leaven goes into this mix before the initial rest.
+    - text: 82% total hydration 1,010 g per loaf 01 / Initial mix and rest
     - term: Leaven used
     - definition: 200 g
     - term: Rye flour

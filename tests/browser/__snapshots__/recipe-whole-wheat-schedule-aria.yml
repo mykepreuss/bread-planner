@@ -6,7 +6,6 @@
     - tab "Ingredients"
   - text: Recipe
   - combobox "Recipe": Tartine Whole Wheat
-  - paragraph: The book’s 70/30 whole-wheat and all-purpose loaf. The flour soaks in cool water, for 2 hours by default, before the leaven goes in, and the loaves proof 18½ hours in the fridge, so a leaven started in the evening bakes two mornings later. If the dough runs lively, lower the leaven toward 15%.
   - tabpanel "Schedule":
     - region "Up next":
       - text: Up next in 17h 40m

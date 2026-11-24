@@ -249,10 +249,9 @@ test('Tartine Whole Wheat is on the menu after Olive and Sesame, made the Tartin
     [undefined, 1080, undefined],
     'Tartine Country Bread keeps the book’s initial mix, with an 18-hour fridge since decision 21',
   );
-  assert.match(r.description, /whole-wheat/);
-  assert.match(r.description, /15%/);
-  assert.match(r.description, /2 hours/);
-  assert.match(r.description, /18½ hours/);
+  // The description says what to plan for (decision 28): an evening start, and what to do if the dough runs lively.
+  assert.match(r.description, /^Start the leaven in the evening\. With the cold proof, it bakes two mornings later\./);
+  assert.match(r.description, /lower the leaven toward 15%/);
   // The removed White & Whole Wheat had the id `white-wheat`; it stays gone and is not this recipe.
   assert.equal(recipeById('white-wheat'), undefined);
 });

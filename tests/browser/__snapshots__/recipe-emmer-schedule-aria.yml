@@ -6,7 +6,6 @@
     - tab "Ingredients"
   - text: Recipe
   - combobox "Recipe": Tartine Emmer/Einkorn
-  - paragraph: "From Tartine Book No. 3: whole-grain emmer or einkorn with medium-strong and high-extraction wheat flour and a little wheat germ, for a nutty, grassy loaf. Made the Basic Country Bread way, with 18 hours in the fridge, so a leaven started in the evening bakes two mornings later. Roll the shaped loaves in coarse bran if you like."
   - tabpanel "Schedule":
     - region "Up next":
       - text: Up next in 17h 40m

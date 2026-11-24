@@ -67,7 +67,7 @@ export function NowCard({
       {suggested && (
         <p className="now-suggested">
           <Sparkles size={16} />
-          Suggested start: the soonest with the least night work.
+          Suggested start
         </p>
       )}
       {shift !== 0 && (

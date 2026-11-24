@@ -72,7 +72,10 @@ test('Sesame is on the menu right after Olive, with Preuss House’s method, flo
     [sesame.flours, house.flours],
   ] as const)
     assert.notEqual(a, b);
-  assert.match(sesame.description, /^Preuss Country Bread dough and timing, with toasted sesame seeds/);
+  assert.match(
+    sesame.description,
+    /^Preuss Country Bread with toasted sesame seeds worked in after Turn 1\. .*oven for the hour before/,
+  );
   assert.ok(
     Object.isFrozen(sesame.addIns) && Object.isFrozen(sesame.addIns!.prep) && Object.isFrozen(sesame.addIns!.items[0]),
   );
