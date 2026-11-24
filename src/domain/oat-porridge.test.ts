@@ -20,7 +20,7 @@ import { clockText } from './text.ts';
  */
 
 const NOTE =
-  'Disperse the leaven used in the initial water, about 80°F / 27°C. Add the flours and the wheat germ; mix until no dry flour remains. Cover and rest; the book gives 25 to 40 minutes.';
+  'Disperse the leaven used in the initial water, about 80°F / 27°C. Add the flours and the wheat germ; mix until no dry flour remains. Cover and rest about an hour: longer than the book’s 25 to 40 minutes, so the dough stretches to take the porridge.';
 const OATS = 'For an oat crust, roll the round in whole rolled oats before it goes into the basket, oat side down.';
 const ADD_NOTE =
   "Add the cooled porridge and, if you are using them, the almonds and almond oil. Work them in gently by hand, folding and pinching, until they are evenly spread through the dough. Don't add extra water: the porridge releases water during bulk. At each turn after this, pinch apart any clumps of porridge. Then carry on with bulk as planned.";

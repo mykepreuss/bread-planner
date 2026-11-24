@@ -1519,6 +1519,13 @@ Record changes, checked by decoding both records: the 10 Oat Porridge plans chan
 
 Evidence (this session): `npm test` passed 207 of 207, also with `BASELINE_ZONE=rule`. `npm run build` passed with 0 errors and 0 warnings. `npm run test:browser` passed 66 of 66 after updating that one screen.
 
+Independent check (the verifier, on `0bf7c5e`): PASS on all seven criteria.
+- Its own 720 combinations (1 to 5 loaves, rests of 15 to 60, both proofs, ovens of 1 to 3, both anchors, reheats of 0 to 45) matched Tartine Country Bread given the same rest and bake, apart from the two porridge steps, with every uncovered step 35 minutes, later batches timed from the previous one, and planning back from the finish exact.
+- The other seven recipes gave byte-identical schedule, quiet-hours and formula output to `main` across 48,384 combinations.
+- A save from `main` with a 30-minute rest kept it; saved rests of 41 to 60 load as saved, and anything else falls back to 60.
+- All five of its breaks were caught by both suites: 35 minutes for every Tartine recipe, the bake note dropped, the porridge back to 2 hours before Turn 2, the longest rest back to 40, and the default back to 30.
+- Fixed from its notes without a re-check, under relaxed verification: the initial-mix note said "the book gives 25 to 40 minutes" over a 60-minute rest, and now says to rest about an hour and why (Oat Porridge has its own note; Emmer/Einkorn keeps the book's); the bake-day case with the add-in step up next now stands at 11:02 PM, after Turn 2's new time; decision 27 is marked superseded in part; the Autolyse length bullet gives Emmer/Einkorn's and Oat Porridge's longest. The HANDOFF heading anticipated the pull request, opened right after. After the fixes, `npm test` passed 207 of 207 in both zone modes, the record still differed from `main` only in the 10 Oat Porridge plans, the build had 0 errors, and `npm run test:browser` passed 66 of 66 with that one screen's note refreshed.
+
 Known: a save made before this keeps its Oat Porridge rest (30 minutes in the live save); set Autolyse to 60 or restore the recipe's defaults to take the new one.
 
 Not verified: a real bake, which is what will show whether the longer rest and bake suit the book's flours.

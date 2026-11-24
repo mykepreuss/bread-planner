@@ -109,7 +109,7 @@ const preussDefaults = (): Settings => ({
   autolyse: HOUSE.autolyse,
 });
 
-/** The initial mix of Tartine Book No. 3's wheat-germ doughs, Emmer/Einkorn and Oat Porridge. */
+/** The initial mix of Tartine Book No. 3's Emmer/Einkorn; Oat Porridge's rests longer (decision 29). */
 const BOOK_3_MIX = {
   note: 'Disperse the leaven used in the initial water, about 80°F / 27°C. Add the flours and the wheat germ; mix until no dry flour remains. Cover and rest; the book gives 25 to 40 minutes.',
 };
@@ -327,7 +327,10 @@ export const RECIPES: Recipe[] = [
     flours: ['highext', 'white'],
     late: [],
     buildFlour: 'white',
-    initialMix: BOOK_3_MIX,
+    // The book's mix, resting an hour rather than its 25 to 40 minutes (decision 29).
+    initialMix: {
+      note: 'Disperse the leaven used in the initial water, about 80°F / 27°C. Add the flours and the wheat germ; mix until no dry flour remains. Cover and rest about an hour: longer than the book’s 25 to 40 minutes, so the dough stretches to take the porridge.',
+    },
     extras: [{ name: 'Wheat germ', percent: 7 }],
     addIns: {
       title: 'Add the oat porridge',
