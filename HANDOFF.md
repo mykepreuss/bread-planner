@@ -1506,7 +1506,7 @@ Release: pull request 53 merged as `b6332b0` on Michael's "Check and merge", aft
 
 In the in-app browser, the live save (Tartine Oat Porridge selected) showed the Schedule tab's recipe card with the menu alone and "Suggested start" on Up next. The Ingredients tab showed "Cook oat porridge the morning you mix. It goes in after Turn 2, with almonds and almond oil if you like. Start the leaven in the evening. With the cold proof, it bakes two mornings later.", "Your batch" with no description and "Parts set the balance between flours.", with nothing wider than the screen and no console errors. The save was not changed.
 
-## Oat Porridge takes The Perfect Loaf's lessons, November 23, 2026: committed, pull request open
+## Oat Porridge takes The Perfect Loaf's lessons, November 23, 2026: released and verified live
 
 Why: Michael asked whether our Oat Porridge is like The Perfect Loaf's Oat Porridge Sourdough (https://www.theperfectloaf.com/oat-porridge-sourdough/), read in the in-app browser. It comes from the same Tartine page, and its four documented test bakes gave five lessons that bear on ours; he chose all five. Branch `oat-porridge-lessons`, from `main` at `e287ab2`.
 
@@ -1529,4 +1529,8 @@ Independent check (the verifier, on `0bf7c5e`): PASS on all seven criteria.
 Known: a save made before this keeps its Oat Porridge rest (30 minutes in the live save); set Autolyse to 60 or restore the recipe's defaults to take the new one.
 
 Not verified: a real bake, which is what will show whether the longer rest and bake suit the book's flours.
+
+Release: pull request 54 merged as `c440221` on Michael's "Check and merge" on November 24, after both Vercel checks passed on `5c4adda`. The commit's status turned to success, the live site served the new bundle (`App.BvTYh-hK.js`, containing "bakes longer uncovered"), and `node scripts/verify-deployment.mjs https://bread.assemblydigital.com` passed 9 checks with 7 assets and the negative fixture rejected.
+
+In the in-app browser, the live save was set aside to see Oat Porridge's defaults: leaven at 8:30 PM, "Cook the oat porridge" at 8:00 AM with the new note, "Mix dough and rest" at 8:30 AM with the hour-long rest note, "Add the oat porridge" at 10:30 AM after Turn 2 with the water and clumps warnings, the whole-oat coat at the final shape, 18 hours in the fridge, "Remove lid" with the bake note and 35 minutes to "All loaves out of the oven" at 9:05 AM. The save was then restored byte for byte, showing Tartine Oat Porridge again.
 
