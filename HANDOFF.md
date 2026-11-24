@@ -1486,7 +1486,7 @@ Release: pull request 52 merged as `0554145` on Michael's "Check and merge", aft
 
 In the in-app browser at 375 px, the live test save (Tartine Whole Wheat selected) had already gained Oat Porridge at the end of its menu. Choosing it showed "Cook the oat porridge" at 8:30 AM with 250 g oats and 500 g water, "Mix dough and rest" at 9:00 AM, "Add the oat porridge" at 10:30 AM, the final shape at 1:05 PM and the fridge at 1:10 PM for about 18 hours, with nothing wider than the screen and no console errors. The save was then restored byte for byte, showing Tartine Whole Wheat again.
 
-## Recipe descriptions for planning, November 23, 2026: committed, pull request open
+## Recipe descriptions for planning, November 23, 2026: released and verified live
 
 Why: Michael asked for a content-design review of copy like the recipe descriptions, which described the bread rather than helping with what he is doing, and asked whether the Schedule tab needs them at all, with Ingredients being the recipe and method page. He chose all three proposals: show the description only on Ingredients, rewrite the eight descriptions without book pages, and make four smaller copy fixes. Branch `recipe-copy`, from `main` at `09e25d7`.
 
@@ -1501,4 +1501,8 @@ Evidence (this session): `npm test` passed 207 of 207, also with `BASELINE_ZONE=
 Verification: copy and placement only, so my own checks, without the verifier, under relaxed verification.
 
 Not verified: a real phone.
+
+Release: pull request 53 merged as `b6332b0` on Michael's "Check and merge", after both Vercel checks passed on `c36aa30`. The commit's status turned to success, the live site served the new bundle (`App.CIULkzPS.js`, with the new Preuss Country Bread description), and `node scripts/verify-deployment.mjs https://bread.assemblydigital.com` passed with 7 assets and the negative fixture rejected.
+
+In the in-app browser, the live save (Tartine Oat Porridge selected) showed the Schedule tab's recipe card with the menu alone and "Suggested start" on Up next. The Ingredients tab showed "Cook oat porridge the morning you mix. It goes in after Turn 2, with almonds and almond oil if you like. Start the leaven in the evening. With the cold proof, it bakes two mornings later.", "Your batch" with no description and "Parts set the balance between flours.", with nothing wider than the screen and no console errors. The save was not changed.
 
