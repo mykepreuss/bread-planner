@@ -297,8 +297,7 @@ test(`App.tsx shows every reachable recorded plan as the record says (${baseline
       const html = atMoment(local(input.now), () => renderToString(createElement(App as never)), true);
       if (suggesting(plannerState(input), local(input.now))) {
         suggested.push(name);
-        if (!html.includes('Suggested start: the soonest with the least night work.'))
-          changed.push(`${name}: no suggested start`);
+        if (!html.includes('Suggested start</p>')) changed.push(`${name}: no suggested start`);
         continue;
       }
       const d = difference(expected(input, output), shown(html), 'screen');

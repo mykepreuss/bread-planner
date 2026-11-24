@@ -408,3 +408,10 @@ test('only Preuss Country Bread, Tartine Country Bread, Olive Bread, Sesame Brea
   );
   for (const gone of ['white-wheat', 'red-rye', 'five-flour', 'four-flour']) assert.equal(recipeById(gone), undefined);
 });
+
+test('recipe descriptions say what to buy, prepare or plan for, without book page references (decision 28)', () => {
+  for (const r of RECIPES) {
+    assert.doesNotMatch(r.description, /\bp\.\s*\d|\bpage\b/i, r.id);
+    assert.doesNotMatch(r.description, /Tartine Book|Basic Country Bread way|crumb|nutty|grassy/, r.id);
+  }
+});

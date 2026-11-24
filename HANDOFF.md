@@ -1485,3 +1485,20 @@ Not verified: a real phone, or a real bake. Porridge doughs are wetter; the 18-h
 Release: pull request 52 merged as `0554145` on Michael's "Check and merge", after both Vercel checks passed on `4fde727`. The commit's status turned to success; the live site served the new bundle (`App.PKdGywx0.js`, containing "Tartine Oat Porridge" and "Cook the oat porridge"), and `node scripts/verify-deployment.mjs https://bread.assemblydigital.com` passed with 7 assets and the negative fixture rejected.
 
 In the in-app browser at 375 px, the live test save (Tartine Whole Wheat selected) had already gained Oat Porridge at the end of its menu. Choosing it showed "Cook the oat porridge" at 8:30 AM with 250 g oats and 500 g water, "Mix dough and rest" at 9:00 AM, "Add the oat porridge" at 10:30 AM, the final shape at 1:05 PM and the fridge at 1:10 PM for about 18 hours, with nothing wider than the screen and no console errors. The save was then restored byte for byte, showing Tartine Whole Wheat again.
+
+## Recipe descriptions for planning, November 23, 2026: committed, pull request open
+
+Why: Michael asked for a content-design review of copy like the recipe descriptions, which described the bread rather than helping with what he is doing, and asked whether the Schedule tab needs them at all, with Ingredients being the recipe and method page. He chose all three proposals: show the description only on Ingredients, rewrite the eight descriptions without book pages, and make four smaller copy fixes. Branch `recipe-copy`, from `main` at `09e25d7`.
+
+Change (decision 28 in docs/BEHAVIOUR.md):
+- `src/App.tsx` shows the description under the recipe menu only on the Ingredients tab.
+- `src/domain/recipes.ts`: each description says what to buy, prepare or plan for; no book pages, ratios, method narration or tasting notes.
+- `NowCard.tsx`: "Suggested start". `IngredientsTab.tsx`: no "Each recipe remembers its own settings."; the flour blend keeps its first sentence; Tartine's initial-mix panel keeps only the bowl note.
+- Tests: the description checks in the Whole Wheat, Country Rye, Olive, Sesame, Emmer/Einkorn and Oat Porridge tests assert the new purpose; a new test keeps book pages and narration out of descriptions; the app and browser tests look for "Suggested start" exactly.
+
+Evidence (this session): `npm test` passed 207 of 207, also with `BASELINE_ZONE=rule`; `npm run baseline:update` left the record unchanged; `npm run build` passed with 0 errors and 0 warnings. `npm run test:browser`: every failure before the update was a snapshot difference; after `--update-snapshots` it passed 66 of 66, and the aria diff holds only the changed lines (descriptions gone from Schedule screens and rewritten on Ingredients screens, plus the four fixes). In the dev server, the Schedule tab's recipe card shows the menu alone, and the Ingredients tab at 375 px shows Preuss Country Bread's new description, with no console errors.
+
+Verification: copy and placement only, so my own checks, without the verifier, under relaxed verification.
+
+Not verified: a real phone.
+

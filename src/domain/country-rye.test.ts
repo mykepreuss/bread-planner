@@ -58,7 +58,9 @@ test('Tartine Country Rye is on the menu after Whole Wheat, made the Tartine way
     [1050, undefined],
     'a 17½-hour fridge, and the book’s rest, not an autolyse',
   );
-  assert.match(r.description, /17½ hours in the fridge/);
+  // The menu's flour is "Rye flour", so the description names the rye to buy (decision 28).
+  assert.match(r.description, /medium-fine whole rye/);
+  assert.match(r.description, /bakes two mornings later/);
   assert.deepEqual(defaultSettings(r), {
     count: 2,
     weight: 1010,

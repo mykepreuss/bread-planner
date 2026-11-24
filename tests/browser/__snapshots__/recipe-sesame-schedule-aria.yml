@@ -6,7 +6,6 @@
     - tab "Ingredients"
   - text: Recipe
   - combobox "Recipe": Sesame Bread
-  - paragraph: Preuss Country Bread dough and timing, with toasted sesame seeds worked in after the first turn. The seeds toast as the autolyse finishes.
   - tabpanel "Schedule":
     - region "Up next":
       - text: Up next in 6h 40m

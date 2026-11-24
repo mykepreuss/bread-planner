@@ -94,7 +94,7 @@ export function IngredientsTab() {
     <>
       <div className="formula-layout">
         <div className="form-stack">
-          <Panel title="Your batch" description="Each recipe remembers its own settings.">
+          <Panel title="Your batch">
             <FieldGroup
               specs={[
                 spec('count', 'Number of loaves', 'loaves', 1, 1),
@@ -111,10 +111,7 @@ export function IngredientsTab() {
               <p className="field-note">Includes the flour and water in the leaven used.</p>
             </div>
           </Panel>
-          <Panel
-            title="Flour blend"
-            description="Parts set the balance between flours. The gram weights scale to your batch."
-          >
+          <Panel title="Flour blend" description="Parts set the balance between flours.">
             <FlourTable />
             {!r && (
               <p className="notice" role="alert">
@@ -222,11 +219,11 @@ export function IngredientsTab() {
               )}
               <Panel
                 title={book ? '01 / Initial mix and rest' : '01 / Autolyse'}
-                description={`${
+                description={
                   book
-                    ? 'Leaven goes into this mix before the initial rest.'
-                    : 'Mix the flour and first water addition. Keep the final-mix ingredients separate.'
-                }${eachBowl}`}
+                    ? eachBowl.trim() || undefined
+                    : `Mix the flour and first water addition. Keep the final-mix ingredients separate.${eachBowl}`
+                }
               >
                 <Weights rows={inBowl(r.initial)} />
               </Panel>

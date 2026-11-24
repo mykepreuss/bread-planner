@@ -6,7 +6,6 @@
     - tab "Ingredients"
   - text: Recipe
   - combobox "Recipe": Preuss Country Bread
-  - paragraph: Anita's all-purpose flour with whole wheat and rye. Autolyse, then an overnight cold proof.
   - tabpanel "Schedule":
     - region "Up next":
       - text: Up next in 5h 55m
@@ -14,7 +13,7 @@
       - paragraph:
         - time: 9:15 PM
       - paragraph: Keep an established starter on its regular feeding routine.
-      - paragraph: "Suggested start: the soonest with the least night work."
+      - paragraph: Suggested start
       - button "Done"
       - paragraph: "Then: Start leaven · Sunday, Nov 22 at 8:15 AM"
     - text: When are we baking? Plan around

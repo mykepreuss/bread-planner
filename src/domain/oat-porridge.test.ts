@@ -82,9 +82,12 @@ test('Tartine Oat Porridge is last on the menu, made the Tartine way with two fl
     ['Cook the oat porridge', 120],
     'cooked two hours before it goes in',
   );
-  assert.match(r.description, /Tartine Book No\. 3/);
-  assert.match(r.description, /18 hours in the fridge/);
-  assert.match(r.description, /almonds/);
+  // The description says what to prepare and when to start (decision 28).
+  assert.match(
+    r.description,
+    /^Cook oat porridge the morning you mix\. It goes in after Turn 2, with almonds and almond oil/,
+  );
+  assert.match(r.description, /bakes two mornings later/);
   assert.deepEqual(defaultSettings(r), {
     count: 2,
     // The book's two loaves of 2,745 g, porridge, almonds and oil included.

@@ -61,9 +61,9 @@ test('Tartine Emmer/Einkorn is on the menu after Country Rye, made the Tartine w
   assert.deepEqual(r.extras, [{ name: 'Wheat germ', percent: 7 }]);
   assert.equal(r.finalShape, BRAN);
   assert.deepEqual([r.coldProof, r.maxAutolyse], [1080, 40], 'Tartine Country Bread’s fridge and rest');
-  assert.match(r.description, /Tartine Book No\. 3/);
-  assert.match(r.description, /18 hours in the fridge/);
-  assert.match(r.description, /coarse bran/);
+  // The description names what to buy and when to start (decision 28).
+  assert.match(r.description, /^You'll need emmer or einkorn flour, high-extraction wheat flour and wheat germ\./);
+  assert.match(r.description, /bakes two mornings later/);
   assert.deepEqual(defaultSettings(r), {
     count: 2,
     weight: 1047.5,

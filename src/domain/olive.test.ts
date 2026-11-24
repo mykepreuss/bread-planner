@@ -47,7 +47,10 @@ test('Olive is on the menu right after Original Tartine, with Preuss House’s m
   const olive = recipe('olive'),
     house = recipe('house');
   assert.equal(olive.name, 'Olive Bread');
-  assert.match(olive.description, /^Preuss Country Bread dough with olives/);
+  assert.match(
+    olive.description,
+    /^Preuss Country Bread with olives, herbes de Provence and lemon zest worked in after Turn 1\./,
+  );
   assert.deepEqual(
     [olive.method, olive.flours, olive.late, olive.buildFlour, olive.defaults],
     [house.method, house.flours, house.late, house.buildFlour, house.defaults],

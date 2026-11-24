@@ -507,7 +507,7 @@ test.describe('flows', () => {
     await expect(page.getByRole('button', { name: 'Plan the next bake' })).toHaveCount(0);
     await expect(page.locator('#plan-date')).toHaveValue('2026-11-22');
     await expect(page.locator('#plan-time')).toHaveValue('08:15');
-    await expect(upNext(page).getByText('Suggested start: the soonest with the least night work.')).toBeVisible();
+    await expect(upNext(page).getByText('Suggested start', { exact: true })).toBeVisible();
     expect(await aria(page)).toMatchSnapshot('flow-plan-next-bake.aria.yml');
     await expectSameAfterReload(page);
   });
@@ -532,7 +532,7 @@ test.describe('flows', () => {
     await expect(page.getByText('Feed starter · 9:15 PM', { exact: true })).toBeVisible();
     await use.click();
     await expect(page.locator('#plan-time')).toHaveValue('08:15');
-    await expect(upNext(page).getByText('Suggested start: the soonest with the least night work.')).toBeVisible();
+    await expect(upNext(page).getByText('Suggested start', { exact: true })).toBeVisible();
     await expect(use).toHaveCount(0);
     await expectSameAfterReload(page);
     // Chosen at another time, it offers the suggestion again; chosen at the suggested time, there is nothing to go back
@@ -572,7 +572,7 @@ test.describe('flows', () => {
     await page.goto('/');
     await ready(page);
     await expect(upNext(page).getByRole('heading', { level: 2 })).toHaveText('Feed starter');
-    await expect(upNext(page).getByText('Suggested start: the soonest with the least night work.')).toBeVisible();
+    await expect(upNext(page).getByText('Suggested start', { exact: true })).toBeVisible();
     await expect(page.locator('#plan-date')).toHaveValue('2026-11-22');
     await expect(page.locator('#plan-time')).not.toHaveValue('09:00');
   });
@@ -604,7 +604,7 @@ test.describe('flows', () => {
     page,
   }) => {
     await open(page, 'fresh');
-    const suggestedNow = upNext(page).getByText('Suggested start: the soonest with the least night work.'),
+    const suggestedNow = upNext(page).getByText('Suggested start', { exact: true }),
       suggestedPlan = page.getByText('Suggested. Change the date or time to choose your own.');
     await expect(upNext(page).getByRole('heading', { level: 2 })).toHaveText('Feed starter');
     await expect(upNext(page).locator('time')).toHaveText('9:15 PM');

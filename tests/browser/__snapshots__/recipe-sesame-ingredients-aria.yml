@@ -6,9 +6,9 @@
     - tab "Ingredients" [selected]
   - text: Recipe
   - combobox "Recipe": Sesame Bread
-  - paragraph: Preuss Country Bread dough and timing, with toasted sesame seeds worked in after the first turn. The seeds toast as the autolyse finishes.
+  - paragraph: Preuss Country Bread with toasted sesame seeds worked in after Turn 1. Toasting and cooling the seeds uses the oven for the hour before.
   - tabpanel "Ingredients":
-    - text: Your batch Each recipe remembers its own settings. Number of loaves
+    - text: Your batch Number of loaves
     - spinbutton "Number of loaves": "2"
     - text: loaves Dough weight per loaf
     - spinbutton "Dough weight per loaf": "1000"
@@ -17,7 +17,7 @@
     - text: "%"
     - slider "Adjust total hydration"
     - paragraph: Includes the flour and water in the leaven used.
-    - text: Flour blend Parts set the balance between flours. The gram weights scale to your batch.
+    - text: Flour blend Parts set the balance between flours.
     - table:
       - rowgroup:
         - row "Flour Blend parts":

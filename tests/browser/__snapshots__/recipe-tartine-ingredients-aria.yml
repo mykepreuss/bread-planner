@@ -6,9 +6,9 @@
     - tab "Ingredients" [selected]
   - text: Recipe
   - combobox "Recipe": Tartine Country Bread
-  - paragraph: The book’s 90/10 white and whole-wheat loaf, with leaven in the initial mix. Its 12-hour leaven suits an evening start, and 18 hours in the fridge bakes it two mornings later.
+  - paragraph: Start the leaven in the evening. With the cold proof, it bakes two mornings later.
   - tabpanel "Ingredients":
-    - text: Your batch Each recipe remembers its own settings. Number of loaves
+    - text: Your batch Number of loaves
     - spinbutton "Number of loaves": "2"
     - text: loaves Dough weight per loaf
     - spinbutton "Dough weight per loaf": "985"
@@ -17,7 +17,7 @@
     - text: "%"
     - slider "Adjust total hydration"
     - paragraph: Includes the flour and water in the leaven used.
-    - text: Flour blend Parts set the balance between flours. The gram weights scale to your batch.
+    - text: Flour blend Parts set the balance between flours.
     - table:
       - rowgroup:
         - row "Flour Blend parts":
@@ -85,7 +85,7 @@
       - button "Restore recipe defaults"
     - text: 1,970g
     - paragraph: Total dough for 2 loaves
-    - text: 77% total hydration 985 g per loaf 01 / Initial mix and rest Leaven goes into this mix before the initial rest.
+    - text: 77% total hydration 985 g per loaf 01 / Initial mix and rest
     - term: Leaven used
     - definition: 200 g
     - term: White-bread flour

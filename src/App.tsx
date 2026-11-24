@@ -67,7 +67,8 @@ function App() {
                   </SelectContent>
                 </Select>
               </div>
-              <p>{recipe.description}</p>
+              {/* The description helps choose and plan a loaf, so it shows with the recipe and method, not while baking. */}
+              {tab === 'formula' && <p>{recipe.description}</p>}
             </div>
             <TabsContent value="schedule">
               <ScheduleTab onViewIngredients={() => setTab('formula')} />

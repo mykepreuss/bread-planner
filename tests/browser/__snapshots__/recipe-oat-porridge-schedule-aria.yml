@@ -6,7 +6,6 @@
     - tab "Ingredients"
   - text: Recipe
   - combobox "Recipe": Tartine Oat Porridge
-  - paragraph: "From Tartine Book No. 3: high-extraction and medium-strong wheat flour with a little wheat germ, and cooked rolled-oat porridge worked in an hour into bulk, for a moist, custardy crumb. Toasted almonds and almond oil are optional. Made the Basic Country Bread way, with 18 hours in the fridge, so a leaven started in the evening bakes two mornings later. Roll the shaped loaves in chopped oats if you like."
   - tabpanel "Schedule":
     - region "Up next":
       - text: Up next in 17h 40m

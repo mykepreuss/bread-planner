@@ -116,7 +116,7 @@ export const RECIPES: Recipe[] = [
   {
     id: 'house',
     name: 'Preuss Country Bread',
-    description: "Anita's all-purpose flour with whole wheat and rye. Autolyse, then an overnight cold proof.",
+    description: 'Feed the starter the evening before, mix in the afternoon, and bake the next morning.',
     method: 'house',
     flours: ['anita', 'wheat', 'rye'],
     late: ['rye'],
@@ -127,8 +127,7 @@ export const RECIPES: Recipe[] = [
   {
     id: 'tartine',
     name: 'Tartine Country Bread',
-    description:
-      'The book’s 90/10 white and whole-wheat loaf, with leaven in the initial mix. Its 12-hour leaven suits an evening start, and 18 hours in the fridge bakes it two mornings later.',
+    description: 'Start the leaven in the evening. With the cold proof, it bakes two mornings later.',
     method: 'tartine',
     flours: ['white', 'wheat'],
     late: [],
@@ -160,7 +159,7 @@ export const RECIPES: Recipe[] = [
     id: 'olive',
     name: 'Olive Bread',
     description:
-      'Preuss Country Bread dough with olives, herbes de Provence, lemon zest and, if you like, toasted nuts, worked in after the first turn. A mix of green and oil-cured black olives works well.',
+      'Preuss Country Bread with olives, herbes de Provence and lemon zest worked in after Turn 1. Pit and chop the olives before you mix; green and oil-cured black together work well. Toasted nuts are optional.',
     method: 'house',
     flours: ['anita', 'wheat', 'rye'],
     late: ['rye'],
@@ -185,7 +184,7 @@ export const RECIPES: Recipe[] = [
     id: 'sesame',
     name: 'Sesame Bread',
     description:
-      'Preuss Country Bread dough and timing, with toasted sesame seeds worked in after the first turn. The seeds toast as the autolyse finishes.',
+      'Preuss Country Bread with toasted sesame seeds worked in after Turn 1. Toasting and cooling the seeds uses the oven for the hour before.',
     method: 'house',
     flours: ['anita', 'wheat', 'rye'],
     late: ['rye'],
@@ -209,7 +208,7 @@ export const RECIPES: Recipe[] = [
     id: 'whole-wheat',
     name: 'Tartine Whole Wheat',
     description:
-      'The book’s 70/30 whole-wheat and all-purpose loaf. The flour soaks in cool water, for 2 hours by default, before the leaven goes in, and the loaves proof 18½ hours in the fridge, so a leaven started in the evening bakes two mornings later. If the dough runs lively, lower the leaven toward 15%.',
+      'Start the leaven in the evening. With the cold proof, it bakes two mornings later. Whole wheat ferments fast: if the dough runs lively, lower the leaven toward 15%.',
     method: 'tartine',
     flours: ['wheat', 'ap'],
     late: [],
@@ -244,7 +243,7 @@ export const RECIPES: Recipe[] = [
     id: 'country-rye',
     name: 'Tartine Country Rye',
     description:
-      'The book’s country rye: just enough medium-fine whole rye with white bread flour for a sweet rye flavour without much sourness. Cooler water and a longer rest after mixing than Tartine Country Bread, and 17½ hours in the fridge, so a leaven started in the evening bakes two mornings later.',
+      'A mild, barely sour rye. Use medium-fine whole rye. Start the leaven in the evening. With the cold proof, it bakes two mornings later.',
     method: 'tartine',
     flours: ['rye', 'white'],
     late: [],
@@ -282,7 +281,7 @@ export const RECIPES: Recipe[] = [
     id: 'emmer',
     name: 'Tartine Emmer/Einkorn',
     description:
-      'From Tartine Book No. 3: whole-grain emmer or einkorn with medium-strong and high-extraction wheat flour and a little wheat germ, for a nutty, grassy loaf. Made the Basic Country Bread way, with 18 hours in the fridge, so a leaven started in the evening bakes two mornings later. Roll the shaped loaves in coarse bran if you like.',
+      "You'll need emmer or einkorn flour, high-extraction wheat flour and wheat germ. Start the leaven in the evening. With the cold proof, it bakes two mornings later.",
     method: 'tartine',
     // Medium-strong wheat flour is the white-bread flour here, a choice made for Michael (decision 24).
     flours: ['white', 'emmer', 'highext'],
@@ -320,7 +319,7 @@ export const RECIPES: Recipe[] = [
     id: 'oat-porridge',
     name: 'Tartine Oat Porridge',
     description:
-      'From Tartine Book No. 3: high-extraction and medium-strong wheat flour with a little wheat germ, and cooked rolled-oat porridge worked in an hour into bulk, for a moist, custardy crumb. Toasted almonds and almond oil are optional. Made the Basic Country Bread way, with 18 hours in the fridge, so a leaven started in the evening bakes two mornings later. Roll the shaped loaves in chopped oats if you like.',
+      'Cook oat porridge the morning you mix. It goes in after Turn 2, with almonds and almond oil if you like. Start the leaven in the evening. With the cold proof, it bakes two mornings later.',
     method: 'tartine',
     // Medium-strong wheat flour is the white-bread flour, as for Emmer/Einkorn (decision 24).
     flours: ['highext', 'white'],
