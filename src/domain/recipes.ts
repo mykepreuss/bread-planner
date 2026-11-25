@@ -28,19 +28,20 @@ export function inSentence(name: string) {
 }
 
 /**
- * What a baker sets for a recipe. Percentages are of added flour, except `reserve`, the share of added water held
- * back for the final mix. `hydration` is added water; the screen shows total hydration (see `totalHydration`). The
- * leaven build is in grams per 1,000 g of added flour. `autolyse` is in whole minutes, from `MIN_AUTOLYSE` to the
+ * What a baker sets for a recipe. `loafFlour` is the added flour in each loaf, in grams: the recipe scales from it, so
+ * a change of hydration, leaven or salt changes only that ingredient, and the dough's weight follows (decision 30).
+ * Percentages are of added flour, `held` included: the water held back for the final mix. `hydration` is added water;
+ * the screen shows total hydration (see `totalHydration`). The leaven build is in grams per 1,000 g of added flour. `autolyse` is in whole minutes, from `MIN_AUTOLYSE` to the
  * recipe's `maxAutolyse`: the autolyse, which ends as the leaven is ready, or for a recipe with the leaven in its initial
  * mix, the rest after that mix, which every later step follows (decisions 22 and 23).
  */
 export type Settings = {
   count: number;
-  weight: number;
+  loafFlour: number;
   hydration: number;
   leaven: number;
   salt: number;
-  reserve: number;
+  held: number;
   flours: Partial<Record<FlourKey, number>>;
   build: { starter: number; flour: number; wheat: number; water: number };
   autolyse: number;
@@ -94,16 +95,16 @@ const share = (part: number, whole: number) => (part / whole) * 100;
 /** The House leaven build, per 1,000 g of added flour. */
 const houseBuild = { starter: 28, flour: 71, wheat: 71, water: 142 };
 /**
- * Preuss House's defaults: 800 g Anita's, 100 g whole wheat, 100 g rye; 780 g water with 100 g held back; 200 g leaven;
- * 20 g salt. Olive and Sesame use them too (decision 16).
+ * Preuss House's defaults, for two loaves: 800 g Anita's, 100 g whole wheat, 100 g rye; 780 g water with 100 g held
+ * back; 200 g leaven; 20 g salt; 2,000 g of dough. Olive and Sesame use them too (decision 16).
  */
 const preussDefaults = (): Settings => ({
   count: 2,
-  weight: 1000,
+  loafFlour: 1000 / 2,
   hydration: 78,
   leaven: 20,
   salt: 2,
-  reserve: share(100, 780),
+  held: share(100, 1000),
   flours: { anita: 80, wheat: 10, rye: 10 },
   build: { ...houseBuild },
   autolyse: HOUSE.autolyse,
@@ -141,14 +142,15 @@ export const RECIPES: Recipe[] = [
     coldProof: 1080,
     // The book gives 25 to 40 minutes for the rest with the leaven in (decision 23).
     maxAutolyse: 40,
-    // 900 g white, 100 g whole wheat; 750 g water with 50 g held back; 200 g leaven; 20 g salt; 1 tbsp (15 g) starter.
+    // 900 g white, 100 g whole wheat; 750 g water with 50 g held back; 200 g leaven; 20 g salt; 1 tbsp (15 g) starter;
+    // 1,970 g of dough.
     defaults: {
       count: 2,
-      weight: 985,
+      loafFlour: 1000 / 2,
       hydration: 75,
       leaven: 20,
       salt: 2,
-      reserve: share(50, 750),
+      held: share(50, 1000),
       flours: { white: 90, wheat: 10 },
       build: { starter: 15, flour: 100, wheat: 100, water: 200 },
       autolyse: TARTINE.rest,
@@ -176,7 +178,7 @@ export const RECIPES: Recipe[] = [
         { before: 'Grated zest of', amount: 1, unit: ['lemon', 'lemons'] },
       ],
     },
-    // Preuss House's defaults. The add-ins are the book's for its two loaves, scaled by dough weight against these.
+    // Preuss House's defaults. The add-ins are the book's for its two loaves, scaled by the flour against these.
     maxAutolyse: PREUSS_MAX_AUTOLYSE,
     defaults: preussDefaults(),
   },
@@ -231,11 +233,11 @@ export const RECIPES: Recipe[] = [
     // Country Bread.
     defaults: {
       count: 2,
-      weight: 1010,
+      loafFlour: 1000 / 2,
       hydration: 80,
       leaven: 20,
       salt: 2,
-      reserve: share(50, 800),
+      held: share(50, 1000),
       flours: { wheat: 70, ap: 30 },
       build: { starter: 15, flour: 100, wheat: 100, water: 200 },
       autolyse: 120,
@@ -265,11 +267,11 @@ export const RECIPES: Recipe[] = [
     // assumed to wait for the salt, as in the Basic Country Bread. Added at Michael's request on November 22, 2026.
     defaults: {
       count: 2,
-      weight: 1010,
+      loafFlour: 1000 / 2,
       hydration: 80,
       leaven: 20,
       salt: 2,
-      reserve: share(50, 800),
+      held: share(50, 1000),
       flours: { rye: 17, white: 83 },
       build: { starter: 15, flour: 100, wheat: 100, water: 200 },
       // The book's 50-minute rest with the leaven in, the middle of its 40 to 60.
@@ -297,15 +299,15 @@ export const RECIPES: Recipe[] = [
     maxAutolyse: 40,
     // Page 72: 400 g medium-strong wheat flour, 300 g whole-grain emmer or einkorn flour, 300 g high-extraction wheat
     // flour; 70 g wheat germ (7%); 850 g water (85%); 150 g leaven (15%), built as for Tartine Country Bread; 25 g fine
-    // sea salt (2.5%). Two loaves of 2,095 g / 2. As for Whole Wheat and Country Rye, 50 g of the water is assumed to
+    // sea salt (2.5%); 2,095 g of dough for two loaves. As for Whole Wheat and Country Rye, 50 g of the water is assumed to
     // wait for the salt, as in the Basic Country Bread.
     defaults: {
       count: 2,
-      weight: 1047.5,
+      loafFlour: 1000 / 2,
       hydration: 85,
       leaven: 15,
       salt: 2.5,
-      reserve: share(50, 850),
+      held: share(50, 1000),
       flours: { white: 40, emmer: 30, highext: 30 },
       build: { starter: 15, flour: 100, wheat: 100, water: 200 },
       autolyse: TARTINE.rest,
@@ -368,15 +370,15 @@ export const RECIPES: Recipe[] = [
     maxAutolyse: 60,
     // Page 178: 500 g high-extraction wheat flour, 500 g medium-strong wheat flour; 70 g wheat germ (7%); 750 g water
     // (75%); 150 g leaven (15%), built as for Tartine Country Bread; 25 g fine sea salt (2.5%); 500 g porridge (50%),
-    // 200 g almonds (20%) and 50 g almond oil (5%). Two loaves of 2,745 g / 2. As for Emmer/Einkorn, 50 g of the water
+    // 200 g almonds (20%) and 50 g almond oil (5%); 2,745 g of dough for two loaves. As for Emmer/Einkorn, 50 g of the water
     // is assumed to wait for the salt, as in the Basic Country Bread.
     defaults: {
       count: 2,
-      weight: 1372.5,
+      loafFlour: 1000 / 2,
       hydration: 75,
       leaven: 15,
       salt: 2.5,
-      reserve: share(50, 750),
+      held: share(50, 1000),
       flours: { highext: 50, white: 50 },
       build: { starter: 15, flour: 100, wheat: 100, water: 200 },
       autolyse: 60,

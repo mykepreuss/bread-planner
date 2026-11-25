@@ -375,13 +375,13 @@ test('an ingredient the recipe has none of gets no tick-off, and a final mix wit
     noRye.additions!.map((a) => a.id),
     ['mix:leaven', 'mix:salt', 'mix:water'],
   );
-  const noSalt = find(schedule(plan('house', {}, { salt: 0, reserve: 0 })), 'mix');
+  const noSalt = find(schedule(plan('house', {}, { salt: 0, held: 0 })), 'mix');
   assert.deepEqual(
     noSalt.additions!.map((a) => a.id),
     ['mix:rye-flour', 'mix:leaven'],
   );
   const nothing = find(
-    schedule(plan('house', {}, { salt: 0, reserve: 0, leaven: 0, flours: { ...house.defaults.flours, rye: 0 } })),
+    schedule(plan('house', {}, { salt: 0, held: 0, leaven: 0, flours: { ...house.defaults.flours, rye: 0 } })),
     'mix',
   );
   assert.equal(nothing.additions, undefined);

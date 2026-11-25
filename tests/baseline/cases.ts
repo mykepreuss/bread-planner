@@ -454,7 +454,7 @@ function formulas(): [string, FormulaInput][] {
   const out: [string, FormulaInput][] = [];
   for (const recipe of RECIPES) {
     out.push([`${recipe} as it comes`, { recipe }]);
-    out.push([`${recipe}, 3 loaves of 850 g`, { recipe, params: { count: 3, weight: 850 } }]);
+    out.push([`${recipe}, 3 loaves of 425 g flour`, { recipe, params: { count: 3, loafFlour: 425 } }]);
     out.push([`${recipe} at 85% total hydration`, { recipe, totalHydration: 85 }]);
     out.push([`${recipe} at 70% total hydration`, { recipe, totalHydration: 70 }]);
   }
@@ -463,8 +463,9 @@ function formulas(): [string, FormulaInput][] {
     ['35% leaven', { leaven: 35 }],
     ['no salt', { salt: 0 }],
     ['2.6% salt', { salt: 2.6 }],
-    ['no water held back', { reserve: 0 }],
-    ['all water held back', { reserve: 100 }],
+    ['no water held back', { held: 0 }],
+    ['all water held back', { held: 78 }],
+    ['more water held back than there is', { held: 100 }],
     ['no rye', { flour_rye: 0 }],
     ["60 parts Anita's", { flour_anita: 60 }],
     ['no flour', { flour_anita: 0, flour_wheat: 0, flour_rye: 0 }],
@@ -472,7 +473,7 @@ function formulas(): [string, FormulaInput][] {
     ['a wetter leaven build', { buildWater: 200 }],
     ['no starter in the build', { buildSeed: 0 }],
     ['a build of starter and flour only', { buildWater: 0, buildWheat: 0, buildBread: 100 }],
-    ['one 1 g loaf', { count: 1, weight: 1 }],
+    ['one loaf of 1 g flour', { count: 1, loafFlour: 1 }],
     ['twelve loaves', { count: 12 }],
   ];
   for (const [name, params] of house) out.push([`house with ${name}`, { recipe: 'house', params }]);

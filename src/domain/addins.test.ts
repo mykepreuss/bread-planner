@@ -46,17 +46,17 @@ test('an add-in reads as the book lists it, singular up to one and plural above'
   assert.equal(addInLine(olives, 0.25), '¾ cup chopped olives');
 });
 
-test('add-ins scale with the dough: count times weight against the book batch', () => {
-  const book = { count: 2, weight: 985 };
+test('add-ins scale with the dough: count times flour per loaf against the book batch', () => {
+  const book = { count: 2, loafFlour: 500 };
   assert.deepEqual(addInLines(extras, book, book), [
     '3 cups chopped olives',
     '2 cups toasted walnuts (optional)',
     '2 teaspoons dried herbs',
     'Grated zest of 1 lemon',
   ]);
-  assert.deepEqual(addInLines(extras, { count: 3, weight: 985 }, book).slice(0, 1), ['4½ cups chopped olives']);
-  assert.deepEqual(addInLines(extras, { count: 1, weight: 1970 }, book).slice(0, 1), ['3 cups chopped olives']);
-  assert.deepEqual(addInLines(extras, { count: 1, weight: 985 }, book).slice(3), ['Grated zest of ½ lemon']);
+  assert.deepEqual(addInLines(extras, { count: 3, loafFlour: 500 }, book).slice(0, 1), ['4½ cups chopped olives']);
+  assert.deepEqual(addInLines(extras, { count: 1, loafFlour: 1000 }, book).slice(0, 1), ['3 cups chopped olives']);
+  assert.deepEqual(addInLines(extras, { count: 1, loafFlour: 500 }, book).slice(3), ['Grated zest of ½ lemon']);
   assert.equal(
     addInNote(extras, addInLines(extras, book, book)),
     'Stir together 3 cups chopped olives; 2 cups toasted walnuts (optional); 2 teaspoons dried herbs; grated zest of 1 lemon. Work it into the dough.',

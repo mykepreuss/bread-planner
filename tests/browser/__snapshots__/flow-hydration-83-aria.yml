@@ -10,9 +10,11 @@
   - tabpanel "Ingredients":
     - text: Your batch Number of loaves
     - spinbutton "Number of loaves": "2"
-    - text: loaves Dough weight per loaf
-    - spinbutton "Dough weight per loaf": "1000"
-    - text: g Total hydration
+    - text: loaves Flour per loaf
+    - spinbutton "Flour per loaf": "500"
+    - text: g
+    - paragraph: Makes 1,017 g of dough per loaf.
+    - text: Total hydration
     - spinbutton "Total hydration": "83"
     - text: "%"
     - slider "Adjust total hydration"
@@ -24,18 +26,18 @@
           - columnheader "Flour"
           - columnheader "Blend parts"
       - rowgroup:
-        - row "Anita's all-purpose flour 787 g in this batch · 80% 80 parts":
-          - cell "Anita's all-purpose flour 787 g in this batch · 80%"
+        - row "Anita's all-purpose flour 800 g in this batch · 80% 80 parts":
+          - cell "Anita's all-purpose flour 800 g in this batch · 80%"
           - cell "80 parts":
             - spinbutton "Anita's all-purpose flour proportion": "80"
             - text: parts
-        - row "Whole-wheat flour 98.4 g in this batch · 10% 10 parts":
-          - cell "Whole-wheat flour 98.4 g in this batch · 10%"
+        - row "Whole-wheat flour 100 g in this batch · 10% 10 parts":
+          - cell "Whole-wheat flour 100 g in this batch · 10%"
           - cell "10 parts":
             - spinbutton "Whole-wheat flour proportion": "10"
             - text: parts
-        - row "Rye flour 98.4 g in this batch · 10% 10 parts":
-          - cell "Rye flour 98.4 g in this batch · 10%"
+        - row "Rye flour 100 g in this batch · 10% 10 parts":
+          - cell "Rye flour 100 g in this batch · 10%"
           - cell "10 parts":
             - spinbutton "Rye flour proportion": "10"
             - text: parts
@@ -50,11 +52,11 @@
       - spinbutton "Salt / added flour": "2"
       - text: "%"
       - slider "Adjust salt / added flour"
-      - text: Water reserved for final mix
-      - spinbutton "Water reserved for final mix": "12.821"
+      - text: Water held back / added flour
+      - spinbutton "Water held back / added flour": "10"
       - text: "%"
-      - slider "Adjust water reserved for final mix"
-      - paragraph: The water split is a percentage of total added water.
+      - slider "Adjust water held back / added flour"
+      - paragraph: The water held back goes in with the salt; the rest goes in first.
     - heading "Leaven build" [level=3]:
       - button "Leaven build" [expanded]
     - region "Leaven build":
@@ -69,48 +71,48 @@
       - spinbutton "Water": "142"
       - text: g
       - term: Mature starter
-      - definition: 27.5 g
+      - definition: 28 g
       - term: Anita's all-purpose flour
-      - definition: 69.8 g
+      - definition: 71 g
       - term: Whole-wheat flour
-      - definition: 69.8 g
+      - definition: 71 g
       - term: Water
-      - definition: 139.7 g
+      - definition: 142 g
       - term: Total
-      - definition: 306.9 g
+      - definition: 312 g
       - text: Made
-      - strong: 306.9 g
+      - strong: 312 g
       - text: Used in dough
-      - strong: 196.8 g
+      - strong: 200 g
       - text: Reserved
-      - strong: 110.2 g
+      - strong: 112 g
     - heading "Recipe defaults" [level=3]:
       - button "Recipe defaults" [expanded]
     - region "Recipe defaults":
       - button "Restore recipe defaults"
-    - text: 2,000g
+    - text: 2,034g
     - paragraph: Total dough for 2 loaves
-    - text: 83% total hydration 1,000 g per loaf 01 / Autolyse Mix the flour and first water addition. Keep the final-mix ingredients separate.
+    - text: 83% total hydration 1,017 g per loaf 01 / Autolyse Mix the flour and first water addition. Keep the final-mix ingredients separate.
     - term: Anita's all-purpose flour
-    - definition: 787 g
+    - definition: 800 g
     - term: Whole-wheat flour
-    - definition: 98.4 g
+    - definition: 100 g
     - term: Water
-    - definition: 697.3 g
+    - definition: 714 g
     - text: 02 / Final mix Add after the autolyse, once the leaven is ready.
     - term: Rye flour
-    - definition: 98.4 g
+    - definition: 100 g
     - term: Leaven used
-    - definition: 196.8 g
+    - definition: 200 g
     - term: Salt
-    - definition: 19.7 g
+    - definition: 20 g
     - term: Water
-    - definition: 102.5 g
-    - strong: 983.8 g
+    - definition: 100 g
+    - strong: 1,000 g
     - text: added flour
-    - strong: 799.8 g
+    - strong: 814 g
     - text: added water
-    - strong: 196.8 g
+    - strong: 200 g
     - text: leaven used
   - heading "Mature starter and readiness guide" [level=3]:
     - button "Mature starter and readiness guide"

@@ -9,7 +9,7 @@
  * UTC offset, such as `2026-11-22 09:00 -08`, so a daylight-saving change shows.
  */
 import { defaultSettings, recipeById, type FlourKey, type Recipe, type Settings } from '../../src/domain/recipes.ts';
-import { addedHydration, formula, totalHydration } from '../../src/domain/formula.ts';
+import { formula, hydrationFor, totalHydration } from '../../src/domain/formula.ts';
 import { schedule } from '../../src/domain/schedule.ts';
 import { fromF, inTempRange, retime, stampNow, toF, withReading, type BulkReading } from '../../src/domain/bakeday.ts';
 import { clockText, dateString, durationText, shiftText, untilText } from '../../src/domain/text.ts';
@@ -114,7 +114,7 @@ export type HelperCall = { fn: string; args: unknown[] };
 
 /** Version 5 names for the build settings, as the record's inputs give them. */
 const BUILD = { buildSeed: 'starter', buildBread: 'flour', buildWheat: 'wheat', buildWater: 'water' } as const;
-const SCALARS = ['count', 'weight', 'hydration', 'leaven', 'salt', 'reserve'] as const;
+const SCALARS = ['count', 'loafFlour', 'hydration', 'leaven', 'salt', 'held'] as const;
 
 /** A recipe's settings with the input's version 5 `params` applied over its defaults, and `autolyse`, which version 5 didn't have. */
 function settingsFrom(recipe: Recipe, params: Record<string, number> = {}): Settings {
@@ -147,7 +147,7 @@ export function plannerState(i: PlanInput | (FormulaInput & { date?: string; tim
   if (!recipe) throw new Error(`Unknown recipe ${i.recipe}`);
   const full = i as Partial<PlanInput>,
     settings = settingsFrom(recipe, i.params);
-  if (i.totalHydration !== undefined) settings.hydration = Math.max(0, addedHydration(i.totalHydration, settings));
+  if (i.totalHydration !== undefined) settings.hydration = hydrationFor(i.totalHydration, settings);
   const base = freshState(local(LOADED_AT));
   return {
     ...base,
@@ -274,6 +274,7 @@ export function observeFormula(i: FormulaInput) {
   if (!r) return null;
   return {
     total: r.total,
+    loafWeight: r.loafWeight,
     flour: r.flour,
     water: r.water,
     used: r.used,

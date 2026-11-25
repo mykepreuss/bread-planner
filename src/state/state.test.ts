@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { MIN_AUTOLYSE, RECIPES, defaultSettings, recipeById, type Settings } from '../domain/recipes.ts';
+import { round } from '../domain/text.ts';
 import { formula, totalHydration } from '../domain/formula.ts';
 import { schedule } from '../domain/schedule.ts';
 import { freshState, planOf, selected, tomorrow, type PlannerState } from './schema.ts';
@@ -110,7 +111,7 @@ test('a saved planner loads back exactly, whatever was checked, timed, ticked or
 
 test('version 6 saves are checked as version 5 ones were', () => {
   const s = JSON.parse(serialize(freshState(NOW)));
-  Object.assign(s.plan.recipes.house.settings, { count: 1.5, reserve: 200, hydration: null, leaven: -3 });
+  Object.assign(s.plan.recipes.house.settings, { count: 1.5, loafFlour: 0, held: -2, hydration: null, leaven: -3 });
   s.plan.recipes.house.settings.flours.rye = 'x';
   s.plan.recipes.house.bake = {
     done: ['leaven', 3],
@@ -136,12 +137,13 @@ test('version 6 saves are checked as version 5 ones were', () => {
   assert.deepEqual(
     [
       house.settings.count,
-      house.settings.reserve,
+      house.settings.loafFlour,
+      house.settings.held,
       house.settings.hydration,
       house.settings.leaven,
       house.settings.flours.rye,
     ],
-    [2, (100 / 780) * 100, 78, 20, 10],
+    [2, 500, 10, 78, 20, 10],
   );
   assert.deepEqual(house.bake, {
     done: ['leaven'],
@@ -167,13 +169,15 @@ test('version 6 saves are checked as version 5 ones were', () => {
 });
 
 test('every setting a version 5 or version 6 save holds loads as saved, for every recipe, zeros included', () => {
+  // Version 5 saves held a loaf weight and a share of the water instead (see the test of saves from before decision
+  // 30); the loader reads either version's settings by these names too.
   const v5 = (recipe: (typeof RECIPES)[number], s: Settings) => ({
     count: s.count,
-    weight: s.weight,
+    loafFlour: s.loafFlour,
     hydration: s.hydration,
     leaven: s.leaven,
     salt: s.salt,
-    reserve: s.reserve,
+    held: s.held,
     ...Object.fromEntries(recipe.flours.map((k) => [`flour_${k}`, s.flours[k]])),
     buildSeed: s.build.starter,
     buildBread: s.build.flour,
@@ -185,11 +189,11 @@ test('every setting a version 5 or version 6 save holds loads as saved, for ever
     // A distinct valid value for every setting, none of them its default.
     const distinct: Settings = {
       count: d.count + 1,
-      weight: d.weight + 7,
+      loafFlour: d.loafFlour + 7,
       hydration: d.hydration + 1.5,
       leaven: d.leaven + 2.5,
       salt: d.salt + 0.25,
-      reserve: d.reserve + 3,
+      held: d.held + 3,
       flours: Object.fromEntries(recipe.flours.map((k, i) => [k, (d.flours[k] ?? 0) + 11 + i])),
       build: {
         starter: d.build.starter + 3,
@@ -200,13 +204,13 @@ test('every setting a version 5 or version 6 save holds loads as saved, for ever
       // 10 minutes shorter: Whole Wheat's default is already its longest (decision 23).
       autolyse: d.autolyse - 10,
     };
-    // 0 wherever 0 is allowed: everything but the loaf count and weight, and the autolyse, whose least is 15 minutes.
+    // 0 wherever 0 is allowed: everything but the loaf count and flour, and the autolyse, whose least is 15 minutes.
     const zeros: Settings = {
       ...distinct,
       hydration: 0,
       leaven: 0,
       salt: 0,
-      reserve: 0,
+      held: 0,
       flours: Object.fromEntries(recipe.flours.map((k) => [k, 0])),
       build: { starter: 0, flour: 0, wheat: 0, water: 0 },
       autolyse: MIN_AUTOLYSE,
@@ -230,6 +234,48 @@ test('every setting a version 5 or version 6 save holds loads as saved, for ever
       assert.deepEqual(six.recipes[recipe.id].settings, want, `${recipe.id}, ${name}, from version 6`);
     }
   }
+});
+
+test('a save from before decision 30 reads its loaf weight as flour and its water held back as a share of the flour', () => {
+  const load = (id: string, old: Record<string, unknown>, version: 5 | 6 = 6) => {
+    const d = defaultSettings(recipeById(id)!);
+    const { loafFlour: _flour, held: _held, ...rest } = d;
+    if (version === 5) {
+      const params = { ...rest, ...old };
+      return fromV5({ version: 5, plan: { recipe: id, recipes: { [id]: { params } } } }, NOW).recipes[id].settings;
+    }
+    const settings = { ...rest, ...old };
+    return fromV6({ version: 6, plan: { recipe: id, recipes: { [id]: { settings } } } }, NOW)!.recipes[id].settings;
+  };
+  const pick = (s: Settings) => [s.loafFlour, s.held, s.hydration];
+  // The old defaults take the new ones, whatever the hydration: a plan whose hydration alone was changed gets the whole
+  // grams it was missing.
+  const house = { weight: 1000, reserve: (100 / 780) * 100 };
+  assert.deepEqual(pick(load('house', house)), [500, 10, 78]);
+  assert.deepEqual(pick(load('house', { ...house, hydration: 75.8 })), [500, 10, 75.8]);
+  assert.deepEqual(pick(load('house', { ...house, hydration: 75.8 }, 5)), [500, 10, 75.8], 'from version 5');
+  for (const [id, weight, reserve] of [
+    ['tartine', 985, (50 / 750) * 100],
+    ['olive', 1000, (100 / 780) * 100],
+    ['sesame', 1000, (100 / 780) * 100],
+    ['whole-wheat', 1010, (50 / 800) * 100],
+    ['country-rye', 1010, (50 / 800) * 100],
+    ['emmer', 1047.5, (50 / 850) * 100],
+    ['oat-porridge', 1372.5, (50 / 750) * 100],
+  ] as const) {
+    const s = load(id, { weight, reserve });
+    assert.deepEqual([s.loafFlour, s.held], [500, id === 'olive' || id === 'sesame' ? 10 : 5], id);
+  }
+  // Any other weight is the flour that made the same dough, and any other share is the same grams of water.
+  assert.deepEqual(pick(load('house', { ...house, weight: 900 })), [450, 10, 78]);
+  assert.deepEqual(pick(load('house', { ...house, weight: 1100 }, 5)), [550, 10, 78], 'from version 5');
+  assert.equal(load('emmer', { weight: 1000, reserve: (50 / 850) * 100 }).loafFlour, round(1000 / 2.095, 6));
+  assert.deepEqual(pick(load('house', { ...house, reserve: 0 })), [500, 0, 78]);
+  assert.deepEqual(pick(load('house', { ...house, reserve: 50 })), [500, 39, 78]);
+  assert.deepEqual(pick(load('house', { ...house, reserve: 50, hydration: 80 })), [500, 40, 80]);
+  // An invalid old value takes the default; a save that has the new settings keeps them.
+  assert.deepEqual(pick(load('house', { weight: 0, reserve: 101 })), [500, 10, 78]);
+  assert.deepEqual(pick(load('house', { weight: 900, reserve: 50, loafFlour: 520, held: 12 })), [520, 12, 78]);
 });
 
 test('the autolyse is whole minutes from 15 to the recipe’s longest, and a save without one, or with one outside that, gets the recipe default (decisions 22 and 23)', () => {
@@ -485,15 +531,17 @@ test('a missing or invalid saved date or time falls back to tomorrow at 9:00 AM,
   assert.equal('created' in JSON.parse(serialize(fromV6(six, NOW)!)).plan, false);
 });
 
-test('typing a total hydration keeps the dough weight and shows the total typed', () => {
+test('typing a total hydration keeps the flour, weighs the water in whole grams a loaf, and shows the total typed', () => {
   for (const id of RECIPES.map((r) => r.id)) {
     const s = act.selectRecipe(plan(), id),
       before = formula(selected(s).recipe, selected(s).settings)!;
-    for (const total of [72, 80, 85.5]) {
+    for (const total of [72, 80, 85]) {
       const after = act.setTotalHydration(s, total),
         r = formula(selected(after).recipe, selected(after).settings)!;
-      assert.ok(Math.abs(r.total - before.total) < 1e-9, `${id} weight`);
-      assert.ok(Math.abs(totalHydration(selected(after).settings) - total) < 1e-9, `${id} ${total}%`);
+      assert.equal(r.flour, before.flour, `${id} flour`);
+      assert.deepEqual([r.used, r.salt], [before.used, before.salt], `${id} leaven and salt`);
+      assert.ok(Math.abs(r.water / 2 - Math.round(r.water / 2)) < 1e-9, `${id} ${total}% water ${r.water}`);
+      assert.equal(Math.round(totalHydration(selected(after).settings)), total, `${id} ${total}%`);
     }
     // A total below what the leaven and starter build already bring stops at no added water.
     assert.equal(selected(act.setTotalHydration(s, 0)).settings.hydration, 0, `${id} at 0%`);
@@ -671,6 +719,7 @@ test('Olive and Sesame saved with Original Tartine’s dough load fresh at Preus
   // Before decision 16 they were Tartine variations: white and whole-wheat flour, 75% hydration, a Tartine leaven build.
   const tartineDough = {
     count: 3,
+    // A loaf weight and water held back as saves held them before decision 30.
     weight: 985,
     hydration: 75,
     leaven: 20,
@@ -700,8 +749,10 @@ test('Olive and Sesame saved with Original Tartine’s dough load fresh at Preus
   assert.deepEqual(s.recipes.sesame.settings, edited, 'a save in the new dough keeps its edits');
   assert.deepEqual(s.recipes.sesame.bake.done, ['leaven', 'autolyse']);
   // Original Tartine still uses white and whole-wheat flour, so its save loads as it was, with the default rest
-  // after mixing, which saves from then didn't hold (decision 22).
-  assert.deepEqual(s.recipes.tartine.settings, { ...tartineDough, autolyse: 30 });
+  // after mixing, which saves from then didn't hold (decision 22), and its default flour and water held back
+  // (decision 30).
+  const { weight: _weight, reserve: _reserve, ...ratios } = tartineDough;
+  assert.deepEqual(s.recipes.tartine.settings, { ...ratios, loafFlour: 500, held: 5, autolyse: 30 });
   assert.equal(s.recipes.tartine.bake.doughTemp, 78);
   // The rule is for Olive and Sesame only: Preuss House with a flour it doesn't use keeps its settings and checklist.
   const house = { ...defaultSettings(recipeById('house')!), count: 4 },

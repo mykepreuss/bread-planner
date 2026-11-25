@@ -21,7 +21,7 @@ export function BatchCard({
   onMixCapacity,
   onViewIngredients,
 }: {
-  weight: number;
+  weight?: number;
   total?: number;
   hydration: number;
   mixCapacity: number;
@@ -58,7 +58,7 @@ export function BatchCard({
       </p>
       <div className="batch-facts">
         <span>
-          <strong>{g(weight)} g</strong> per loaf
+          <strong>{weight === undefined ? '—' : g(weight)} g</strong> per loaf
         </span>
         <span>
           <strong>{total === undefined ? '—' : g(total)} g</strong> total dough

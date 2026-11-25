@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { RECIPES, recipeById, defaultSettings, type Recipe, type Settings } from './recipes.ts';
-import { formula, totalHydration, addedHydration, type Weighed } from './formula.ts';
+import { formula, totalHydration, addedHydration, hydrationFor, type Weighed } from './formula.ts';
 import { schedule, type PlanInput } from './schedule.ts';
 
 // Ported from src/lib/recipes.test.ts. Plans are for 9:00 AM local time on 21 October 2026, as there, and every time
@@ -14,11 +14,11 @@ const IDS = ['house', 'tartine', 'olive', 'sesame', 'whole-wheat', 'country-rye'
  */
 const allLeaven = (s: Settings) =>
   Object.assign(s, {
-    weight: 2002 / 2,
+    loafFlour: 944 / 2,
     hydration: (724 / 944) * 100,
     leaven: (312 / 944) * 100,
     salt: (22 / 944) * 100,
-    reserve: (72 / 724) * 100,
+    held: (72 / 944) * 100,
     flours: { anita: (758 / 944) * 100, wheat: (83 / 944) * 100, rye: (103 / 944) * 100 },
     build: {
       starter: (28 / 944) * 1000,
@@ -102,25 +102,50 @@ test('total hydration includes only the used leaven while every recipe quantity 
   approx(h.reserve, 112);
 });
 
-test('typing a total hydration changes the water at the same dough weight and leaves the schedule as it was', () => {
+test('typing a total hydration changes only the water, in whole grams, and the dough weight, not the schedule', () => {
   const input = plan('house'),
     s = input.settings,
     before = schedule(input);
-  s.hydration = addedHydration(80.5, s);
-  approx(s.hydration, 78.55);
+  approx(addedHydration(80.5, s), 78.55);
+  // 82% total is 80.2% added water exactly, 401 g a loaf; the flour, leaven, salt and water held back stay (decision 30).
+  s.hydration = hydrationFor(82, s);
+  approx(s.hydration, 80.2);
   const r = weigh(input);
-  approx(r.totalHydration, 80.5);
-  approx(r.total, 2000);
-  approx(r.water / r.flour, 0.7855);
-  approx(sum([...r.initial, ...r.final]), 2000);
+  assert.equal(Math.round(r.totalHydration), 82);
+  grams(r.initial, [800, 100, 702]);
+  grams(r.final, [100, 200, 20, 100]);
+  approx(r.total, 2022);
+  approx(r.loafWeight, 1011);
   assert.deepEqual(
     schedule(input).map((x) => x.at),
     before.map((x) => x.at),
   );
-  s.hydration = addedHydration(80, s);
+  // 77% total is 373.5 g of water a loaf exactly; it rounds to 374 g, and still shows 77%.
+  s.hydration = hydrationFor(77, s);
+  const drier = weigh(input);
+  assert.equal(Math.round(drier.totalHydration), 77);
+  grams(drier.initial, [800, 100, 648]);
+  approx(drier.total, 1968);
+  s.hydration = hydrationFor(80, s);
   const restored = weigh(input);
   grams(restored.initial, [800, 100, 680]);
   grams(restored.final, [100, 200, 20, 100]);
+  approx(restored.total, 2000);
+});
+
+test('typing any whole total hydration gives whole grams of water a loaf, in every recipe, and shows the total typed', () => {
+  for (const id of IDS)
+    for (let total = 60; total <= 100; total++) {
+      const input = plan(id),
+        s = input.settings;
+      s.hydration = hydrationFor(total, s);
+      const r = weigh(input);
+      assert.equal(Math.round(r.totalHydration), total, `${id} ${total}%`);
+      const perLoaf = r.water / s.count;
+      approx(perLoaf, Math.round(perLoaf), `${id} ${total}% water ${perLoaf} a loaf`);
+      approx(r.flour, 1000, `${id} ${total}% flour`);
+      approx(r.final.find(([name]) => name === 'Water')![1], 50 * (s.held / 5), `${id} ${total}% water held back`);
+    }
 });
 
 test('total hydration follows the leaven build, taking mature starter as half water and an empty build as 100%', () => {
@@ -205,22 +230,24 @@ test('the book recipe keeps its quantities and leaven in the initial mix, and we
   assert.ok(!('dustingRice' in r));
 });
 
-test('every recipe conserves dough mass and scales count, loaf weight and hydration independently', () => {
+test('every recipe conserves dough mass and scales count, flour per loaf and hydration independently', () => {
   const house = plan('house');
   for (const id of IDS) {
     const input = id === 'house' ? house : plan(id),
       s = input.settings,
       other = structuredClone(house.settings);
     if (id !== 'house') s.count += 1;
-    s.weight = 800;
+    s.loafFlour = 400;
     s.hydration += 5;
     const r = weigh(input);
-    approx(sum([...r.initial, ...r.final, ...r.addIns]), s.count * 800);
+    approx(r.flour, s.count * 400);
+    approx(sum([...r.initial, ...r.final, ...r.addIns]), r.total);
+    approx(r.loafWeight * s.count, r.total);
     approx((100 * r.water) / r.flour, s.hydration);
     if (id !== 'house') assert.deepEqual(house.settings, other);
   }
   const fresh = defaultSettings(recipe('house'));
-  assert.deepEqual([fresh.count, fresh.weight, fresh.hydration], [2, 1000, 78], 'edits never reach the defaults');
+  assert.deepEqual([fresh.count, fresh.loafFlour, fresh.hydration], [2, 500, 78], 'edits never reach the defaults');
 });
 
 test('flour proportions normalize visibly to batch weights, and zero flour is a valid empty state', () => {

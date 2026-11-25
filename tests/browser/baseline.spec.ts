@@ -638,6 +638,9 @@ test.describe('flows', () => {
     const hydration = page.getByLabel('Total hydration', { exact: true });
     await hydration.fill('82');
     await hydration.blur();
+    // The flour stays and the water is whole grams, so the dough grows (decision 30).
+    await expect(page.getByText('Makes 1,011 g of dough per loaf.')).toBeVisible();
+    await expect(page.getByText('800 g in this batch · 80%')).toBeVisible();
     expect(await aria(page)).toMatchSnapshot('flow-hydration-82.aria.yml');
     await page.getByRole('slider', { name: 'Adjust total hydration' }).press('ArrowRight');
     await expect(hydration).toHaveValue('83');
@@ -839,12 +842,12 @@ test.describe('flows', () => {
     await expect(made('Whole-wheat flour')).toHaveText('50 g');
     await expect(made('Water')).toHaveText('150 g');
     await choose(page, 'Recipe', 'Tartine Country Bread');
-    const weight = page.getByLabel('Dough weight per loaf'),
-      tartineWeight = await weight.inputValue();
-    await weight.fill('900');
+    const flour = page.getByLabel('Flour per loaf'),
+      tartineFlour = await flour.inputValue();
+    await flour.fill('450');
     await page.getByRole('button', { name: 'Restore recipe defaults' }).click();
     await page.getByRole('button', { name: 'Restore defaults' }).click();
-    await expect(weight).toHaveValue(tartineWeight);
+    await expect(flour).toHaveValue(tartineFlour);
     await choose(page, 'Recipe', 'Preuss Country Bread');
     await expect(build.getByRole('spinbutton', { name: 'Water', exact: true })).toHaveValue('150');
   });

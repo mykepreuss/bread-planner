@@ -96,11 +96,9 @@ export function IngredientsTab() {
         <div className="form-stack">
           <Panel title="Your batch">
             <FieldGroup
-              specs={[
-                spec('count', 'Number of loaves', 'loaves', 1, 1),
-                spec('weight', 'Dough weight per loaf', 'g', 1),
-              ]}
+              specs={[spec('count', 'Number of loaves', 'loaves', 1, 1), spec('loafFlour', 'Flour per loaf', 'g', 1)]}
             />
+            {r && <p className="field-note">Makes {g(r.loafWeight)} g of dough per loaf.</p>}
             <div className="hydration-control">
               <NumberField
                 spec={spec('hydration', 'Total hydration', '%', 0, 1)}
@@ -127,10 +125,10 @@ export function IngredientsTab() {
                   specs={[
                     spec('leaven', 'Leaven / added flour', '%'),
                     spec('salt', 'Salt / added flour', '%'),
-                    spec('reserve', 'Water reserved for final mix', '%'),
+                    spec('held', 'Water held back / added flour', '%'),
                   ]}
                 />
-                <p className="field-note">The water split is a percentage of total added water.</p>
+                <p className="field-note">The water held back goes in with the salt; the rest goes in first.</p>
               </AccordionContent>
             </AccordionItem>
             <AccordionItem value="build">
@@ -207,7 +205,7 @@ export function IngredientsTab() {
                       {Math.round(r.totalHydration)}%<small>total hydration</small>
                     </span>
                     <span>
-                      {g(p.weight)} g<small>per loaf</small>
+                      {g(r.loafWeight)} g<small>per loaf</small>
                     </span>
                   </div>
                 </CardContent>

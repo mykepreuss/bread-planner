@@ -1,5 +1,5 @@
 import { defaultSettings, type FlourKey, type Settings } from '../domain/recipes.ts';
-import { addedHydration } from '../domain/formula.ts';
+import { hydrationFor } from '../domain/formula.ts';
 import { schedule } from '../domain/schedule.ts';
 import { retime, stampNow, withReading, type TempUnit } from '../domain/bakeday.ts';
 import { suggestedStart } from '../domain/quiet.ts';
@@ -42,10 +42,10 @@ export const selectRecipe = (state: PlannerState, id: string): PlannerState =>
 /** A number setting of the selected recipe. The field accepts only valid values; see Amount. */
 export type SettingKey =
   | 'count'
-  | 'weight'
+  | 'loafFlour'
   | 'leaven'
   | 'salt'
-  | 'reserve'
+  | 'held'
   | 'autolyse'
   | `flour:${FlourKey}`
   | `build:${keyof Settings['build']}`;
@@ -58,10 +58,13 @@ export function setSetting(state: PlannerState, key: SettingKey, value: number):
   return update(state, { settings: { ...s, [key]: value } });
 }
 
-/** Typing a total hydration saves the added hydration that gives it, so the dough weight stays the same. */
+/**
+ * Typing a total hydration saves the added hydration that gives it, with the water a whole number of grams per loaf.
+ * The flour stays, so only the water and the dough's weight change (decision 30).
+ */
 export function setTotalHydration(state: PlannerState, total: number): PlannerState {
   const s = settingsOf(state);
-  return update(state, { settings: { ...s, hydration: Math.max(0, addedHydration(total, s)) } });
+  return update(state, { settings: { ...s, hydration: hydrationFor(total, s) } });
 }
 
 /** Restores the selected recipe's settings and clears its bake. Other recipes and the shared settings stay. */

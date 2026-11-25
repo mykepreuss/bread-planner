@@ -64,16 +64,16 @@ export function addInLine(item: AddIn, scale: number, flour = 0) {
 }
 
 /**
- * Every add-in's line, scaled by the dough's weight against the book's batch: twice the dough, twice the olives. A
- * weighed add-in is its share of the dough's `flour`.
+ * Every add-in's line, scaled by the dough's flour against the book's batch: twice the flour, twice the olives. So a
+ * wetter or drier dough keeps the same add-ins (decision 30). A weighed add-in is its share of the dough's `flour`.
  */
 export function addInLines(
   addIns: AddIns,
-  dough: { count: number; weight: number },
-  book: { count: number; weight: number },
+  dough: { count: number; loafFlour: number },
+  book: { count: number; loafFlour: number },
   flour = 0,
 ) {
-  const scale = (dough.count * dough.weight) / (book.count * book.weight);
+  const scale = (dough.count * dough.loafFlour) / (book.count * book.loafFlour);
   return addIns.items.map((item) => addInLine(item, scale, flour));
 }
 
