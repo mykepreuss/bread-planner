@@ -268,6 +268,19 @@ test('its schedule is Tartine Country Bread’s with a 1-hour rest and a 35-minu
     find(steps, 'addins').additions!.map((a) => Math.round(a.grams)),
     [250, 100, 25],
   );
+  // A wetter or drier dough keeps the flour, so the porridge, its oats and water, and the almonds stay (decision 30).
+  for (const hydration of [65, 85]) {
+    const changed = plan('oat-porridge');
+    changed.settings = { ...changed.settings, hydration };
+    const at = schedule(changed);
+    assert.equal(find(at, 'toast').note, cookNote('250 g', '500 g', '200 g almonds'), `${hydration}% porridge step`);
+    assert.deepEqual(
+      find(at, 'addins').additions!.map((a) => a.grams),
+      [500, 200, 50],
+      `${hydration}% add-ins`,
+    );
+    assert.match(find(at, 'addins').note, /^Add the cooled porridge/);
+  }
 });
 
 test('a leaven from 8:30 to 10:30 PM keeps every step out of quiet hours with a cold proof (decision 29)', () => {

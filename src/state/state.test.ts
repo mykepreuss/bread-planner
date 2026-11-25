@@ -273,6 +273,13 @@ test('a save from before decision 30 reads its loaf weight as flour and its wate
   assert.deepEqual(pick(load('house', { ...house, reserve: 0 })), [500, 0, 78]);
   assert.deepEqual(pick(load('house', { ...house, reserve: 50 })), [500, 39, 78]);
   assert.deepEqual(pick(load('house', { ...house, reserve: 50, hydration: 80 })), [500, 40, 80]);
+  // Emmer/Einkorn's 15% leaven made a typed hydration fractional before: 61% was 58.075% added water, 290.375 g a loaf
+  // at 500 g of flour. It loads as the whole grams for the same total shown, 290 g. A save with the new settings keeps
+  // its hydration as saved.
+  const emmer = load('emmer', { weight: 1047.5, reserve: (50 / 850) * 100, hydration: 58.075 });
+  assert.ok(Math.abs((emmer.loafFlour * emmer.hydration) / 100 - 290) < 1e-9, `${emmer.hydration}`);
+  assert.equal(Math.round(totalHydration(emmer)), 61);
+  assert.equal(load('emmer', { loafFlour: 500, held: 5, hydration: 58.075 }).hydration, 58.075);
   // An invalid old value takes the default; a save that has the new settings keeps them.
   assert.deepEqual(pick(load('house', { weight: 0, reserve: 101 })), [500, 10, 78]);
   assert.deepEqual(pick(load('house', { weight: 900, reserve: 50, loafFlour: 520, held: 12 })), [520, 12, 78]);
