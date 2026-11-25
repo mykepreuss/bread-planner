@@ -1573,3 +1573,15 @@ Release: pull request 55 merged as `226d3ec` on Michael's "Check and merge", aft
 
 In the in-app browser, the live save (Tartine Oat Porridge selected) had already loaded into the new settings: 500 g of flour a loaf, 5% held back, its hydration of 75% as saved. Its Ingredients tab showed "Flour per loaf" with "Makes 1,372.5 g of dough per loaf.", 500/500 g of flour, 70 g wheat germ, 700 g then 50 g of water, 150 g leaven, 25 g salt and the 500/200/50 g add-ins, as before, with no console errors. The page was only read; the save was byte for byte as it was.
 
+
+## Content Signals in robots.txt, November 25, 2026: released and verified live
+
+Why: Michael asked for a review of Cloudflare's agent-readiness scan (isitagentready.com), which scored the site 13 of 100. Most of its failed checks (API catalog, OAuth and OIDC discovery, MCP server card, agent skills index, WebMCP, commerce) are for sites with an API, sign-in or shop, and this static app has none; markdown negotiation and Search for Agents need Cloudflare's proxy, and the record is DNS only. Without JavaScript the page shows only "Loading your bread planner…", but saves live in the browser, so a rendered page would show an agent only the defaults. He chose the one change that fits: declare content-use preferences. Branch `robots-content-signal`, from `main` at `0ddc21c`.
+
+Change: `public/robots.txt` gains `Content-Signal: search=yes, ai-input=yes, ai-train=no` under `User-agent: *`; `Allow: /` is unchanged. It states a preference that compliant crawlers honour and blocks nothing.
+
+Evidence: `npm test` passed 211 of 211 (on Node 26 locally) and `npm run build` put the line in `dist/robots.txt`. Both Vercel checks passed on the pull request.
+
+Release: pull request 56 merged as `b43b4a4` on Michael's "merge it and verify live". About 80 seconds later `https://bread.assemblydigital.com/robots.txt` served the three lines (200, text/plain), and `node scripts/verify-deployment.mjs https://bread.assemblydigital.com` passed 9 checks with 7 assets and the negative fixture rejected. A rescan at 10:04 found the directive: Bot Access Control 2 of 2, score 25. The scanner now counts 5 API, auth and MCP checks rather than 8.
+
+Not verified: the production deployment ID; the Vercel CLI is not installed on this machine.
