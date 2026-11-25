@@ -1535,7 +1535,7 @@ Release: pull request 54 merged as `c440221` on Michael's "Check and merge" on N
 In the in-app browser, the live save was set aside to see Oat Porridge's defaults: leaven at 8:30 PM, "Cook the oat porridge" at 8:00 AM with the new note, "Mix dough and rest" at 8:30 AM with the hour-long rest note, "Add the oat porridge" at 10:30 AM after Turn 2 with the water and clumps warnings, the whole-oat coat at the final shape, 18 hours in the fridge, "Remove lid" with the bake note and 35 minutes to "All loaves out of the oven" at 9:05 AM. The save was then restored byte for byte, showing Tartine Oat Porridge again.
 
 
-## Hydration keeps the flour, November 25, 2026: locally verified, pull request open
+## Hydration keeps the flour, November 25, 2026: released and verified live
 
 Why: Michael found that changing a recipe's hydration gave odd decimals for every ingredient, and wanted the dough's volume to change instead, as Tartine Country Bread's lower hydration makes a smaller dough than Preuss Country Bread's from the same flour. Reviewing all eight recipes showed three causes: the loaf weight was the fixed setting, so the flour, leaven, salt and build rescaled; the water held back was a share of the water (12.821% for Preuss); and a whole-number total hydration converted to a fractional added hydration. He chose the recommendation, with "Flour per loaf" as the batch field. Branch `flour-fixed-hydration`, from `main` at `f968a78`.
 
@@ -1568,3 +1568,8 @@ Evidence (this session, after the fixes): `npm test` passed 211 of 211, also wit
 Known: a recipe whose loaf weight was changed before this keeps that dough's flour, in decimals, until Flour per loaf is set or its defaults restored. One or three loaves can leave half grams, and five loaves split into three bowls leave thirds. A rollback to an earlier release uses its default loaf weight and water share.
 
 Not verified: a real phone, or a real bake.
+
+Release: pull request 55 merged as `226d3ec` on Michael's "Check and merge", after both Vercel checks passed on `90d8a87`. The commit's status turned to success, the live site served the new bundle (`App.eiD9JnNn.js`, containing "Flour per loaf", "of dough per loaf" and "Water held back / added flour"), and `node scripts/verify-deployment.mjs https://bread.assemblydigital.com` passed 9 checks with 7 assets and the negative fixture rejected.
+
+In the in-app browser, the live save (Tartine Oat Porridge selected) had already loaded into the new settings: 500 g of flour a loaf, 5% held back, its hydration of 75% as saved. Its Ingredients tab showed "Flour per loaf" with "Makes 1,372.5 g of dough per loaf.", 500/500 g of flour, 70 g wheat germ, 700 g then 50 g of water, 150 g leaven, 25 g salt and the 500/200/50 g add-ins, as before, with no console errors. The page was only read; the save was byte for byte as it was.
+
