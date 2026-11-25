@@ -15,7 +15,7 @@ const sliderRanges: Record<string, { min: number; max: number; step: number }> =
   hydration: { min: 50, max: 100, step: 1 },
   leaven: { min: 0, max: 50, step: 1 },
   salt: { min: 0, max: 5, step: 0.1 },
-  reserve: { min: 0, max: 100, step: 1 },
+  held: { min: 0, max: 30, step: 1 },
 };
 
 /** A number input that keeps what is typed until it is valid, and shows the allowed range when it is not. */
@@ -118,7 +118,7 @@ export function NumberField({
           label={context ? `${spec.label} (${context})` : spec.label}
           value={value}
           min={min}
-          max={spec.cell === 'reserve' ? 100 : spec.max}
+          max={spec.max}
           step={spec.step ?? 0.001}
           onChange={onChange}
         />
@@ -160,7 +160,7 @@ function useSetting(cell: string) {
     ? settings.build[key.slice(6) as keyof typeof settings.build]
     : key.startsWith('flour:')
       ? (settings.flours[key.slice(6) as FlourKey] ?? 0)
-      : settings[key as 'count' | 'weight' | 'leaven' | 'salt' | 'reserve' | 'autolyse'];
+      : settings[key as 'count' | 'loafFlour' | 'leaven' | 'salt' | 'held' | 'autolyse'];
   return { value, onChange: (n: number) => update((s) => setSetting(s, key, n)) };
 }
 /** A number field for one of the selected recipe's settings. */

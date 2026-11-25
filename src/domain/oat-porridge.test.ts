@@ -97,12 +97,12 @@ test('Tartine Oat Porridge is last on the menu, made the Tartine way with two fl
   assert.match(r.description, /bakes two mornings later/);
   assert.deepEqual(defaultSettings(r), {
     count: 2,
-    // The book's two loaves of 2,745 g, porridge, almonds and oil included.
-    weight: 1372.5,
+    // 500 g of flour a loaf: the book's two loaves of 2,745 g, porridge, almonds and oil included.
+    loafFlour: 500,
     hydration: 75,
     leaven: 15,
     salt: 2.5,
-    reserve: (50 / 750) * 100,
+    held: 5,
     flours: { highext: 50, white: 50 },
     build: { starter: 15, flour: 100, wheat: 100, water: 200 },
     // A 1-hour rest with the leaven in (decision 29).
@@ -151,13 +151,14 @@ test('its weights are the book’s table: 500 and 500 g of flour, 70 g wheat ger
   near(f.totalHydration, (825 / 1075) * 100, 'total hydration');
   near(f.made, 415, 'leaven made');
   near(f.reserve, 265, 'leaven kept');
-  // Everything scales with the flour: three loaves of 1,000 g.
-  const three = formula(r, { ...defaultSettings(r), count: 3, weight: 1000 })!;
-  near(three.flour, 3000 / 2.745, 'flour for three loaves');
-  near(three.addIns[0][1], three.flour / 2, 'porridge for three loaves');
+  // Everything scales with the flour: three loaves of 400 g flour.
+  const three = formula(r, { ...defaultSettings(r), count: 3, loafFlour: 400 })!;
+  near(three.flour, 1200, 'flour for three loaves');
+  near(three.addIns[0][1], 600, 'porridge for three loaves');
+  near(three.total, 1200 * 2.745, 'dough for three loaves, porridge, almonds and oil included');
   near(
     [...three.initial, ...three.final, ...three.addIns].reduce((a, [, g]) => a + g, 0),
-    3000,
+    three.total,
     'every gram is in a mixing stage or the add-ins',
   );
   // Recipes whose add-ins are in cups keep them out of the dough's weight.
@@ -267,6 +268,19 @@ test('its schedule is Tartine Country Bread’s with a 1-hour rest and a 35-minu
     find(steps, 'addins').additions!.map((a) => Math.round(a.grams)),
     [250, 100, 25],
   );
+  // A wetter or drier dough keeps the flour, so the porridge, its oats and water, and the almonds stay (decision 30).
+  for (const hydration of [65, 85]) {
+    const changed = plan('oat-porridge');
+    changed.settings = { ...changed.settings, hydration };
+    const at = schedule(changed);
+    assert.equal(find(at, 'toast').note, cookNote('250 g', '500 g', '200 g almonds'), `${hydration}% porridge step`);
+    assert.deepEqual(
+      find(at, 'addins').additions!.map((a) => a.grams),
+      [500, 200, 50],
+      `${hydration}% add-ins`,
+    );
+    assert.match(find(at, 'addins').note, /^Add the cooled porridge/);
+  }
 });
 
 test('a leaven from 8:30 to 10:30 PM keeps every step out of quiet hours with a cold proof (decision 29)', () => {

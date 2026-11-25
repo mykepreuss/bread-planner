@@ -22,10 +22,27 @@ export function totalHydration(s: Settings) {
   const leaven = leavenFractions(s);
   return (s.hydration + s.leaven * leaven.water) / (1 + (s.leaven * leaven.flour) / 100);
 }
-/** The added hydration that gives a total hydration, so typing a total keeps the dough weight. */
+/** The added hydration that gives a total hydration exactly. */
 export function addedHydration(total: number, s: Settings) {
   const leaven = leavenFractions(s);
   return clean(total * (1 + (s.leaven * leaven.flour) / 100) - s.leaven * leaven.water);
+}
+/**
+ * The added hydration to save for a total hydration typed or slid to (decision 30). The flour stays, so only the
+ * water changes, and it is a whole number of grams per loaf whenever that still shows the total given, as it does for
+ * every recipe's 500 g of flour. Never below no added water.
+ */
+export function hydrationFor(total: number, s: Settings) {
+  const exact = Math.max(0, addedHydration(total, s));
+  if (!(s.loafFlour > 0)) return exact;
+  const whole = (Math.round((s.loafFlour * exact) / 100) / s.loafFlour) * 100;
+  return Math.round(totalHydration({ ...s, hydration: whole })) === Math.round(total) ? whole : exact;
+}
+
+/** A recipe's ingredients that count in the dough's weight but not its flour or hydration, as a percentage of the flour. */
+export function extraPercent(recipe: Recipe) {
+  const weighed = (recipe.addIns?.items ?? []).filter(isWeighed);
+  return [...(recipe.extras ?? []), ...weighed].reduce((a, x) => a + x.percent, 0);
 }
 
 export type Weighed = [name: string, grams: number];
@@ -33,22 +50,22 @@ export type Weighed = [name: string, grams: number];
 /**
  * The weights for a recipe's settings: the dough's flour, water, leaven and salt, each flour's share, any dry
  * ingredients that are not flour (`extras`), the two mixing stages, the weighed add-ins worked in during bulk
- * (`addIns`), and the leaven build made, used, kept or still needed. Extras and weighed add-ins count in the dough's
- * weight but not its hydration. Null when there is no flour to scale from.
+ * (`addIns`), the dough's weight in all and per loaf, and the leaven build made, used, kept or still needed. The flour
+ * is the loaves' flour, and everything else follows from it (decision 30). Extras and weighed add-ins count in the
+ * dough's weight but not its hydration. The water held back is never more than the water. Null when there is no
+ * flour to scale from.
  */
 export function formula(recipe: Recipe, s: Settings) {
-  const total = s.count * s.weight,
+  const flour = s.count * s.loafFlour,
     part = (key: FlourKey) => s.flours[key] || 0,
     parts = recipe.flours.reduce((a, k) => a + part(k), 0),
-    weighed = (recipe.addIns?.items ?? []).filter(isWeighed),
-    extraPercent = [...(recipe.extras ?? []), ...weighed].reduce((a, x) => a + x.percent, 0),
-    denominator = 1 + (s.hydration + s.leaven + s.salt + extraPercent) / 100;
-  if (parts <= 0 || !Number.isFinite(total) || denominator <= 0) return null;
-  const flour = total / denominator,
+    weighed = (recipe.addIns?.items ?? []).filter(isWeighed);
+  if (parts <= 0 || !Number.isFinite(flour) || !(flour > 0)) return null;
+  const total = flour * (1 + (s.hydration + s.leaven + s.salt + extraPercent(recipe)) / 100),
     water = (flour * s.hydration) / 100,
     used = (flour * s.leaven) / 100,
     salt = (flour * s.salt) / 100,
-    finalWater = (water * s.reserve) / 100;
+    finalWater = Math.min(water, (flour * s.held) / 100);
   const flours = recipe.flours.map((key) => ({
     key,
     name: FLOUR_NAMES[key],
@@ -80,6 +97,7 @@ export function formula(recipe: Recipe, s: Settings) {
     totalWater = water + used * leaven.water;
   return {
     total,
+    loafWeight: total / s.count,
     flour,
     water,
     used,

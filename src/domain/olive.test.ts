@@ -74,7 +74,7 @@ test('its add-ins at the default batch read as the book lists them, the nuts mar
   ]);
 });
 
-test('its add-ins scale with the loaf count and the loaf weight', () => {
+test('its add-ins scale with the loaf count and the flour per loaf, not the hydration', () => {
   assert.deepEqual(lines({ count: 3 }), [
     '4½ cups pitted olives, coarsely chopped',
     '3 cups toasted walnuts or hazelnuts, coarsely chopped (optional)',
@@ -87,13 +87,15 @@ test('its add-ins scale with the loaf count and the loaf weight', () => {
     '1 teaspoon dried herbes de Provence',
     'Grated zest of ½ lemon',
   ]);
-  assert.deepEqual(lines({ weight: 2000 }), [
+  assert.deepEqual(lines({ loafFlour: 1000 }), [
     '6 cups pitted olives, coarsely chopped',
     '4 cups toasted walnuts or hazelnuts, coarsely chopped (optional)',
     '4 teaspoons dried herbes de Provence',
     'Grated zest of 2 lemons',
   ]);
-  assert.deepEqual(lines({ count: 1, weight: 2000 }), lines(), 'one loaf of twice the weight is the book batch');
+  assert.deepEqual(lines({ count: 1, loafFlour: 1000 }), lines(), 'one loaf of twice the flour is the book batch');
+  assert.deepEqual(lines({ hydration: 70 }), lines(), 'a drier dough keeps the add-ins (decision 30)');
+  assert.deepEqual(lines({ hydration: 85 }), lines(), 'a wetter dough keeps the add-ins');
 });
 
 test('its schedule is Preuss House’s plus one add-in step at Turn 1’s time, right after it, listing the scaled amounts', () => {
@@ -137,7 +139,7 @@ test('its schedule is Preuss House’s plus one add-in step at Turn 1’s time, 
 });
 
 test('its formula, the weights on the Ingredients tab, is Preuss House’s', () => {
-  for (const change of [{}, { count: 3, weight: 800 }, { hydration: 80, leaven: 15, reserve: 10 }]) {
+  for (const change of [{}, { count: 3, loafFlour: 400 }, { hydration: 80, leaven: 15, held: 8 }]) {
     const olive = plan('olive', change).settings,
       house = plan('house', change).settings;
     const weights = formula(recipe('olive'), olive);

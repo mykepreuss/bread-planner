@@ -63,11 +63,11 @@ test('Tartine Country Rye is on the menu after Whole Wheat, made the Tartine way
   assert.match(r.description, /bakes two mornings later/);
   assert.deepEqual(defaultSettings(r), {
     count: 2,
-    weight: 1010,
+    loafFlour: 500,
     hydration: 80,
     leaven: 20,
     salt: 2,
-    reserve: (50 / 800) * 100,
+    held: 5,
     flours: { rye: 17, white: 83 },
     build: { starter: 15, flour: 100, wheat: 100, water: 200 },
     autolyse: 50,

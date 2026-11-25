@@ -58,9 +58,9 @@ function problems(s: PlannerState): string[] {
     const q = r.settings,
       at = recipe.id;
     check(Number.isInteger(q.count) && q.count >= 1, `${at} count ${q.count}`);
-    check(finite(q.weight) && q.weight >= 1, `${at} weight ${q.weight}`);
+    check(finite(q.loafFlour) && q.loafFlour >= 1, `${at} loafFlour ${q.loafFlour}`);
     for (const k of ['hydration', 'leaven', 'salt'] as const) check(finite(q[k]) && q[k] >= 0, `${at} ${k} ${q[k]}`);
-    check(finite(q.reserve) && q.reserve >= 0 && q.reserve <= 100, `${at} reserve ${q.reserve}`);
+    check(finite(q.held) && q.held >= 0, `${at} held ${q.held}`);
     check(JSON.stringify(Object.keys(q.flours)) === JSON.stringify(recipe.flours), `${at} flours`);
     for (const v of [...Object.values(q.flours), ...Object.values(q.build)])
       check(finite(v) && v >= 0, `${at} flour or build ${v}`);
@@ -196,7 +196,8 @@ test('3,000 random corruptions of real saves load into a valid planner, as versi
     'tempUnit',
     'recipes',
   ];
-  const scalars = ['count', 'weight', 'hydration', 'leaven', 'salt', 'reserve'],
+  // Saves from before decision 30 hold a loaf weight and a share of the water; later ones the flour and a share of it.
+  const scalars = ['count', 'weight', 'loafFlour', 'hydration', 'leaven', 'salt', 'reserve', 'held'],
     flours = ['anita', 'red', 'wheat', 'rye', 'white', 'ap', 'fife'],
     builds = ['starter', 'flour', 'wheat', 'water'],
     bakeKeys = ['done', 'doneAt', 'doughTemp', 'bulkTemps'];

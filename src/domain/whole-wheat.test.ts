@@ -231,12 +231,12 @@ test('Tartine Whole Wheat is on the menu after Olive and Sesame, made the Tartin
   assert.equal(FLOUR_NAMES.wheat, 'Whole-wheat flour');
   assert.deepEqual(r.defaults, {
     count: 2,
-    weight: 1010,
+    loafFlour: 500,
     hydration: 80,
     leaven: 20,
     salt: 2,
     // 50 g of the 800 g water is held back for the salt, as for the Basic Country Bread.
-    reserve: 6.25,
+    held: 5,
     flours: { wheat: 70, ap: 30 },
     build: { starter: 15, flour: 100, wheat: 100, water: 200 },
     autolyse: 120,
@@ -260,7 +260,7 @@ test('the formula is the book’s table: 700 g whole wheat, 300 g all-purpose, 8
   const input = plan('whole-wheat'),
     r = formula(input.recipe, input.settings);
   assert.ok(r);
-  assert.deepEqual([input.settings.count, input.settings.weight], [2, 1010]);
+  assert.deepEqual([input.settings.count, input.settings.loafFlour], [2, 500]);
   approx(r.total, 2020);
   approx(r.flour, 1000);
   assert.deepEqual(

@@ -10,9 +10,11 @@
   - tabpanel "Ingredients":
     - text: Your batch Number of loaves
     - spinbutton "Number of loaves": "2"
-    - text: loaves Dough weight per loaf
-    - spinbutton "Dough weight per loaf": "1000"
-    - text: g Total hydration
+    - text: loaves Flour per loaf
+    - spinbutton "Flour per loaf": "500"
+    - text: g
+    - paragraph: Makes 1,000 g of dough per loaf.
+    - text: Total hydration
     - spinbutton "Total hydration": "80"
     - text: "%"
     - slider "Adjust total hydration"
@@ -50,11 +52,11 @@
       - spinbutton "Salt / added flour": "2"
       - text: "%"
       - slider "Adjust salt / added flour"
-      - text: Water reserved for final mix
-      - spinbutton "Water reserved for final mix": "12.821"
+      - text: Water held back / added flour
+      - spinbutton "Water held back / added flour": "10"
       - text: "%"
-      - slider "Adjust water reserved for final mix"
-      - paragraph: The water split is a percentage of total added water.
+      - slider "Adjust water held back / added flour"
+      - paragraph: The water held back goes in with the salt; the rest goes in first.
     - heading "Leaven build" [level=3]:
       - button "Leaven build" [expanded]
     - region "Leaven build":

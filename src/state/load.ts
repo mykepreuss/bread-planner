@@ -8,6 +8,8 @@ import {
   type Settings,
 } from '../domain/recipes.ts';
 import { inTempRange, withReading, type BulkReading } from '../domain/bakeday.ts';
+import { extraPercent, hydrationFor, totalHydration } from '../domain/formula.ts';
+import { round } from '../domain/text.ts';
 import { emptyBake, freshState, tomorrow, type Bake, type PlannerState, type RecipeState } from './schema.ts';
 
 /**
@@ -39,30 +41,75 @@ function isTime(s: unknown): s is string {
 }
 
 /**
- * A setting, or its default when missing or invalid. Counts are whole and at least 1, weights at least 1, the water
- * held back at most 100%, the autolyse whole minutes from 15 to the recipe's `maxAutolyse` (decision 23), everything
- * else at least 0.
+ * A setting, or its default when missing or invalid. Counts are whole and at least 1, a loaf's flour or weight at
+ * least 1 g, the water held back of a save from before decision 30 at most 100% of the water, the autolyse whole
+ * minutes from 15 to the recipe's `maxAutolyse` (decision 23), everything else at least 0.
  */
 function setting(key: string, n: unknown, fallback: number, maxAutolyse = Infinity) {
-  const min = key === 'count' || key === 'weight' ? 1 : key === 'autolyse' ? MIN_AUTOLYSE : 0,
+  const min = key === 'count' || key === 'loafFlour' || key === 'weight' ? 1 : key === 'autolyse' ? MIN_AUTOLYSE : 0,
     whole = key === 'count' || key === 'autolyse',
     max = key === 'reserve' ? 100 : key === 'autolyse' ? maxAutolyse : Infinity;
   return isFinite(n) && n >= min && n <= max && (!whole || Number.isInteger(n)) ? n : fallback;
+}
+
+/**
+ * Each recipe's loaf weight and water held back, as a percentage of the water, before decision 30 made the flour the
+ * base and the water held back a share of it. Only for reading saves from before then.
+ */
+const BEFORE_30: Record<string, { weight: number; reserve: number }> = {
+  house: { weight: 1000, reserve: (100 / 780) * 100 },
+  tartine: { weight: 985, reserve: (50 / 750) * 100 },
+  olive: { weight: 1000, reserve: (100 / 780) * 100 },
+  sesame: { weight: 1000, reserve: (100 / 780) * 100 },
+  'whole-wheat': { weight: 1010, reserve: (50 / 800) * 100 },
+  'country-rye': { weight: 1010, reserve: (50 / 800) * 100 },
+  emmer: { weight: 1047.5, reserve: (50 / 850) * 100 },
+  'oat-porridge': { weight: 1372.5, reserve: (50 / 750) * 100 },
+};
+const near = (a: number, b: number) => Math.abs(a - b) < 1e-9;
+
+/**
+ * The flour per loaf and the water held back, from a save that has them, or else from one made before decision 30,
+ * which kept a loaf weight and a share of the water instead. A weight or share still at its old default takes the new
+ * default, so a plan whose hydration alone was changed gets the recipe's whole grams of flour and water held back. Any
+ * other is read as the flour, or the share of flour, that gave the same dough at the saved settings.
+ */
+function flourAndHeld(
+  recipe: Recipe,
+  get: (field: string) => unknown,
+  d: Settings,
+  s: Pick<Settings, 'hydration' | 'leaven' | 'salt'>,
+) {
+  const old = BEFORE_30[recipe.id],
+    weight = setting('weight', get('weight'), NaN),
+    reserve = setting('reserve', get('reserve'), NaN);
+  const converted = get('loafFlour') === undefined && !!old && !Number.isNaN(weight) && !near(weight, old.weight);
+  const loafFlour = converted
+    ? round(weight / (1 + (s.hydration + s.leaven + s.salt + extraPercent(recipe)) / 100), 6)
+    : setting('loafFlour', get('loafFlour'), d.loafFlour);
+  const held =
+    get('held') !== undefined || !old || Number.isNaN(reserve) || near(reserve, old.reserve)
+      ? setting('held', get('held'), d.held)
+      : round((reserve * s.hydration) / 100, 6);
+  // A save from before decision 30 at the default flour, but with water in part grams: a hydration typed then, which
+  // a 15% leaven, as in Emmer/Einkorn and Oat Porridge, often made fractional. It takes the whole grams for the same
+  // total hydration shown.
+  const snap = get('loafFlour') === undefined && !converted;
+  return { loafFlour, held, snap };
 }
 
 /** Reads a recipe's settings through `get`, which names each value as the save does. */
 function settingsFrom(recipe: Recipe, get: (field: string) => unknown): Settings {
   const d = defaultSettings(recipe);
   // The autolyse is read below, against the recipe's own longest.
-  const scalar = (key: 'count' | 'weight' | 'hydration' | 'leaven' | 'salt' | 'reserve') =>
-    setting(key, get(key), d[key]);
-  return {
+  const scalar = (key: 'count' | 'hydration' | 'leaven' | 'salt') => setting(key, get(key), d[key]);
+  const ratios = { hydration: scalar('hydration'), leaven: scalar('leaven'), salt: scalar('salt') },
+    { loafFlour, held, snap } = flourAndHeld(recipe, get, d, ratios);
+  const settings: Settings = {
     count: scalar('count'),
-    weight: scalar('weight'),
-    hydration: scalar('hydration'),
-    leaven: scalar('leaven'),
-    salt: scalar('salt'),
-    reserve: scalar('reserve'),
+    loafFlour,
+    ...ratios,
+    held,
     flours: Object.fromEntries(recipe.flours.map((k) => [k, setting(k, get(`flour:${k}`), d.flours[k] ?? 0)])),
     build: {
       starter: setting('starter', get('build:starter'), d.build.starter),
@@ -74,6 +121,10 @@ function settingsFrom(recipe: Recipe, get: (field: string) => unknown): Settings
     // recipe's range: since decision 23, 15 minutes to what its book or the guides give.
     autolyse: setting('autolyse', get('autolyse'), d.autolyse, recipe.maxAutolyse),
   };
+  const water = (loafFlour * settings.hydration) / 100;
+  if (snap && Math.abs(water - Math.round(water)) > 1e-9)
+    settings.hydration = hydrationFor(Math.round(totalHydration(settings)), settings);
+  return settings;
 }
 
 /** Version 5 names: `flour_anita`, `buildSeed` and so on. A House blend saved before Anita's flour keeps its red spring parts. */

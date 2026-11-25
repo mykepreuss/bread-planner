@@ -41,7 +41,7 @@ test('every Preuss House setting changes the computed weights', () => {
   const weights = (r: Formula | null) => [r?.flours.map((f) => f.grams), r?.initial, r?.final, r?.madeParts];
   const before = weights(weigh('house'));
   const changes: [string, (s: Settings) => void][] = [
-    ['loaf weight', (s) => (s.weight += 200)],
+    ['flour per loaf', (s) => (s.loafFlour += 100)],
     ['loaf count', (s) => (s.count += 5)],
     ["Anita's flour", (s) => (s.flours.anita = (s.flours.anita ?? 0) + 5)],
     ['whole wheat', (s) => (s.flours.wheat = (s.flours.wheat ?? 0) + 5)],
@@ -49,7 +49,7 @@ test('every Preuss House setting changes the computed weights', () => {
     ['hydration', (s) => (s.hydration += 5)],
     ['salt', (s) => (s.salt += 5)],
     ['leaven used', (s) => (s.leaven += 5)],
-    ['water held back', (s) => (s.reserve += 5)],
+    ['water held back', (s) => (s.held += 5)],
     ['build starter', (s) => (s.build.starter += 5)],
     ['build flour', (s) => (s.build.flour += 5)],
     ['build whole wheat', (s) => (s.build.wheat += 5)],
@@ -113,11 +113,10 @@ test('Tartine scales its yield exactly, without rounding, and keeps the reserved
   near(r.used, 300);
   near(r.made, 622.5);
   near(r.reserve, 322.5);
-  const heavier = weigh('tartine', (s) => {
-    s.count = 2;
-    s.weight = 1000;
-  })!;
-  assert.equal(heavier.total, 2000);
+  const heavier = weigh('tartine', (s) => (s.loafFlour = 600))!;
+  near(heavier.flour, 1200);
+  near(heavier.total, 1200 * 1.97);
+  near(heavier.loafWeight, 600 * 1.97);
 });
 
 test('an empty Tartine build is short by all the leaven used, never a negative reserve', () => {
@@ -162,7 +161,7 @@ test('Preuss House exactly matches the supplied stages and totals', () => {
 test('House yield scales exactly', () => {
   const r = weigh('house', (s) => {
     s.count = 3;
-    s.weight = 750;
+    s.loafFlour = 375;
   })!;
   assert.equal(r.total, 2250);
   stage(r.initial, [
@@ -191,4 +190,42 @@ test('House leaven made and used stay separate, including shortfalls', () => {
   assert.equal(b.reserve, 0);
   assert.equal(b.shortfall, 200);
   assert.equal(b.used, 200);
+});
+
+test('the flour is the base: hydration, leaven and salt change only their own weights, and the dough weight follows (decision 30)', () => {
+  const base = weigh('house')!;
+  const wetter = weigh('house', (s) => (s.hydration = 80))!;
+  stage(wetter.initial, [
+    ["Anita's all-purpose flour", 800],
+    ['Whole-wheat flour', 100],
+    ['Water', 700],
+  ]);
+  stage(wetter.final, base.final);
+  near(wetter.total, 2020);
+  near(wetter.loafWeight, 1010);
+  const moreLeaven = weigh('house', (s) => (s.leaven = 15))!;
+  stage(moreLeaven.initial, base.initial);
+  stage(moreLeaven.final, [
+    ['Rye flour', 100],
+    ['Leaven used', 150],
+    ['Salt', 20],
+    ['Water', 100],
+  ]);
+  near(moreLeaven.total, 1950);
+  const saltier = weigh('house', (s) => (s.salt = 2.5))!;
+  near(saltier.salt, 25);
+  near(saltier.total, 2005);
+});
+
+test('the water held back is a share of the flour, never more than the water', () => {
+  const r = weigh('tartine', (s) => (s.held = 8))!;
+  stage(r.final, [
+    ['Salt', 20],
+    ['Water', 80],
+  ]);
+  near(r.initial.find(([name]) => name === 'Water')![1], 670);
+  const all = weigh('house', (s) => (s.held = 200))!;
+  near(all.initial.find(([name]) => name === 'Water')![1], 0);
+  near(all.final.find(([name]) => name === 'Water')![1], 780);
+  near(all.total, 2000);
 });

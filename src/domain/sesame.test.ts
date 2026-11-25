@@ -85,20 +85,20 @@ test('Sesame is on the menu right after Olive, with Preuss House’s method, flo
   assert.deepEqual(s.recipes.sesame.settings, house.defaults);
 });
 
-test('the sesame seeds read as one cup at the default batch, and scale with the loaf count and weight', () => {
+test('the sesame seeds read as one cup at the default batch, and scale with the loaf count and flour', () => {
   const sesame = recipe('sesame'),
     addIns = sesame.addIns!,
     book = sesame.defaults;
   assert.equal(addIns.items.length, 1);
   assert.equal(addInLine(addIns.items[0], 1), `1 cup ${SEEDS}`);
-  const lines = (count: number, weight: number) => addInLines(addIns, { count, weight }, book);
-  assert.deepEqual(lines(2, 1000), [`1 cup ${SEEDS}`], 'the book batch, as Preuss House’s two loaves');
-  assert.deepEqual(lines(1, 1000), [`½ cup ${SEEDS}`]);
-  assert.deepEqual(lines(3, 1000), [`1½ cups ${SEEDS}`]);
-  assert.deepEqual(lines(4, 1000), [`2 cups ${SEEDS}`]);
-  assert.deepEqual(lines(1, 2000), [`1 cup ${SEEDS}`], 'one loaf twice the weight');
-  assert.deepEqual(lines(2, 2000), [`2 cups ${SEEDS}`]);
-  assert.deepEqual(lines(2, 500), [`½ cup ${SEEDS}`], 'about half the dough');
+  const lines = (count: number, loafFlour: number) => addInLines(addIns, { count, loafFlour }, book);
+  assert.deepEqual(lines(2, 500), [`1 cup ${SEEDS}`], 'the book batch, as Preuss House’s two loaves');
+  assert.deepEqual(lines(1, 500), [`½ cup ${SEEDS}`]);
+  assert.deepEqual(lines(3, 500), [`1½ cups ${SEEDS}`]);
+  assert.deepEqual(lines(4, 500), [`2 cups ${SEEDS}`]);
+  assert.deepEqual(lines(1, 1000), [`1 cup ${SEEDS}`], 'one loaf of twice the flour');
+  assert.deepEqual(lines(2, 1000), [`2 cups ${SEEDS}`]);
+  assert.deepEqual(lines(2, 250), [`½ cup ${SEEDS}`], 'half the flour');
 });
 
 test('its formula, the weights on the Ingredients tab, is Preuss House’s', () => {
@@ -107,7 +107,7 @@ test('its formula, the weights on the Ingredients tab, is Preuss House’s', () 
   for (const change of [
     {},
     { count: 3 },
-    { weight: 800, hydration: 80 },
+    { loafFlour: 400, hydration: 80 },
     { flours: { anita: 70, wheat: 20, rye: 10 } },
   ]) {
     const s = { ...defaultSettings(sesame), ...change };

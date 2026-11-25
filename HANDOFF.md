@@ -1534,3 +1534,37 @@ Release: pull request 54 merged as `c440221` on Michael's "Check and merge" on N
 
 In the in-app browser, the live save was set aside to see Oat Porridge's defaults: leaven at 8:30 PM, "Cook the oat porridge" at 8:00 AM with the new note, "Mix dough and rest" at 8:30 AM with the hour-long rest note, "Add the oat porridge" at 10:30 AM after Turn 2 with the water and clumps warnings, the whole-oat coat at the final shape, 18 hours in the fridge, "Remove lid" with the bake note and 35 minutes to "All loaves out of the oven" at 9:05 AM. The save was then restored byte for byte, showing Tartine Oat Porridge again.
 
+
+## Hydration keeps the flour, November 25, 2026: locally verified, pull request open
+
+Why: Michael found that changing a recipe's hydration gave odd decimals for every ingredient, and wanted the dough's volume to change instead, as Tartine Country Bread's lower hydration makes a smaller dough than Preuss Country Bread's from the same flour. Reviewing all eight recipes showed three causes: the loaf weight was the fixed setting, so the flour, leaven, salt and build rescaled; the water held back was a share of the water (12.821% for Preuss); and a whole-number total hydration converted to a fractional added hydration. He chose the recommendation, with "Flour per loaf" as the batch field. Branch `flour-fixed-hydration`, from `main` at `f968a78`.
+
+Done means:
+- At every recipe's defaults, every weight and schedule is as before.
+- Typing or sliding a whole total hydration changes only the water and the dough weight, with whole grams of water a loaf: Preuss Country Bread at 82% is 800/100/702 g then 100/200/20/100 g, 1,011 g a loaf.
+- A save from before keeps working: an old default loaf weight or water share loads as the new default.
+- `npm test` in both zone modes, the build and `npm run test:browser` pass.
+
+Change (decision 30 in docs/BEHAVIOUR.md):
+- `src/domain/recipes.ts`: `Settings` has `loafFlour` (500 g for every recipe) and `held` (10% or 5% of the flour) in place of `weight` and `reserve`.
+- `src/domain/formula.ts`: the flour is loaves × flour per loaf and the dough's weight follows; `loafWeight` is returned; the water held back is capped at the water; `hydrationFor` gives the added hydration for a total with whole grams of water a loaf whenever that still shows the total; `extraPercent` is shared with the loader.
+- `src/state/actions.ts`: `setTotalHydration` uses `hydrationFor`; the setting keys are `loafFlour` and `held`.
+- `src/state/load.ts`: `flourAndHeld` reads a save's new settings, or converts a pre-decision-30 `weight` and `reserve` (old defaults to new defaults; anything else to the flour that made the same dough, and the share of the water as a share of the flour). A pre-decision-30 save at the default flour whose water comes to part grams a loaf, such as Emmer/Einkorn or Oat Porridge with a typed hydration, loads at whole grams for the same total shown.
+- `src/domain/addins.ts`: cup add-ins scale with the flour, not the dough's weight.
+- `IngredientsTab.tsx`, `NumberField.tsx`, `BatchCard.tsx`, `src/view/schedule.ts`: "Flour per loaf" with "Makes N g of dough per loaf." under it; "Water held back / added flour" with a 0–30% slider and a new note; dough per loaf from the formula on both tabs.
+- Tests: the formula, recipe, state and add-in tests use the new settings; new tests cover the flour as the base, the held-back cap, whole grams for every recipe at 60–100%, and loading saves from before decision 30 (v5 and v6). The browser hydration flow checks 800 g of Anita's and 1,011 g a loaf at 82%.
+
+Record changes, checked by decoding both records: one plan changed (House at 85%: its leaven build is now 28/71/71/142 g); the formula cases at other hydrations, leaven and salt keep 1,000 g of flour and change the dough's weight; "3 loaves of 850 g" became "3 loaves of 425 g flour", "one 1 g loaf" "one loaf of 1 g flour", and "more water held back than there is" was added (51 calculations); the 24 saved-data cases differ only in listing `loafFlour` and `held` at their defaults instead of `weight` and `reserve`; the 53 helpers are identical. The browser record's nine Ingredients screens and three hydration flows changed only in the batch and held-back fields and notes, and the weights that follow at 82% and 83%.
+
+Independent check (the verifier, on `e92624a`): the code met criteria 1 to 6, and criterion 7 failed on one docs sentence.
+- At the defaults, 413 cases (8 recipes, 1 to 12 loaves, both proofs, 1 to 3 per mix) matched `main` to 1.8e-12, text identical.
+- `setTotalHydration` at every whole total from 60 to 100, every recipe, 1 to 4 loaves: 1,312 cases, 0 failures. Flour, leaven, salt, extras, add-ins and water held back stayed; water per loaf was whole; the field showed the total typed.
+- Saves written by `main`'s own `serialize`, plain and after its hydration changes, loaded as decision 30 says, in version 5 and 6.
+- Breaks: 7 of its 9 were caught (whole-gram rounding, the held share as a share of water, the cap, the old-default mapping, the new keys winning, add-ins by dough weight). The other 2, Oat Porridge's porridge and add-in notes scaled by dough weight, were not.
+- Fixed from its findings without a re-check, under relaxed verification. (1) BEHAVIOUR.md said a plan whose hydration alone was changed gets whole grams, but Emmer/Einkorn and Oat Porridge saves with a typed hydration loaded with quarter grams (61% gave 530.75 g of first water). Rather than narrow the sentence, the loader now snaps such a save to whole grams for the same total shown, with a test; a break of it is caught. (2) The held-share wording was corrected. (3) A test now keeps Oat Porridge's porridge step and add-ins the same at 65% and 85%. (4) Decision 30 now gives House at 85%'s new stage weights.
+
+Evidence (this session, after the fixes): `npm test` passed 211 of 211, also with `BASELINE_ZONE=rule`. `npm run build` passed with 0 errors and 0 warnings. `npm run test:browser` passed 66 of 66 after updating the snapshots. A model of every recipe at whole total hydrations 65–95% and 2, 4 or 6 loaves found every mixing weight a whole gram.
+
+Known: a recipe whose loaf weight was changed before this keeps that dough's flour, in decimals, until Flour per loaf is set or its defaults restored. One or three loaves can leave half grams, and five loaves split into three bowls leave thirds. A rollback to an earlier release uses its default loaf weight and water share.
+
+Not verified: a real phone, or a real bake.

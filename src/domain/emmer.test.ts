@@ -66,11 +66,11 @@ test('Tartine Emmer/Einkorn is on the menu after Country Rye, made the Tartine w
   assert.match(r.description, /bakes two mornings later/);
   assert.deepEqual(defaultSettings(r), {
     count: 2,
-    weight: 1047.5,
+    loafFlour: 500,
     hydration: 85,
     leaven: 15,
     salt: 2.5,
-    reserve: (50 / 850) * 100,
+    held: 5,
     flours: { white: 40, emmer: 30, highext: 30 },
     build: { starter: 15, flour: 100, wheat: 100, water: 200 },
     autolyse: 30,
@@ -109,13 +109,14 @@ test('its weights are the book’s table: 400, 300 and 300 g of flour, 70 g whea
   near(f.totalHydration, (925 / 1075) * 100, 'total hydration');
   near(f.made, 415, 'leaven made');
   near(f.reserve, 265, 'leaven kept');
-  // The wheat germ scales with the flour: three loaves of 850 g.
-  const three = formula(recipe('emmer'), { ...defaultSettings(recipe('emmer')), count: 3, weight: 850 })!;
-  near(three.flour, 2550 / 2.095, 'flour for three loaves');
-  near(three.extras[0][1], (three.flour * 7) / 100, 'wheat germ for three loaves');
+  // The wheat germ scales with the flour: three loaves of 400 g flour.
+  const three = formula(recipe('emmer'), { ...defaultSettings(recipe('emmer')), count: 3, loafFlour: 400 })!;
+  near(three.flour, 1200, 'flour for three loaves');
+  near(three.extras[0][1], 84, 'wheat germ for three loaves');
+  near(three.total, 1200 * 2.095, 'dough for three loaves');
   near(
     three.initial.concat(three.final).reduce((a, [, g]) => a + g, 0),
-    2550,
+    three.total,
     'every gram is in a mixing stage',
   );
 });

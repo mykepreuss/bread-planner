@@ -102,7 +102,7 @@ export function scheduleView(state: PlannerState, now: number, when: (d: Date) =
     bowls: mixingBowls(count, state.mixCapacity),
     total: calc?.total,
     hydration: totalHydration(settings),
-    weight: settings.weight,
+    weight: calc?.loafWeight,
     underway: bake.done.length > 0 && !stale,
     allDone: remaining.length === 0 && steps.length > 0,
     totalMinutes: firstStep && doneStep ? (doneStep.at.getTime() - firstStep.at.getTime()) / 60000 : null,
